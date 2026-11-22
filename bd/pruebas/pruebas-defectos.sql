@@ -753,4 +753,18 @@ VALUES (pg_temp.id('cc', 237), pg_temp.id('bb', 130), pg_temp.id('51', 92), pg_t
 SELECT pg_temp.chk('D9-07 una sesión previa en OTRO escenario no cuenta',
  $q$SELECT is_first_session AND NOT has_prior_session FROM sessions WHERE id = pg_temp.id('cc', 237)$q$);
 
+-- Reescritura: xmin común y orden físico distinto del de llegada (T-10, auditoría de E2)
+DELETE FROM decision_facts;
+INSERT INTO decision_facts (scenario_version_id, week_start, decision_key, option_key, is_first_session)
+SELECT '00000000-0000-0000-0000-000000000011', date '2026-11-16', 'D01', lpad(i::text, 3, '0'), true FROM generate_series(1, 20) i;
+INSERT INTO decision_facts (scenario_version_id, week_start, decision_key, option_key, is_first_session)
+SELECT '00000000-0000-0000-0000-000000000011', date '2026-11-16', 'D01', lpad(i::text, 3, '0'), true FROM generate_series(21, 40) i;
+SELECT pg_temp.chk('D2-30 antes de reescribir el xmin separa las dos llegadas',
+ $q$SELECT count(DISTINCT xmin::text) = 2 FROM decision_facts$q$);
+SELECT rewrite_facts();
+SELECT pg_temp.chk('D2-31 tras reescribir, las dos llegadas comparten xmin',
+ $q$SELECT count(*) = 40 AND count(DISTINCT xmin::text) = 1 FROM decision_facts$q$);
+SELECT pg_temp.chk('D2-32 tras reescribir, el orden físico no es el de llegada',
+ $q$SELECT array_agg(option_key ORDER BY ctid) <> array_agg(option_key ORDER BY option_key) FROM decision_facts$q$);
+
 SELECT pg_temp.finish();

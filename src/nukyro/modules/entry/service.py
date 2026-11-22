@@ -37,7 +37,11 @@ def create_participant(engine: Engine, documents: dict, body, secret: str | None
     ):
         raise HTTPException(422)
     with engine.begin() as conn:
-        if secret and queries.touch_participant(conn, hash_secret(secret)):
+        if secret and (existing := queries.touch_participant(conn, hash_secret(secret))):
+            # Si cambió la versión de un documento, se registra la nueva aceptación (RF-073)
+            queries.insert_acceptances(
+                conn, existing, body.privacy_notice_version, body.terms_version
+            )
             return "existing", secret
         secret = new_secret()
         participant = queries.insert_participant(conn, hash_secret(secret))
@@ -71,9 +75,13 @@ def start_session(engine: Engine, documents: dict, secret: str, body) -> dict:
     versions = current_versions(documents)
     try:
         return _start_session(engine, versions, secret, body)
-    except IntegrityError:
-        # La versión se retiró entre la consulta y el INSERT: el trigger la rechaza (RN-15)
-        raise HTTPException(404) from None
+    except IntegrityError as exc:
+        # Solo el trigger de RN-15 (la versión se retiró entre la consulta y el INSERT) es un 404.
+        # Un CHECK trae nombre de restricción; cualquier otro fallo es un 500 que se registra.
+        diag = getattr(exc.orig, "diag", None)
+        if getattr(exc.orig, "sqlstate", None) == "23514" and not (diag and diag.constraint_name):
+            raise HTTPException(404) from None
+        raise
 
 
 def _start_session(engine: Engine, versions: dict, secret: str, body) -> dict:
