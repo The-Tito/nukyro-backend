@@ -33,6 +33,8 @@ Vista del KG (`context/proyecto/kg.json`): si difieren, manda el KG y se corrige
 | D-24 | 2026-11-22 | **Ejecución delegada del plan.** En ausencia del usuario, el asistente trabaja hasta terminar el plan: pasa las Puertas A y B y cierra tareas con auditor y evidencia, instala las dependencias del plan, usa Docker local, hace commits, push de ramas, PR y fusiones según D-11. Toda puerta así pasada queda como «delegada», con revisión humana pendiente. No delega conflictos, textos legales, datos personales o su conservación, alcance, gasto, releases a main ni acciones irreversibles: eso queda bloqueado y se reporta. Al 96% del límite de 5 horas se ejecuta /cerrar. La frase literal está en `cita` del KG; Docker, las dependencias, la marca «delegada» y lo no delegado son interpretación del asistente. | usuario | tomada | KG |
 | D-25 | 2026-11-22 | **Reparto de modelos.** Opus dirige, decide el diseño y hace la auditoría de cada fase; Sonnet programa y prueba; Haiku lee y resume. Ningún agente fusiona ni hace push: lo hace el director tras repetir la verificación. | asistente (declarada) | tomada | KG |
 | ADR-006 | 2026-11-22 | **Repositorio público con contexto seudonimizado.** Concreta D-09. | usuario | Aceptada | context/adr/ADR-006-repositorio-publico-seudonimizado.md |
+| ADR-007 | 2026-11-22 | **Copia anónima solo al borrar o bloquear.** Diseño delegado (D-24), sin revisión humana. | asistente (declarada) | Aceptada | context/adr/ADR-007-copia-anonima-al-cerrar.md |
+| ADR-008 | 2026-11-22 | **Estructura y seguridad de la API.** Diseño delegado (D-24), sin revisión humana. | asistente (declarada) | Aceptada | context/adr/ADR-008-estructura-seguridad-api.md |
 
 ## Abiertas
 

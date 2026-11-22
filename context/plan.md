@@ -133,7 +133,7 @@ Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que 
 
 ### T-09 · Decisiones de base y esquema corregido
 - Etapa: E2
-- Estado: pendiente
+- Estado: en_curso
 - Entregable: ADR-007, ADR-008, esquema, modelo y pruebas SQL
 - Criterios de cierre:
   - ADR-007 reemplaza a ADR-004 y declara el riesgo residual (D-19 a D-21)
@@ -150,7 +150,7 @@ Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que 
 
 ### T-05 · Base de la API y migración inicial
 - Etapa: E2
-- Estado: pendiente
+- Estado: en_curso
 - Entregable: FastAPI, Compose con TLS local, Alembic y roles
 - Criterios de cierre:
   - `alembic upgrade head` crea el esquema en PostgreSQL 16 vacío, con owner sin superusuario
@@ -160,7 +160,7 @@ Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que 
 
 ### T-06 · Revisiones automáticas del backend
 - Etapa: E2
-- Estado: pendiente
+- Estado: en_curso
 - Entregable: CI, hooks de Python y `scripts/verify`
 - Criterios de cierre:
   - CI corre las pruebas SQL y de la API
