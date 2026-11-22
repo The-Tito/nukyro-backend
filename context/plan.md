@@ -18,7 +18,7 @@ E1 va aparte y no bloquea el backend local. Cada RF tiene una sola fase principa
 | E0 | Adopción de la metodología | Método instalado, validado y confirmado | | | cerrada |
 | E1 | Cierre documental | Documentos coherentes con el KG | | | pendiente |
 | E2 | Base ejecutable y entrada | Esquema corregido y primer recorrido HTTPS hasta la base | 001-004, 062, 068, 071, 073 | E0 | cerrada |
-| E3 | Motor de simulación | Consecuencias deterministas decididas por el servidor | 006, 013-038, 063-066 | E2 | en_curso |
+| E3 | Motor de simulación | Consecuencias deterministas decididas por el servidor | 006, 013-038, 063-066 | E2 | cerrada |
 | E4 | Experiencia educativa | Recorrido completo, del pre-test al resumen | 005, 007-012, 039-061, 067 | E3 | pendiente |
 | E5 | Identidad y aislamiento | Con o sin cuenta, cada persona accede solo a lo suyo | 074-077 | E4 | pendiente |
 | E6 | Ciclo de datos y estadísticas | Borrar sin perder agregados ni reidentificar | 070, 072, 078-080 | E5 | pendiente |
@@ -217,7 +217,8 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-13 · Escenario de demostración
 - Etapa: E3
-- Estado: pendiente
+- Estado: cerrada
+- Nota: Cerrada el 2026-11-22 por delegación (D-24, D-32) con EV-03. Sin revisión humana de los textos.
 - Entregable: contenido ficticio completo
 - Criterios de cierre:
   - 8 decisiones, 3 variables, 2 eventos, 3 desenlaces y sus evaluaciones

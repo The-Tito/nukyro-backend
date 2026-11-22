@@ -55,3 +55,9 @@ Solo peticiones que deciden algo, inician una tarea o corrigen el rumbo.
 **Prompt:** la misma petición de la entrada anterior (D-24)
 **Resultado:** plan de E3, ADR-009 y, sin fusionar, `src/nukyro/engine/` y `src/nukyro/modules/simulation/`
 **Revisión humana:** pendiente
+
+## 2026-11-22: sesión retomada, cierre de E3 (T-07, T-12, T-13)
+**Modelo:** Claude Opus 5.5 (dirección y auditorías), Claude Sonnet (programación, contenido y auditorías acotadas)
+**Prompt:** «si a todo, continua con el desarrollo, ya fusione el pr», «continuamos haciendo tu los prs y fusionando, nada mas» y «continuaras solo hasta finalizar el backend, dame un porcentaje estomado de cuanto llevas desarrollado y cuanto falta»
+**Resultado:** D-26 a D-32, validador y publicación, DEMO-BECAS y E3 cerrada por delegación (EV-03)
+**Revisión humana:** decisiones respondidas por el usuario; código, puertas y textos pendientes de revisar
