@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Nukyro · Flujo de datos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#101018; --bg2:#161622; --card:#1c1c2b; --card2:#23233a; --line:#2e2e46;
+  --text:#F2F1FF; --muted:#A3A2B8; --faint:#6c6b84;
+  --azul:#4737FF; --azul-osc:#3529BF; --lav:#ACA5FF; --palido:#D1CDFF; --naranja:#F75C03; --piedra:#8a8a99;
+  --ins:#3DD68C; --upd:#F5B83D; --del:#FF5C6C; --sel:#7C8CFF; --chk:#D1CDFF;
+  --mono:'JetBrains Mono',ui-monospace,Menlo,monospace; --sans:'Inter',system-ui,sans-serif; --disp:'Space Grotesk','Inter',sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font:15px/1.5 var(--sans);overflow:hidden}
+button{font:inherit;color:inherit}
+.app{display:grid;grid-template-rows:auto 1fr auto;height:100vh}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;border-bottom:1px solid var(--line);background:linear-gradient(90deg,#101018,#171436)}
+.brand{display:flex;align-items:center;gap:10px;font-family:var(--disp);font-weight:500;font-size:20px;letter-spacing:.2px}
+.brand small{font-family:var(--sans);font-size:13px;color:var(--muted);font-weight:400;margin-left:6px}
+.hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+.btn{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:7px 12px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-size:13px;transition:background .15s,border-color .15s,transform .1s}
+.btn:hover{background:var(--card2);border-color:#45457a}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--azul);border-color:var(--azul)}
+.btn.primary:hover{background:#5848ff}
+.btn[aria-pressed="true"]{background:var(--azul-osc);border-color:var(--lav)}
+.btn kbd{font-family:var(--mono);font-size:11px;color:var(--muted)}
+main{display:grid;grid-template-columns:1fr 400px;min-height:0}
+.stage{position:relative;min-height:0;min-width:0;padding:10px}
+.stage svg{width:100%;height:100%;display:block}
+aside{border-left:1px solid var(--line);background:var(--bg2);display:flex;flex-direction:column;min-height:0;position:relative}
+.panel{padding:22px 22px 12px;overflow:auto;flex:1;min-height:0}
+.chapter{font-family:var(--mono);font-size:12px;color:var(--lav);letter-spacing:.5px;text-transform:uppercase}
+.panel h1{font-family:var(--disp);font-weight:700;font-size:26px;line-height:1.15;margin:6px 0 12px}
+.panel p{margin:0 0 10px;color:#d9d8ec}
+.panel p code,.panel li code{font-family:var(--mono);font-size:12.5px;background:#2a2a44;padding:1px 5px;border-radius:5px;color:var(--palido)}
+.panel ul{margin:0 0 10px;padding-left:18px;color:#d9d8ec}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.chip{font-family:var(--mono);font-size:11.5px;padding:3px 8px;border-radius:999px;border:1px solid #3d3d66;color:var(--palido);background:#20203a}
+.console-h{display:flex;justify-content:space-between;align-items:center;padding:10px 22px 6px;border-top:1px solid var(--line);font-family:var(--mono);font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.console{font-family:var(--mono);font-size:12px;padding:0 22px 14px;height:210px;overflow:auto;flex:none}
+.log{display:grid;grid-template-columns:62px 1fr;gap:8px;padding:4px 0;border-bottom:1px dashed #2a2a40;animation:in .3s ease-out both}
+.log b{font-weight:600}
+.log span{color:#cfcfe6;word-break:break-word}
+.log span i{font-style:normal;color:var(--muted)}
+@keyframes in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.op-INSERT{color:var(--ins)} .op-UPDATE{color:var(--upd)} .op-DELETE{color:var(--del)} .op-SELECT{color:var(--sel)} .op-CHECK{color:var(--chk)} .op-KEEP{color:var(--lav)} .op-CALL{color:var(--lav)}
+footer{display:flex;align-items:center;gap:14px;padding:10px 20px;border-top:1px solid var(--line);background:var(--bg2)}
+.timeline{display:flex;gap:4px;flex:1;align-items:center;overflow-x:auto;padding:6px 2px}
+.dot{flex:1;min-width:16px;height:8px;border-radius:4px;background:#2a2a44;border:0;cursor:pointer;padding:0;position:relative;transition:background .2s}
+.dot:hover{background:#45457a}
+.dot.done{background:#4a43a8}
+.dot.cur{background:var(--naranja)}
+.dot:focus-visible,.btn:focus-visible{outline:2px solid var(--lav);outline-offset:2px}
+.counter{font-family:var(--mono);font-size:13px;color:var(--muted);min-width:62px;text-align:center}
+/* SVG */
+.zone rect{fill:#151522;stroke:#26263a;stroke-width:1}
+.zone text{font-family:var(--disp);font-weight:700;font-size:15px;letter-spacing:.3px}
+.zone .zc{font-family:var(--mono);font-weight:400;font-size:11px;fill:var(--faint)}
+.tbl{cursor:pointer;transition:opacity .4s;transform-box:fill-box;transform-origin:center}
+.tbl rect.box{fill:var(--card);stroke:#34344f;stroke-width:1;transition:stroke .3s,fill .3s}
+.tbl:hover rect.box{stroke:var(--lav)}
+.tbl text{font-family:var(--mono);font-size:12.5px;fill:var(--text);pointer-events:none}
+.tbl.dim{opacity:.28}
+.tbl.hot rect.box{fill:#24244a;stroke-width:2}
+.tbl.focus rect.box{stroke:#fff;stroke-width:2}
+.badge{font-family:var(--mono);font-size:10px;font-weight:600}
+.actor rect{fill:#1a1830;stroke:#4f4a8f;stroke-dasharray:4 3}
+.actor text{font-family:var(--disp);font-size:13px;fill:var(--palido);font-weight:500;pointer-events:none}
+.actor .sub{font-family:var(--mono);font-size:10.5px;fill:var(--faint);font-weight:400}
+.actor.dim{opacity:.3}
+.actor.hot rect{stroke:var(--lav);stroke-dasharray:none;fill:#221f45}
+.edge{fill:none;stroke:#3b3b5c;stroke-width:1.2;opacity:.55;transition:opacity .4s}
+.edges.dim .edge{opacity:.1}
+.edge.lit{stroke:var(--lav);opacity:.9;stroke-width:1.6}
+.flow{fill:none;stroke-width:2;stroke-linecap:round;opacity:.85}
+.flow.old{opacity:.35}
+.legend text{font-family:var(--mono);font-size:11.5px;fill:var(--muted)}
+.legend .lt{font-family:var(--disp);font-size:13px;fill:var(--palido);font-weight:500}
+/* drawer */
+.drawer{position:absolute;inset:0;background:var(--bg2);transform:translateX(100%);transition:transform .32s cubic-bezier(.2,.8,.2,1);display:flex;flex-direction:column;z-index:5}
+.drawer.open{transform:none}
+.drawer .dh{padding:20px 22px 10px;border-bottom:1px solid var(--line)}
+.drawer h2{font-family:var(--mono);font-size:18px;margin:4px 0 6px;font-weight:600}
+.drawer .dn{color:var(--muted);font-size:13.5px;white-space:pre-line}
+.drawer .cols{overflow:auto;padding:8px 22px 20px;flex:1}
+.col{display:grid;grid-template-columns:auto 1fr auto;gap:8px;padding:7px 0;border-bottom:1px solid #26263a;font-family:var(--mono);font-size:12.5px;align-items:baseline}
+.col .k{font-size:10px;font-weight:600;min-width:22px}
+.col .k.pk{color:var(--upd)} .col .k.fk{color:var(--sel)}
+.col .ty{color:var(--muted);font-size:11.5px}
+.col .cn{grid-column:2/4;color:var(--faint);font-family:var(--sans);font-size:12px;margin-top:-4px}
+.col .ref{color:var(--sel);font-size:11px}
+.close{position:absolute;top:14px;right:14px}
+.hint{position:absolute;left:20px;bottom:14px;font-size:12px;color:var(--faint);pointer-events:none}
+@media (max-width:1000px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100vh}
+  main{grid-template-columns:1fr}
+  .stage{height:62vw;min-height:300px}
+  aside{border-left:0;border-top:1px solid var(--line)}
+  .drawer{position:fixed;top:auto;height:75vh;bottom:0;border-top:1px solid var(--line);transform:translateY(100%)}
+  .hint{display:none}
+  header{flex-wrap:wrap;padding:10px 16px}
+  footer{padding:10px 16px;flex-wrap:wrap}
+  .brand small{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true">
+        <defs><linearGradient id="gk" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#3529BF"/><stop offset=".55" stop-color="#4737FF"/><stop offset="1" stop-color="#ACA5FF"/></linearGradient></defs>
+        <circle cx="14" cy="17" r="11" fill="url(#gk)"/>
+        <path d="M20 8 q3 -4 6 -3" stroke="#D1CDFF" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        <circle cx="26.3" cy="4.6" r="2.4" fill="#F75C03"/>
+        <path d="M9.5 17 q1.5 -2 3 0 M15.5 17 q1.5 -2 3 0" stroke="#fff" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+      </svg>
+      Nukyro <small>Flujo de datos · modelo v0.2 · PostgreSQL 16</small>
+    </div>
+    <div class="hdr-right">
+      <button class="btn" id="bSpeed" title="Velocidad de la animación">1×</button>
+      <button class="btn" id="bAuto" aria-pressed="false" title="Avanzar solo (A)">▶ Auto <kbd>A</kbd></button>
+      <button class="btn" id="bReplay" title="Repetir paso (R)">⟲ <kbd>R</kbd></button>
+      <button class="btn" id="bFull" title="Pantalla completa (F)">⛶ <kbd>F</kbd></button>
+    </div>
+  </header>
+  <main>
+    <div class="stage">
+      <svg id="svg" viewBox="0 0 1600 840" role="img" aria-label="Diagrama de las 35 tablas de Nukyro y el flujo de datos del paso actual">
+        <defs>
+          <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <g id="gZones"></g><g id="gEdges" class="edges"></g><g id="gFlows"></g><g id="gNodes"></g><g id="gBadges"></g><g id="gParts"></g>
+      </svg>
+      <div class="hint">Clic en una tabla para ver sus columnas · ← → para avanzar</div>
+    </div>
+    <aside>
+      <div class="panel" id="panel" aria-live="polite"></div>
+      <div class="console-h"><span>Consola SQL del paso</span><span id="opCount"></span></div>
+      <div class="console" id="console"></div>
+      <div class="drawer" id="drawer" role="dialog" aria-modal="false" aria-labelledby="dTitle">
+        <button class="btn close" id="dClose" aria-label="Cerrar">✕ <kbd>Esc</kbd></button>
+        <div class="dh"><div class="chapter" id="dDomain"></div><h2 id="dTitle"></h2><div class="dn" id="dNote"></div></div>
+        <div class="cols" id="dCols"></div>
+      </div>
+    </aside>
+  </main>
+  <footer>
+    <button class="btn" id="bPrev" aria-label="Paso anterior">◀</button>
+    <div class="timeline" id="timeline" role="tablist" aria-label="Pasos"></div>
+    <span class="counter" id="counter"></span>
+    <button class="btn primary" id="bNext" aria-label="Paso siguiente">Siguiente ▶</button>
+  </footer>
+</div>
+
+<script>
+const DATA = {"tables":{"admin_users":{"note":"Administradores del panel (U02, FUN-11). Separados de los participantes (ADR-002).","cols":[{"n":"id","t":"uuid","pk":1},{"n":"cognito_sub","t":"text","nn":1,"u":1,"note":"Grupo admins de Cognito"},{"n":"email","t":"text","nn":1},{"n":"display_name","t":"text","nn":1},{"n":"is_active","t":"boolean","nn":1},{"n":"created_at","t":"timestamptz","nn":1}]},"scenarios":{"note":"Escenario con clave estable. Su contenido vive en scenario_versions.","cols":[{"n":"id","t":"uuid","pk":1},{"n":"key","t":"text","nn":1,"u":1},{"n":"title","t":"text","nn":1},{"n":"created_at","t":"timestamptz","nn":1}]},"scenario_versions":{"note":"Ciclo draft → published → retired (trigger guard_version_status).\nSolo se edita y se borra contenido en draft (trigger guard_content_version, RN-15, RN-17).","cols":[{"n":"id","t":"uuid","pk":1},{"n":"scenario_id","t":"uuid","nn":1,"fk":"scenarios"},{"n":"version_number","t":"integer","nn":1,"note":"CHECK > 0"},{"n":"status","t":"text","nn":1,"note":"draft | published | retired"},{"n":"based_on_version_id","t":"uuid","fk":"scenario_versions"},{"n":"title","t":"text","nn":1},{"n":"introduction","t":"text","nn":1},{"n":"rubric_version","t":"text","nn":1},{"n":"created_by","t":"uuid","fk":"admin_users"},{"n":"created_at","t":"timestamptz","nn":1},{"n":"published_at","t":"timestamptz","note":"Nulo solo en draft"},{"n":"published_by","t":"uuid","fk":"admin_users"},{"n":"retired_at","t":"timestamptz","note":"No nulo solo en retired"}]},"learning_objectives":{"note":"","cols":[{"n":"id","t":"uuid","pk":1},{"n":"version_id","t":"uuid","nn":1,"fk":"scenario_versions"},{"n":"key","t":"text","nn":1},{"n":"description","t":"text","nn":1},{"n":"position","t":"integer","nn":1}]},"state_variables":{"note":"CHECK: min_value <= initial_value <= max_value","cols":[{"n":"id","t":"uuid","pk":1},{"n":"version_id","t":"uuid","nn":1,"fk":"scenario_versions"},{"n":"key","t":"text","nn":1},{"n":"label","t":"text","nn":1},{"n":"indicator_label","t":"text","note":"Indicador narrativo visible (RF-035); nulo = interno"},{"n":"initial_value","t":"integer","nn":1},{"n":"min_value","t":"integer"},{"n":"max_value","t":"integer"}]},"nodes":{"note":"","cols":[{"n":"id","t":"uuid","pk":1},{"n":"version_id","t":"uuid","nn":1,"fk":"nodes"},{"n":"key","t":"text","nn":1},{"n":"node_type","t":"text","nn":1,"note":"intro | info | decision | event | outcome"},{"n":"title","t":"text","nn":1},{"n":"body","t":"text","nn":1},{"n":"project_phase","t":"text","note":"requirements | design | development | testing | delivery | incident_response"},{"n":"default_next_node_id","t":"uuid","fk":"nodes","note":"Nulo en outcome"},{"n":"position","t":"integer","nn":1}]},"decision_points":{"note":"Extensión 1:1 de un nodo de tipo decisión.","cols":[{"n":"node_id","t":"uuid","pk":1,"fk":"nodes"},{"n":"version_id","t":"uuid","nn":1,"fk":"learning_objectives"},{"n":"requires_justification","t":"boolean","nn":1},{"n":"evaluated_for_h05","t":"boolean","nn":1,"note":"Implica requires_justification"},{"n":"min_correct_reasons","t":"smallint","nn":1},{"n":"learning_objective_id","t":"uuid","nn":1,"fk":"learning_objectives"},{"n":"affected_parties","t":"text","nn":1,"note":"OR-05"}]},"options":{"note":"Alternativas de un punto de decisión.","cols":[{"n":"id","t":"uuid","pk":1},{"n":"version_id","t":"uuid","nn":1,"fk":"nodes"},{"n":"node_id","t":"uuid","nn":1,"fk":"decision_points"},{"n":"key","t":"text","nn":1},{"n":"label","t":"text","nn":1},{"n":"description","t":"text","nn":1},{"n":"effects","t":"jsonb","nn":1,"note":"Arreglo de efectos sobre variables"},{"n":"next_node_id","t":"uuid","fk":"nodes"},{"n":"position","t":"integer","nn":1}]},"justification_reasons":{"note":"Razones predefinidas; justificación sin texto libre.","cols":[{"n":"id","t":"uuid","pk":1},{"n":"version_id","t":"uuid","nn":1,"fk":"decision_points"},{"n":"node_id","t":"uuid","nn":1,"fk":"decision_points"},{"n":"key","t":"text","nn":1},{"n":"label","t":"text","nn":1},{"n":"is_correct","t":"boolean","nn":1},{"n":"position","t":"integer","nn":1}]},"rules":{"note":"","cols":[{"n":"id","t":"uuid","pk":1},{"n":"version_id","t":"uuid","nn":1,"fk":"nodes"},{"n":"key","t":"text","nn":1},{"n":"rule_type","t":"text","nn":1,"note":"transition | event"},{"n":"from_node_id","t":"uuid","nn":1,"fk":"nodes"},{"n":"condition","t":"jsonb","nn":1,"note":"Objeto JSON"},{"n":"target_node_id","t":"uuid","nn":1,"fk":"nodes"},{"n":"relation_type","t":"text","nn":1,"note":"causal | risk"},{"n":"priority","t":"integer","nn":1},{"n":"explanation","t":"text","nn":1}]},"educational_references":{"note":"","cols":[{"n":"id","t":"uuid","pk":1},{"n":"version_id","t":"uuid","nn":1,"fk":"scenario_versions"},{"n":"key","t":"text","nn":1},{"n":"ref_category","t":"text","nn":1,"note":"ethical | professional | normative | legal"},{"n":"title","t":"text","nn":1},{"n":"source","t":"text","nn":1},{"n":"url","t":"text"},{"n":"section","t":"text"},{"n":"version_label","t":"text"},{"n":"jurisdiction","t":"text","note":"Obligatoria si ref_category = legal (RN-08)"},{"n":"consulted_on","t":"date"},{"n":"valid_from","t":"date"}]},"decision_references":{"note":"","cols":[{"n":"version_id","t":"uuid","nn":1,"fk":"educational_references"},{"n":"node_id","t":"uuid","pk":1,"nn":1,"fk":"decision_points"},{"n":"reference_id","t":"uuid","pk":1,"nn":1,"fk":"educational_references"}]},"feedback_items":{"note":"","cols":[{"n":"id","t":"uuid","pk":1},{"n":"version_id","t":"uuid","nn":1,"fk":"options"},{"n":"node_id","t":"uuid","nn":1,"fk":"nodes"},{"n":"option_id","t":"uuid","fk":"options"},{"n":"category","t":"text","nn":1,"note":"ethical | professional | normative | legal"},{"n":"body","t":"text","nn":1},{"n":"position","t":"integer","nn":1}]},"question_sets":{"note":"","cols":[{"n":"id","t":"uuid","pk":1},{"n":"version_id","t":"uuid","nn":1,"fk":"scenario_versions"},{"n":"set_type","t":"text","nn":1,"note":"pretest | posttest | transfer | causal"},{"n":"requires_all_answers","t":"boolean","nn":1}]},"questions":{"note":"","cols":[{"n":"id","t":"uuid","pk":1},{"n":"version_id","t":"uuid","nn":1,"fk":"nodes"},{"n":"question_set_id","t":"uuid","nn":1,"fk":"question_sets"},{"n":"key","t":"text","nn":1},{"n":"prompt","t":"text","nn":1},{"n":"topic","t":"text","nn":1},{"n":"learning_objective_id","t":"uuid","nn":1,"fk":"learning_objectives","note":"RN-11"},{"n":"assesses_decision_node_id","t":"uuid","fk":"decision_points","note":"OR-05"},{"n":"requires_node_id","t":"uuid","fk":"nodes","note":"RF-058: pregunta causal condicionada"},{"n":"position","t":"integer","nn":1}]},"question_options":{"note":"","cols":[{"n":"id","t":"uuid","pk":1},{"n":"version_id","t":"uuid","nn":1,"fk":"questions"},{"n":"question_id","t":"uuid","nn":1,"fk":"questions"},{"n":"key","t":"text","nn":1},{"n":"label","t":"text","nn":1},{"n":"is_correct","t":"boolean","nn":1},{"n":"position","t":"integer","nn":1}]},"accounts":{"note":"Cuenta opcional con Cognito. Bloqueo de 30 días antes de eliminar (RF-080).","cols":[{"n":"id","t":"uuid","pk":1},{"n":"cognito_sub","t":"text","nn":1,"u":1},{"n":"email","t":"text","nn":1},{"n":"nickname","t":"text","nn":1,"note":"1 a 40 caracteres; no único"},{"n":"newsletter_opt_in","t":"boolean","nn":1},{"n":"surveys_opt_in","t":"boolean","nn":1},{"n":"status","t":"text","nn":1,"note":"active | blocked"},{"n":"blocked_at","t":"timestamptz"},{"n":"block_reason","t":"text","note":"user_request | inactivity | underage | terms_breach"},{"n":"deletion_due_at","t":"timestamptz"},{"n":"last_login_at","t":"timestamptz","nn":1},{"n":"created_at","t":"timestamptz","nn":1}]},"participants":{"note":"Raíz de la propiedad de los datos. CHECK: account_id o secret_hash no nulo.","cols":[{"n":"id","t":"uuid","pk":1},{"n":"account_id","t":"uuid","u":1,"fk":"accounts","note":"Nulo = participante sin cuenta"},{"n":"secret_hash","t":"bytea","u":1,"note":"SHA-256 del secreto de reanudación (RF-062)"},{"n":"exclude_from_stats","t":"boolean","nn":1,"note":"Oposición a estadísticas (RF-079)"},{"n":"created_at","t":"timestamptz","nn":1},{"n":"last_activity_at","t":"timestamptz","nn":1}]},"document_acceptances":{"note":"","cols":[{"n":"id","t":"uuid","pk":1},{"n":"participant_id","t":"uuid","nn":1,"fk":"participants"},{"n":"document_type","t":"text","nn":1,"note":"age_18_plus | privacy_notice | terms"},{"n":"document_version","t":"text"},{"n":"accepted_at","t":"timestamptz","nn":1}]},"consent_events":{"note":"Historial de consentimientos opcionales; solo inserción.","cols":[{"n":"id","t":"uuid","pk":1},{"n":"account_id","t":"uuid","nn":1,"fk":"accounts"},{"n":"consent_type","t":"text","nn":1,"note":"newsletter | surveys"},{"n":"granted","t":"boolean","nn":1},{"n":"source","t":"text","nn":1,"note":"registration | settings | unsubscribe_link | arco_request"},{"n":"occurred_at","t":"timestamptz","nn":1}]},"arco_requests":{"note":"Solicitudes de derechos ARCO (RF-085, RF-086).","cols":[{"n":"id","t":"uuid","pk":1},{"n":"account_id","t":"uuid","fk":"accounts","note":"SET NULL: la solicitud sobrevive a la cuenta"},{"n":"requester_email","t":"text","nn":1},{"n":"right_type","t":"text","nn":1,"note":"access | rectification | cancellation | opposition | revocation | limitation"},{"n":"description","t":"text","nn":1},{"n":"status","t":"text","nn":1,"note":"received | awaiting_info | in_review | accepted | denied | executed | withdrawn"},{"n":"received_at","t":"timestamptz","nn":1},{"n":"info_requested_at","t":"timestamptz"},{"n":"info_due_on","t":"date"},{"n":"response_due_on","t":"date","nn":1},{"n":"extended","t":"boolean","nn":1},{"n":"extension_reason","t":"text"},{"n":"responded_at","t":"timestamptz"},{"n":"execution_due_on","t":"date"},{"n":"executed_at","t":"timestamptz"},{"n":"denial_reason","t":"text"},{"n":"identity_doc_key","t":"text","note":"Objeto en S3; nulo al cerrar (RF-086)"},{"n":"identity_doc_deleted_at","t":"timestamptz"},{"n":"assigned_admin_id","t":"uuid","fk":"admin_users"},{"n":"closed_at","t":"timestamptz"}]},"sessions":{"note":"Fase calculada: started → in_scenario → outcome_reached → completed.","cols":[{"n":"id","t":"uuid","pk":1},{"n":"participant_id","t":"uuid","nn":1,"fk":"participants"},{"n":"scenario_version_id","t":"uuid","nn":1,"fk":"nodes","note":"Solo versión publicada (trigger, RN-15)"},{"n":"current_node_id","t":"uuid","nn":1,"fk":"nodes"},{"n":"outcome_node_id","t":"uuid","fk":"nodes"},{"n":"started_at","t":"timestamptz","nn":1},{"n":"pretest_completed_at","t":"timestamptz"},{"n":"outcome_reached_at","t":"timestamptz"},{"n":"completed_at","t":"timestamptz"},{"n":"last_activity_at","t":"timestamptz","nn":1},{"n":"self_reported_first","t":"boolean","nn":1},{"n":"has_prior_session","t":"boolean","nn":1},{"n":"is_first_session","t":"boolean","note":"GENERATED: self_reported_first AND NOT has_prior_session (RN-18)"},{"n":"survey_answered","t":"boolean","nn":1},{"n":"facts_written_at","t":"timestamptz","note":"Evita escribir session_facts dos veces"}]},"session_steps":{"note":"Recorrido de nodos para reanudar (RF-006).","cols":[{"n":"id","t":"uuid","pk":1},{"n":"session_id","t":"uuid","nn":1,"fk":"sessions"},{"n":"scenario_version_id","t":"uuid","nn":1,"fk":"nodes"},{"n":"node_id","t":"uuid","nn":1,"fk":"nodes"},{"n":"seq","t":"integer","nn":1},{"n":"entered_at","t":"timestamptz","nn":1}]},"session_decisions":{"note":"","cols":[{"n":"id","t":"uuid","pk":1},{"n":"session_id","t":"uuid","nn":1,"fk":"sessions"},{"n":"scenario_version_id","t":"uuid","nn":1,"fk":"decision_points"},{"n":"node_id","t":"uuid","nn":1,"fk":"options"},{"n":"option_id","t":"uuid","nn":1,"fk":"options"},{"n":"decided_at","t":"timestamptz","nn":1},{"n":"justification_correct","t":"boolean","note":"RF-059"}]},"session_decision_reasons":{"note":"","cols":[{"n":"session_decision_id","t":"uuid","pk":1,"nn":1,"fk":"session_decisions"},{"n":"node_id","t":"uuid","nn":1,"fk":"justification_reasons"},{"n":"reason_id","t":"uuid","pk":1,"nn":1,"fk":"justification_reasons"}]},"session_variables":{"note":"Valor actual de cada variable (RF-026).","cols":[{"n":"session_id","t":"uuid","pk":1,"nn":1,"fk":"sessions"},{"n":"scenario_version_id","t":"uuid","nn":1,"fk":"state_variables"},{"n":"variable_id","t":"uuid","pk":1,"nn":1,"fk":"state_variables"},{"n":"value","t":"integer","nn":1},{"n":"updated_at","t":"timestamptz","nn":1}]},"session_effects":{"note":"Efecto aplicado por una decisión (RF-040).","cols":[{"n":"id","t":"uuid","pk":1},{"n":"session_decision_id","t":"uuid","nn":1,"fk":"session_decisions"},{"n":"session_id","t":"uuid","nn":1,"fk":"session_variables"},{"n":"variable_id","t":"uuid","nn":1,"fk":"session_variables"},{"n":"old_value","t":"integer","nn":1},{"n":"new_value","t":"integer","nn":1}]},"session_events":{"note":"Regla activada (RF-031, RF-041).","cols":[{"n":"id","t":"uuid","pk":1},{"n":"session_id","t":"uuid","nn":1,"fk":"sessions"},{"n":"scenario_version_id","t":"uuid","nn":1,"fk":"rules"},{"n":"rule_id","t":"uuid","nn":1,"fk":"rules"},{"n":"triggered_at","t":"timestamptz","nn":1}]},"session_event_causes":{"note":"Decisiones que causaron el evento (RF-034, RF-065).","cols":[{"n":"session_event_id","t":"uuid","pk":1,"nn":1,"fk":"session_events"},{"n":"session_id","t":"uuid","nn":1,"fk":"session_decisions"},{"n":"session_decision_id","t":"uuid","pk":1,"nn":1,"fk":"session_decisions"}]},"assessment_attempts":{"note":"","cols":[{"n":"id","t":"uuid","pk":1},{"n":"session_id","t":"uuid","nn":1,"fk":"sessions"},{"n":"scenario_version_id","t":"uuid","nn":1,"fk":"question_sets"},{"n":"question_set_id","t":"uuid","nn":1,"fk":"question_sets"},{"n":"started_at","t":"timestamptz","nn":1},{"n":"submitted_at","t":"timestamptz"},{"n":"answered_count","t":"smallint","nn":1},{"n":"correct_count","t":"smallint","nn":1},{"n":"score","t":"numeric(5,2)","note":"0 a 100; nulo si está incompleto (RF-011)"}]},"assessment_answers":{"note":"","cols":[{"n":"attempt_id","t":"uuid","pk":1,"nn":1,"fk":"assessment_attempts"},{"n":"question_set_id","t":"uuid","nn":1,"fk":"questions"},{"n":"question_id","t":"uuid","pk":1,"nn":1,"fk":"question_options"},{"n":"option_id","t":"uuid","nn":1,"fk":"question_options"},{"n":"answered_at","t":"timestamptz","nn":1}]},"session_facts":{"note":"Hecho anónimo por sesión cerrada. Alimenta H02 a H06.","cols":[{"n":"id","t":"uuid","pk":1},{"n":"scenario_version_id","t":"uuid","nn":1,"fk":"scenario_versions"},{"n":"week_start","t":"date","nn":1,"note":"Lunes ISO"},{"n":"closure_reason","t":"text","nn":1,"note":"completed | expired | account_deleted | self_deleted | arco"},{"n":"is_first_session","t":"boolean","nn":1},{"n":"pretest_score","t":"numeric(5,2)"},{"n":"posttest_score","t":"numeric(5,2)"},{"n":"transfer_correct","t":"smallint"},{"n":"transfer_total","t":"smallint"},{"n":"causal_correct","t":"smallint"},{"n":"causal_total","t":"smallint"},{"n":"justification_correct","t":"smallint"},{"n":"justification_total","t":"smallint"},{"n":"outcome_reached","t":"boolean","nn":1},{"n":"outcome_key","t":"text"},{"n":"evaluations_completed","t":"boolean","nn":1},{"n":"duration_bucket_min","t":"smallint","note":"Múltiplo de 5"}]},"decision_facts":{"note":"Hecho anónimo por decisión confirmada.","cols":[{"n":"id","t":"uuid","pk":1},{"n":"scenario_version_id","t":"uuid","nn":1,"fk":"scenario_versions"},{"n":"week_start","t":"date","nn":1},{"n":"decision_key","t":"text","nn":1},{"n":"option_key","t":"text","nn":1},{"n":"is_first_session","t":"boolean","nn":1}]},"survey_responses":{"note":"Encuesta dentro de la app, anónima (escalas 1 a 5).","cols":[{"n":"id","t":"uuid","pk":1},{"n":"scenario_version_id","t":"uuid","nn":1,"fk":"scenario_versions"},{"n":"week_start","t":"date","nn":1},{"n":"is_first_session","t":"boolean","nn":1},{"n":"usefulness","t":"smallint","nn":1,"note":"1 a 5 (H07)"},{"n":"clarity","t":"smallint"},{"n":"decision_impact","t":"smallint"},{"n":"causal_understanding","t":"smallint"},{"n":"summary_usefulness","t":"smallint"},{"n":"would_repeat","t":"smallint"}]},"admin_audit_log":{"note":"Bitácora del panel; sin respuestas de participantes (RF-087, RNF-15).","cols":[{"n":"id","t":"bigint","pk":1,"note":"GENERATED ALWAYS AS IDENTITY"},{"n":"occurred_at","t":"timestamptz","nn":1},{"n":"admin_user_id","t":"uuid","nn":1,"note":"Opaco: sin llave foránea"},{"n":"action","t":"text","nn":1},{"n":"entity_type","t":"text","nn":1},{"n":"entity_id","t":"uuid"},{"n":"detail","t":"jsonb","nn":1}]}},"refs":[["scenario_versions","scenarios"],["scenario_versions","admin_users"],["learning_objectives","scenario_versions"],["state_variables","scenario_versions"],["nodes","scenario_versions"],["rules","scenario_versions"],["educational_references","scenario_versions"],["question_sets","scenario_versions"],["decision_points","nodes"],["decision_points","learning_objectives"],["options","decision_points"],["options","nodes"],["justification_reasons","decision_points"],["rules","nodes"],["decision_references","decision_points"],["decision_references","educational_references"],["feedback_items","nodes"],["feedback_items","options"],["questions","question_sets"],["questions","learning_objectives"],["questions","decision_points"],["questions","nodes"],["question_options","questions"],["participants","accounts"],["document_acceptances","participants"],["consent_events","accounts"],["arco_requests","accounts"],["arco_requests","admin_users"],["sessions","participants"],["sessions","scenario_versions"],["sessions","nodes"],["session_steps","sessions"],["session_steps","nodes"],["session_decisions","sessions"],["session_decisions","decision_points"],["session_decisions","options"],["session_decision_reasons","session_decisions"],["session_decision_reasons","justification_reasons"],["session_variables","sessions"],["session_variables","state_variables"],["session_effects","session_decisions"],["session_effects","session_variables"],["session_events","sessions"],["session_events","rules"],["session_event_causes","session_events"],["session_event_causes","session_decisions"],["assessment_attempts","sessions"],["assessment_attempts","question_sets"],["assessment_answers","assessment_attempts"],["assessment_answers","questions"],["assessment_answers","question_options"],["session_facts","scenario_versions"],["decision_facts","scenario_versions"],["survey_responses","scenario_versions"]]};
+
+/* ---------- Disposición ---------- */
+const BW = 196, BH = 30;
+const DOMAINS = {
+  identidad:   {label:'Identidad',        color:'#F75C03', x:20,   y:56,  w:420, h:268, adr:'ADR-002'},
+  simulacion:  {label:'Simulación',       color:'#7C6BFF', x:470,  y:56,  w:560, h:394, adr:'ADR-003'},
+  estadisticas:{label:'Estadísticas anónimas', color:'#9a9aac', x:470, y:478, w:560, h:178, adr:'ADR-004'},
+  contenido:   {label:'Contenido versionado', color:'#4737FF', x:1060, y:56, w:520, h:560, adr:'ADR-001'},
+  administracion:{label:'Administración', color:'#D1CDFF', x:1060, y:640, w:520, h:180, adr:'RF-087'},
+};
+const POS = {
+  participants:[34,104,'identidad'], accounts:[238,104,'identidad'],
+  document_acceptances:[34,176,'identidad'], consent_events:[238,176,'identidad'],
+  arco_requests:[238,248,'identidad'],
+  sessions:[500,104,'simulacion'], session_steps:[816,104,'simulacion'],
+  session_variables:[500,176,'simulacion'], session_decisions:[816,176,'simulacion'],
+  session_effects:[500,248,'simulacion'], session_decision_reasons:[816,248,'simulacion'],
+  session_events:[500,320,'simulacion'], session_event_causes:[816,320,'simulacion'],
+  assessment_attempts:[500,392,'simulacion'], assessment_answers:[816,392,'simulacion'],
+  session_facts:[500,526,'estadisticas'], decision_facts:[816,526,'estadisticas'], survey_responses:[658,596,'estadisticas'],
+  scenarios:[1084,104,'contenido'], scenario_versions:[1376,104,'contenido'],
+  learning_objectives:[1084,170,'contenido'], state_variables:[1376,170,'contenido'],
+  nodes:[1084,236,'contenido'], rules:[1376,236,'contenido'],
+  decision_points:[1084,302,'contenido'], feedback_items:[1376,302,'contenido'],
+  options:[1084,368,'contenido'], justification_reasons:[1376,368,'contenido'],
+  educational_references:[1084,434,'contenido'], decision_references:[1376,434,'contenido'],
+  question_sets:[1084,500,'contenido'], questions:[1376,500,'contenido'],
+  question_options:[1376,566,'contenido'],
+  admin_users:[1376,688,'administracion'], admin_audit_log:[1376,756,'administracion'],
+};
+const ACTORS = {
+  participant:{x:40, y:380, w:184, h:54, label:'Participante', sub:'navegador · nukyro_api'},
+  cognito:    {x:236,y:380, w:184, h:54, label:'Amazon Cognito', sub:'cuentas y admins'},
+  admin:      {x:1084,y:700,w:184, h:54, label:'Panel de administración', sub:'nukyro_admin'},
+  jobs:       {x:500,y:740, w:184, h:54, label:'Tareas programadas', sub:'nukyro_jobs'},
+  analytics:  {x:816,y:740, w:184, h:54, label:'Analítica', sub:'nukyro_analytics'},
+};
+const OPC = {INSERT:'#3DD68C',UPDATE:'#F5B83D',DELETE:'#FF5C6C',SELECT:'#7C8CFF',CHECK:'#D1CDFF',KEEP:'#ACA5FF',CALL:'#ACA5FF'};
+
+/* ---------- Guion ----------
+   op: [desde, hacia, OPERACIÓN, etiqueta, enParaleloConLaAnterior?]
+   "hacia" es la tabla que se toca. desde = null → sin partícula. */
+const STEPS = [
+{ch:'Introducción', title:'El mapa: 35 tablas en 5 dominios', all:true,
+ html:`<p>La base de datos de Nukyro vive en el esquema <code>nukyro</code> de PostgreSQL 16. Sus 35 tablas se agrupan en cinco dominios:</p>
+ <ul><li><b>Contenido versionado</b> (15) y <b>administración</b> (2): lo que escribe el equipo.</li>
+ <li><b>Identidad</b> (5): quién es el participante, con o sin cuenta.</li>
+ <li><b>Simulación</b> (10): lo que hace cada persona en una práctica.</li>
+ <li><b>Estadísticas anónimas</b> (3): lo que se mide sin saber quién fue.</li></ul>
+ <p>Las líneas son las llaves foráneas. A continuación seguimos el recorrido de los datos: del administrador que escribe un escenario hasta el participante que lo practica, y lo que queda al final.</p>`,
+ refs:['ADR-001','ADR-002','ADR-003','ADR-004','ADR-005'], ops:[]},
+
+{ch:'1 · Contenido', title:'El administrador abre un escenario', actors:['admin','cognito'],
+ html:`<p>El panel reconoce al administrador por su <code>cognito_sub</code> (grupo <code>admins</code> de Cognito). Crea el escenario con una <b>clave estable</b> y su primera versión en <b>borrador</b>.</p>
+ <p>Cada acción del panel se escribe en la bitácora, que <b>no tiene llaves foráneas</b>: el registro sobrevive aunque se borre al administrador.</p>`,
+ refs:['U02','RF-084','RF-087','ADR-001'],
+ ops:[['cognito','admin','CALL','inicio de sesión · grupo admins'],
+      ['admin','admin_users','SELECT','WHERE cognito_sub = :sub'],
+      ['admin','scenarios','INSERT','key = "datos-de-salud"'],
+      ['scenarios','scenario_versions','INSERT','version_number = 1 · status = draft'],
+      ['admin','admin_audit_log','INSERT','action = create_draft']]},
+
+{ch:'1 · Contenido', title:'Se arma la versión: nodos, opciones y reglas',
+ html:`<p>Todo el contenido cuelga de <code>version_id</code>. Las llaves compuestas <code>(version_id, id)</code> impiden que una opción apunte a un nodo de <b>otra</b> versión.</p>
+ <p>Las referencias internas (siguiente nodo, objetivo, reglas) son <code>DEFERRABLE INITIALLY DEFERRED</code>: se verifican al <code>COMMIT</code>, así un nodo puede apuntar a otro que se crea después en la misma transacción.</p>
+ <p>Las justificaciones son <b>razones predefinidas</b>, sin texto libre. Los efectos de cada opción y las condiciones de las reglas son <code>jsonb</code>.</p>`,
+ refs:['ADR-001','RF-035','RN-08','OR-05'],
+ ops:[['scenario_versions','learning_objectives','INSERT','objetivos de aprendizaje'],
+      ['scenario_versions','state_variables','INSERT','variables + indicador narrativo'],
+      ['scenario_versions','nodes','INSERT','intro · info · decision · event · outcome'],
+      ['nodes','decision_points','INSERT','extensión 1:1 del nodo de decisión'],
+      ['decision_points','options','INSERT','alternativas + effects (jsonb)'],
+      ['decision_points','justification_reasons','INSERT','razones con is_correct',true],
+      ['scenario_versions','rules','INSERT','condition (jsonb) → target_node'],
+      ['scenario_versions','educational_references','INSERT','ética · profesional · normativa · legal'],
+      ['decision_points','decision_references','INSERT','referencias del dilema'],
+      ['options','feedback_items','INSERT','retroalimentación por alternativa']]},
+
+{ch:'1 · Contenido', title:'Las evaluaciones del escenario',
+ html:`<p>Cada versión tiene hasta cuatro conjuntos de preguntas: <b>pre-test</b>, <b>post-test</b>, <b>transferencia</b> y <b>causal</b> (uno de cada tipo por versión).</p>
+ <p>Toda pregunta apunta a un objetivo de aprendizaje de la misma versión (RN-11). Un índice parcial único permite <b>como máximo una opción correcta</b> por pregunta (RF-009). Las preguntas causales pueden depender de un nodo visitado (RF-058).</p>`,
+ refs:['RN-11','RF-009','RF-058','OR-05'],
+ ops:[['scenario_versions','question_sets','INSERT','pretest · posttest · transfer · causal'],
+      ['question_sets','questions','INSERT','prompt, topic, position'],
+      ['learning_objectives','questions','CHECK','objetivo de la misma versión (RN-11)'],
+      ['questions','question_options','INSERT','UNIQUE … WHERE is_correct (RF-009)']]},
+
+{ch:'1 · Contenido', title:'Publicar la versión (P12)', actors:['admin'],
+ html:`<p>La aplicación valida la versión (RF-066) y, en una transacción, bloquea el escenario con <code>FOR UPDATE</code>, retira la versión publicada anterior y publica el borrador.</p>
+ <p>Dos índices parciales garantizan <b>una sola versión publicada y un solo borrador</b> por escenario (RN-16). Desde ese momento un trigger rechaza cualquier cambio al contenido: para corregir se crea un borrador nuevo con <code>based_on_version_id</code>.</p>`,
+ refs:['P12','RN-16','RN-15','RN-17','RF-066','RF-083'],
+ ops:[['admin','scenarios','SELECT','FOR UPDATE · serializa publicaciones'],
+      ['admin','scenario_versions','UPDATE','publicada anterior → retired'],
+      ['admin','scenario_versions','UPDATE','draft → published · published_at'],
+      ['scenario_versions','nodes','CHECK','trigger guard_content_version: inmutable'],
+      ['admin','admin_audit_log','INSERT','action = publish']]},
+
+{ch:'2 · Participante', title:'Llega un participante, sin cuenta', actors:['participant'],
+ html:`<p>No hace falta registrarse. El navegador guarda un <b>secreto de reanudación</b> y la base solo su hash SHA-256 de 32 bytes (<code>secret_hash</code>).</p>
+ <p><code>participants</code> es la <b>raíz de identidad</b>: todo lo que la persona genere cuelga de esta fila y se borra en cascada con ella.</p>
+ <p>Antes de la primera sesión se registran las aceptaciones: mayoría de edad, Aviso de Privacidad y Términos. <code>UNIQUE NULLS NOT DISTINCT</code> evita duplicarlas.</p>`,
+ refs:['ADR-002','RF-062','RF-073'],
+ ops:[['participant','participants','INSERT','secret_hash = sha256(secreto)'],
+      ['participant','document_acceptances','INSERT','age_18_plus'],
+      ['participant','document_acceptances','INSERT','privacy_notice · versión vigente'],
+      ['participant','document_acceptances','INSERT','terms · versión vigente']]},
+
+{ch:'3 · Práctica', title:'Empieza la práctica: se crea la sesión', actors:['participant'],
+ html:`<p>La sesión <b>fija la versión publicada</b>: si mañana se publica otra, esta práctica sigue con la suya. Un trigger rechaza sesiones sobre versiones que no estén publicadas (RN-15).</p>
+ <p><code>UNIQUE (id, scenario_version_id)</code> propaga la versión a todas las tablas hijas, así ninguna puede apuntar a contenido ajeno.</p>
+ <p>Las variables de estado se copian con su valor inicial y se anota el primer paso del recorrido. <code>is_first_session</code> es una columna <b>generada</b> (RN-18).</p>`,
+ refs:['RN-15','RN-18','RF-077','RF-026','RF-006'],
+ ops:[['participants','sessions','INSERT','self_reported_first, has_prior_session'],
+      ['sessions','scenario_versions','CHECK','trigger: solo versión publicada'],
+      ['sessions','nodes','SELECT','current_node_id = nodo intro'],
+      ['state_variables','session_variables','INSERT','value = initial_value'],
+      ['sessions','session_steps','INSERT','seq = 1']]},
+
+{ch:'3 · Práctica', title:'Pre-test', actors:['participant'],
+ html:`<p>Antes del escenario se mide lo que la persona ya sabe. Hay <b>un solo intento por conjunto</b> en cada sesión (RN-19) y una respuesta por pregunta; las llaves compuestas garantizan que la opción pertenece a la pregunta y la pregunta al conjunto.</p>
+ <p><code>score</code> va de 0 a 100 y queda nulo si el intento está incompleto (RF-011). Al terminar se marca <code>pretest_completed_at</code>: la <b>fase</b> de la sesión no se guarda, se calcula con estos hitos.</p>`,
+ refs:['RN-19','RF-011','RF-005'],
+ ops:[['sessions','question_sets','SELECT','set_type = pretest'],
+      ['sessions','assessment_attempts','INSERT','UNIQUE (session_id, question_set_id)'],
+      ['participant','assessment_answers','INSERT','una respuesta por pregunta'],
+      ['assessment_answers','assessment_attempts','UPDATE','correct_count · score'],
+      ['assessment_attempts','sessions','UPDATE','pretest_completed_at = now()']]},
+
+{ch:'3 · Práctica', title:'Lee el dilema', actors:['participant'],
+ html:`<p>Al llegar a un nodo de decisión la API solo <b>lee</b>: el texto del nodo, sus alternativas, las razones para justificar y las referencias educativas.</p>
+ <p>El rol <code>nukyro_api</code> tiene permiso de <code>SELECT</code> sobre el contenido y nada más: un participante no puede alterar el escenario.</p>
+ <p>Los indicadores narrativos visibles salen de <code>state_variables.indicator_label</code> (RF-035).</p>`,
+ refs:['RF-035','OR-05'],
+ ops:[['sessions','nodes','SELECT','nodo actual (decision)'],
+      ['nodes','decision_points','SELECT','requires_justification'],
+      ['decision_points','options','SELECT','alternativas'],
+      ['decision_points','justification_reasons','SELECT','razones a elegir',true],
+      ['decision_points','decision_references','SELECT','referencias del dilema'],
+      ['decision_references','educational_references','SELECT','fuente · sección · jurisdicción'],
+      ['session_variables','state_variables','SELECT','indicadores visibles']]},
+
+{ch:'3 · Práctica', title:'Confirma una decisión (P5)', actors:['participant'], hero:true,
+ html:`<p>El corazón del simulador, en <b>una sola transacción</b>:</p>
+ <ul><li><code>FOR UPDATE</code> sobre la sesión serializa peticiones simultáneas.</li>
+ <li><code>ON CONFLICT (session_id, node_id) DO NOTHING</code>: si el navegador reintenta, se devuelve la decisión ya guardada (<b>idempotencia</b>, RN-14).</li>
+ <li>La opción pertenece al nodo (RN-03) y el nodo a la versión (RN-02), por llaves compuestas.</li>
+ <li>Cada efecto guarda su valor anterior y nuevo; cada regla activada guarda <b>qué decisiones la causaron</b>.</li>
+ <li>Siguiente nodo: regla de transición → <code>options.next_node_id</code> → <code>default_next_node_id</code>.</li></ul>
+ <p>Si la persona no se opuso a las estadísticas, se añade un hecho anónimo.</p>`,
+ refs:['P5','ADR-003','RN-14','RN-02','RN-03','RF-059','RF-040','RF-031','RF-034'],
+ ops:[['participant','sessions','SELECT','FOR UPDATE · valida current_node_id'],
+      ['sessions','session_decisions','INSERT','ON CONFLICT DO NOTHING (RN-14)'],
+      ['session_decisions','session_decision_reasons','INSERT','razones → justification_correct'],
+      ['options','session_variables','UPDATE','effects: confianza +2, plazo −1'],
+      ['session_decisions','session_effects','INSERT','old_value → new_value'],
+      ['rules','session_events','INSERT','regla cumplida · UNIQUE (session, rule)'],
+      ['session_decisions','session_event_causes','INSERT','decisiones que lo causaron'],
+      ['sessions','session_steps','INSERT','seq = n + 1'],
+      ['session_steps','sessions','UPDATE','current_node_id · last_activity_at'],
+      ['session_decisions','decision_facts','INSERT','decision_key, option_key, semana']]},
+
+{ch:'3 · Práctica', title:'Llega al desenlace', actors:['participant'],
+ html:`<p>Cuando el siguiente nodo es de tipo <code>outcome</code>, se guardan <code>outcome_node_id</code> y <code>outcome_reached_at</code>.</p>
+ <p>La retroalimentación se <b>reconstruye con la trazabilidad guardada</b>: qué decidió, qué variables cambió, qué eventos provocó y por qué (relación <code>causal</code> o <code>risk</code>). No hay calificación de la persona ni rankings: son indicadores narrativos.</p>`,
+ refs:['RF-037','RF-041','RF-065','RF-034','RF-040'],
+ ops:[['nodes','sessions','UPDATE','outcome_node_id · outcome_reached_at'],
+      ['sessions','session_events','SELECT','eventos de la sesión'],
+      ['session_events','session_event_causes','SELECT','cadena causal'],
+      ['session_events','rules','SELECT','relation_type · explanation'],
+      ['session_decisions','session_effects','SELECT','cómo cambió cada variable'],
+      ['session_decisions','feedback_items','SELECT','retroalimentación por alternativa']]},
+
+{ch:'3 · Práctica', title:'Evaluaciones finales y encuesta', actors:['participant'],
+ html:`<p>Post-test, transferencia y preguntas causales siguen la misma mecánica que el pre-test. Una pregunta causal solo aparece si la persona visitó el nodo que la condiciona (RF-058).</p>
+ <p>La encuesta va a <code>survey_responses</code> <b>sin llave hacia la sesión ni hacia la persona</b>: solo versión, semana y si fue primera sesión. En la sesión solo queda <code>survey_answered</code> para no volver a preguntar.</p>`,
+ refs:['RF-058','RF-060','RF-061','RN-19'],
+ ops:[['sessions','assessment_attempts','INSERT','posttest · transfer · causal'],
+      ['participant','assessment_answers','INSERT','respuestas'],
+      ['questions','session_steps','SELECT','causal: ¿visitó requires_node_id?'],
+      ['assessment_attempts','sessions','UPDATE','completed_at = now()'],
+      ['participant','survey_responses','INSERT','escalas 1–5 · sin session_id'],
+      ['participant','sessions','UPDATE','survey_answered = true',true]]},
+
+{ch:'4 · Estadística', title:'Hechos anónimos', actors:['analytics'],
+ html:`<p>Al cerrar la sesión se escribe <b>un hecho por sesión</b> en <code>session_facts</code>: semana (lunes) en lugar de fecha exacta, duración en tramos de 5 minutos, puntuaciones y aciertos. <code>facts_written_at</code> evita escribirlo dos veces.</p>
+ <p>Las tablas de hechos <b>no tienen ninguna llave hacia personas</b>, solo hacia la versión del escenario. El rol <code>nukyro_analytics</code> solo puede leer estas tablas: con ellas se contrastan las hipótesis H02 a H07.</p>`,
+ refs:['ADR-004','RF-079','H02–H07'],
+ ops:[['sessions','session_facts','INSERT','closure_reason = completed · week_start'],
+      ['assessment_attempts','session_facts','INSERT','pretest_score · posttest_score · aciertos'],
+      ['session_facts','sessions','UPDATE','facts_written_at = now()'],
+      ['analytics','session_facts','SELECT','solo hechos anónimos'],
+      ['analytics','decision_facts','SELECT','',true],
+      ['analytics','survey_responses','SELECT','',true]]},
+
+{ch:'5 · Cuenta', title:'Crea una cuenta y conserva su progreso (P10)', actors:['participant','cognito'],
+ html:`<p>La cuenta es <b>opcional</b>. Las credenciales viven en Cognito; la base guarda <code>cognito_sub</code>, correo y apodo. Los consentimientos opcionales (boletín, encuestas) dejan historial con fecha en <code>consent_events</code>.</p>
+ <p>El participante del navegador <b>se convierte</b> en el de la cuenta: <code>account_id</code> se llena y el secreto se borra. Si la cuenta ya tenía participante (otro dispositivo), sus sesiones se trasladan y el participante del navegador se elimina. Todo en una transacción; repetirla no hace nada.</p>`,
+ refs:['P10','ADR-002','RF-074'],
+ ops:[['participant','cognito','CALL','registro · verificación de correo'],
+      ['cognito','accounts','INSERT','cognito_sub · email · nickname'],
+      ['accounts','consent_events','INSERT','newsletter / surveys · source = registration'],
+      ['accounts','participants','UPDATE','account_id = :acc · secret_hash = NULL'],
+      ['participants','sessions','UPDATE','si ya existía otro participante: sesiones → A']]},
+
+{ch:'6 · Derechos', title:'Solicitud de derechos ARCO', actors:['participant','admin'],
+ html:`<p>La solicitud guarda el derecho ejercido, su estado y las <b>fechas límite</b> en días hábiles (calculadas por la aplicación). El documento de identidad va a S3; al cerrar, un <code>CHECK</code> obliga a que <code>identity_doc_key</code> sea nulo.</p>
+ <p>La solicitud <b>sobrevive a la cuenta</b> (<code>ON DELETE SET NULL</code>) para acreditar que se atendió, y se conserva 12 meses tras el cierre. El panel solo ve datos del participante para atender ARCO, y deja rastro en la bitácora.</p>`,
+ refs:['RF-085','RF-086','RF-079','RF-087','DEC-MODELO-V02'],
+ ops:[['participant','arco_requests','INSERT','right_type · response_due_on'],
+      ['admin','admin_users','SELECT','assigned_admin_id'],
+      ['admin','arco_requests','UPDATE','received → in_review → executed'],
+      ['admin','participants','UPDATE','oposición: exclude_from_stats = true'],
+      ['admin','consent_events','INSERT','revocación · source = arco_request'],
+      ['admin','admin_audit_log','INSERT','action = arco_update']]},
+
+{ch:'7 · Retención', title:'Caducidad y borrado (P9)', actors:['jobs'],
+ html:`<p>Una tarea programada busca participantes <b>sin cuenta y con 30 días sin actividad</b>, y cuentas bloqueadas cuyo plazo venció.</p>
+ <p>Primero escribe el hecho anónimo de cada sesión pendiente; después borra la raíz y <b>la cascada se lleva todo</b>: sesiones, decisiones, efectos, eventos, intentos, respuestas y aceptaciones. El mismo flujo sirve para el borrado a petición y para la cancelación ARCO.</p>`,
+ refs:['P9','RF-080','RF-078','ADR-004'],
+ ops:[['jobs','participants','SELECT','account_id IS NULL · 30 días sin actividad'],
+      ['jobs','session_facts','INSERT','closure_reason = expired'],
+      ['jobs','participants','DELETE','borra la raíz'],
+      ['participants','sessions','DELETE','ON DELETE CASCADE'],
+      ['participants','document_acceptances','DELETE','cascada',true],
+      ['sessions','session_steps','DELETE','cascada'],
+      ['sessions','session_decisions','DELETE','cascada',true],
+      ['sessions','session_variables','DELETE','cascada',true],
+      ['sessions','session_events','DELETE','cascada',true],
+      ['sessions','assessment_attempts','DELETE','cascada',true],
+      ['session_decisions','session_decision_reasons','DELETE','cascada'],
+      ['session_decisions','session_effects','DELETE','cascada',true],
+      ['session_events','session_event_causes','DELETE','cascada',true],
+      ['assessment_attempts','assessment_answers','DELETE','cascada',true],
+      ['jobs','accounts','DELETE','blocked · deletion_due_at vencido'],
+      ['accounts','consent_events','DELETE','cascada',true],
+      ['accounts','arco_requests','UPDATE','account_id = NULL (SET NULL)']]},
+
+{ch:'Cierre', title:'Qué queda: nada que identifique',
+ html:`<p>Tras el borrado, lo personal desaparece. Lo que permanece <b>no identifica a nadie</b>:</p>
+ <ul><li>El <b>contenido</b> de las versiones, inmutable.</li>
+ <li>Los <b>hechos anónimos</b> y la encuesta, por semana y versión.</li>
+ <li>Las <b>solicitudes ARCO</b>, 12 meses tras el cierre, para acreditar que se atendieron.</li>
+ <li>La <b>bitácora del panel</b>, sin respuestas de participantes.</li></ul>
+ <p>Cada actor entra con su rol: <code>nukyro_api</code>, <code>nukyro_admin</code>, <code>nukyro_jobs</code> y <code>nukyro_analytics</code>, y cada uno ve solo su parte.</p>`,
+ refs:['ADR-004','RNF-15','DEC-MODELO-V02'],
+ keep:['scenarios','scenario_versions','learning_objectives','state_variables','nodes','decision_points','options','justification_reasons','rules','educational_references','decision_references','feedback_items','question_sets','questions','question_options','session_facts','decision_facts','survey_responses','arco_requests','admin_users','admin_audit_log'],
+ ops:[]},
+];
+
+/* ---------- Utilidades ---------- */
+const NS='http://www.w3.org/2000/svg';
+const $=s=>document.querySelector(s);
+const el=(tag,attrs={},parent)=>{const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;};
+const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+function rectOf(name){
+  if(ACTORS[name]){const a=ACTORS[name];return {x:a.x,y:a.y,w:a.w,h:a.h,zone:null};}
+  const p=POS[name];return {x:p[0],y:p[1],w:BW,h:BH,zone:p[2]};
+}
+function pathBetween(a,b){
+  const A=rectOf(a),B=rectOf(b);
+  const acx=A.x+A.w/2, acy=A.y+A.h/2, bcx=B.x+B.w/2, bcy=B.y+B.h/2;
+  const gapX = B.x > A.x+A.w ? B.x-(A.x+A.w) : (A.x > B.x+B.w ? A.x-(B.x+B.w) : -1);
+  if(gapX>16){
+    const r = bcx>acx;
+    const x1=r?A.x+A.w:A.x, x2=r?B.x:B.x+B.w, y1=acy, y2=bcy;
+    const c=Math.max(36,Math.abs(x2-x1)*.45)*(r?1:-1);
+    return `M${x1},${y1} C${x1+c},${y1} ${x2-c},${y2} ${x2},${y2}`;
+  }
+  const dy=bcy-acy;
+  if(Math.abs(dy)<=80 && Math.abs(acx-bcx)<60){
+    const down=dy>0;const y1=down?A.y+A.h:A.y, y2=down?B.y:B.y+B.h;
+    return `M${acx},${y1} C${acx},${(y1+y2)/2} ${bcx},${(y1+y2)/2} ${bcx},${y2}`;
+  }
+  // misma columna, no adyacentes: rodear por el lado exterior de la zona
+  const z=A.zone?DOMAINS[A.zone]:null;
+  const right = z ? (acx > z.x+z.w/2) : false;
+  const x1=right?A.x+A.w:A.x, x2=right?B.x+B.w:B.x;
+  const bulge=(28+Math.abs(dy)*.12)*(right?1:-1);
+  return `M${x1},${acy} C${x1+bulge},${acy} ${x2+bulge},${bcy} ${x2},${bcy}`;
+}
+
+/* ---------- Dibujo base ---------- */
+const gZ=$('#gZones'),gE=$('#gEdges'),gF=$('#gFlows'),gN=$('#gNodes'),gB=$('#gBadges'),gP=$('#gParts');
+const count={};for(const t in POS)count[POS[t][2]]=(count[POS[t][2]]||0)+1;
+for(const k in DOMAINS){const d=DOMAINS[k];const g=el('g',{class:'zone'},gZ);
+  el('rect',{x:d.x,y:d.y,width:d.w,height:d.h,rx:14},g);
+  el('rect',{x:d.x+16,y:d.y+16,width:4,height:16,rx:2,fill:d.color,style:'stroke:none'},g);
+  const t=el('text',{x:d.x+28,y:d.y+29,fill:d.color},g);t.textContent=d.label;
+  const c=el('text',{x:d.x+d.w-16,y:d.y+29,'text-anchor':'end',class:'zc'},g);c.textContent=`${count[k]} tablas · ${d.adr}`;
+}
+// leyenda
+(()=>{const g=el('g',{class:'legend',transform:'translate(40,470)'},gZ);
+  const t=el('text',{x:0,y:0,class:'lt'},g);t.textContent='Operaciones';
+  ['INSERT','UPDATE','DELETE','SELECT','CHECK'].forEach((o,i)=>{const y=24+i*24;
+    el('circle',{cx:7,cy:y-4,r:5,fill:OPC[o]},g);const x=el('text',{x:20,y},g);
+    x.textContent={INSERT:'INSERT · escribe',UPDATE:'UPDATE · modifica',DELETE:'DELETE · borra',SELECT:'SELECT · lee',CHECK:'CHECK · trigger o restricción'}[o];});
+  const t2=el('text',{x:0,y:160,class:'lt'},g);t2.textContent='Relaciones';
+  el('path',{d:'M0,180 C20,180 20,180 40,180',class:'edge'},g);
+  const x2=el('text',{x:50,y:184},g);x2.textContent='llave foránea';
+  el('path',{d:'M0,204 L40,204',class:'flow',stroke:'#7C8CFF'},g);
+  const x3=el('text',{x:50,y:208},g);x3.textContent='flujo del paso actual';
+  const x4=el('text',{x:0,y:240},g);x4.textContent='Clic en una tabla: columnas';
+})();
+const edgeEls=[];
+for(const [a,b] of DATA.refs){const p=el('path',{d:pathBetween(a,b),class:'edge'},gE);p.dataset.a=a;p.dataset.b=b;edgeEls.push(p);}
+const nodeEls={};
+for(const t in POS){const r=rectOf(t);const d=DOMAINS[r.zone];
+  const g=el('g',{class:'tbl',tabindex:0,role:'button','aria-label':`Tabla ${t}`},gN);
+  el('rect',{x:r.x,y:r.y,width:BW,height:BH,rx:7,class:'box'},g);
+  el('rect',{x:r.x,y:r.y+6,width:3,height:BH-12,rx:1.5,fill:d.color},g);
+  const tx=el('text',{x:r.x+12,y:r.y+19.5},g);tx.textContent=t;
+  g.addEventListener('click',()=>openDrawer(t));
+  g.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openDrawer(t);}});
+  nodeEls[t]=g;
+}
+const actorEls={};
+for(const k in ACTORS){const a=ACTORS[k];const g=el('g',{class:'actor'},gN);
+  el('rect',{x:a.x,y:a.y,width:a.w,height:a.h,rx:a.h/2},g);
+  const t=el('text',{x:a.x+a.w/2,y:a.y+23,'text-anchor':'middle'},g);t.textContent=a.label;
+  const s=el('text',{x:a.x+a.w/2,y:a.y+40,'text-anchor':'middle',class:'sub'},g);s.textContent=a.sub;
+  actorEls[k]=g;}
+
+/* ---------- Estado y reproducción ---------- */
+let cur=0, token=0, speed=1, auto=false, autoTimer=null, touched={};
+const timers=new Set();
+const wait=ms=>new Promise(res=>{const id=setTimeout(()=>{timers.delete(id);res();},ms/speed);timers.add(id);});
+function clearTimers(){for(const id of timers)clearTimeout(id);timers.clear();}
+
+function badge(t,ops){
+  const old=gB.querySelector(`[data-t="${t}"]`);if(old)old.remove();
+  const r=rectOf(t);const label=[...ops].join(' · ');const w=label.length*6.3+12;
+  const g=el('g',{'data-t':t},gB);
+  const c=OPC[[...ops].slice(-1)[0]];
+  el('rect',{x:r.x+r.w-w+6,y:r.y-9,width:w,height:16,rx:8,fill:c},g);
+  const x=el('text',{x:r.x+r.w-w+12,y:r.y+2.5,class:'badge',fill:'#101018'},g);x.textContent=label;
+  if(!reduce) g.animate([{transform:'translateY(4px)',opacity:0},{transform:'none',opacity:1}],{duration:260,easing:'cubic-bezier(.2,.8,.2,1)'});
+}
+function mark(t,op){
+  if(ACTORS[t]){actorEls[t].classList.remove('dim');actorEls[t].classList.add('hot');return;}
+  touched[t]=touched[t]||new Set();touched[t].delete(op);touched[t].add(op);
+  const g=nodeEls[t];g.classList.remove('dim');g.classList.add('hot');
+  g.querySelector('.box').style.stroke=OPC[op];
+  badge(t,touched[t]);
+  if(!reduce) g.animate([{transform:'scale(1)'},{transform:'scale(1.07)'},{transform:'scale(1)'}],{duration:450,easing:'ease-out'});
+}
+function logLine(op,to,label){
+  const c=$('#console');const d=document.createElement('div');d.className='log';
+  d.innerHTML=`<b class="op-${op}">${op}</b><span>${ACTORS[to]?ACTORS[to].label:to}${label?` <i>· ${label}</i>`:''}</span>`;
+  c.appendChild(d);c.scrollTop=c.scrollHeight;
+}
+function travel(path,color,dur,myToken){
+  return new Promise(res=>{
+    if(reduce){res();return;}
+    const len=path.getTotalLength();const dot=el('circle',{r:6,fill:color,filter:'url(#glow)'},gP);
+    const t0=performance.now();
+    (function f(now){
+      if(myToken!==token){dot.remove();res();return;}
+      let k=Math.min(1,(now-t0)/(dur/speed));const e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+      const p=path.getPointAtLength(e*len);dot.setAttribute('cx',p.x);dot.setAttribute('cy',p.y);
+      if(k<1)requestAnimationFrame(f);else{dot.animate([{opacity:1,r:6},{opacity:0,r:14}],{duration:300}).onfinish=()=>dot.remove();res();}
+    })(t0);
+  });
+}
+async function runOp(op,myToken){
+  const [from,to,kind,label]=op;
+  logLine(kind,to,label);
+  if(from){
+    if(ACTORS[from])mark(from,kind);
+    const p=el('path',{d:pathBetween(from,to),class:'flow',stroke:OPC[kind]},gF);
+    if(!reduce){const L=p.getTotalLength();p.style.strokeDasharray=L;p.style.strokeDashoffset=L;
+      p.animate([{strokeDashoffset:L},{strokeDashoffset:0}],{duration:520/speed,fill:'forwards',easing:'ease-out'});}
+    else p.style.strokeDasharray='none';
+    await travel(p,OPC[kind],780,myToken);
+    if(myToken!==token)return;
+    p.classList.add('old');
+  }
+  mark(to,kind);
+}
+async function playStep(i){
+  const myToken=++token;clearTimers();clearTimeout(autoTimer);
+  const s=STEPS[i];touched={};
+  gF.innerHTML='';gB.innerHTML='';gP.innerHTML='';$('#console').innerHTML='';
+  // estado visual inicial
+  const all=!!s.all;
+  for(const t in nodeEls){const g=nodeEls[t];g.classList.remove('hot','focus');g.querySelector('.box').style.stroke='';g.classList.toggle('dim',!all && !(s.keep||[]).includes(t));}
+  for(const k in actorEls){actorEls[k].classList.remove('hot');actorEls[k].classList.toggle('dim',!all && !(s.actors||[]).includes(k));}
+  gE.classList.toggle('dim',!all);
+  edgeEls.forEach(e=>e.classList.remove('lit'));
+  if(all && !reduce){edgeEls.forEach((e,j)=>{const L=e.getTotalLength();e.animate([{strokeDasharray:L,strokeDashoffset:L},{strokeDasharray:L,strokeDashoffset:0}],{duration:900,delay:j*18,fill:'backwards',easing:'ease-out'});});
+    Object.values(nodeEls).forEach((g,j)=>g.animate([{opacity:0,transform:'translateY(6px)'},{opacity:1,transform:'none'}],{duration:400,delay:j*20,fill:'backwards'}));}
+  if(s.keep){s.keep.forEach(t=>mark(t,'KEEP'));logLine('KEEP',`${s.keep.length} tablas`,'sin datos personales');}
+  renderPanel(i);
+  $('#opCount').textContent=s.ops.length?`${s.ops.length} operaciones`:'';
+  await wait(reduce?0:350);
+  // ejecutar operaciones (las marcadas en paralelo arrancan junto con la anterior)
+  let k=0;
+  while(k<s.ops.length){
+    if(myToken!==token)return;
+    const group=[s.ops[k]];k++;
+    while(k<s.ops.length && s.ops[k][4]){group.push(s.ops[k]);k++;}
+    await Promise.all(group.map(o=>runOp(o,myToken)));
+    await wait(reduce?0:(s.hero?260:180));
+  }
+  if(myToken!==token)return;
+  if(auto && cur<STEPS.length-1) autoTimer=setTimeout(()=>go(cur+1),4200/speed);
+}
+function renderPanel(i){
+  const s=STEPS[i];
+  $('#panel').innerHTML=`<div class="chapter">${s.ch}</div><h1>${s.title}</h1>${s.html}<div class="chips">${(s.refs||[]).map(r=>`<span class="chip">${r}</span>`).join('')}</div>`;
+  $('#panel').scrollTop=0;
+  $('#counter').textContent=`${i+1} / ${STEPS.length}`;
+  document.querySelectorAll('.dot').forEach((d,j)=>{d.classList.toggle('cur',j===i);d.classList.toggle('done',j<i);d.setAttribute('aria-selected',j===i);});
+  $('#bPrev').disabled=i===0;$('#bNext').disabled=i===STEPS.length-1;
+}
+function go(i){if(i<0||i>=STEPS.length)return;cur=i;closeDrawer();playStep(i);}
+
+/* ---------- Detalle de tabla ---------- */
+const DLABEL={identidad:'Identidad',simulacion:'Simulación',estadisticas:'Estadísticas anónimas',contenido:'Contenido versionado',administracion:'Administración'};
+let focused=null;
+function openDrawer(t){
+  const T=DATA.tables[t];focused=t;
+  $('#dDomain').textContent=DLABEL[POS[t][2]];$('#dTitle').textContent=t;
+  $('#dNote').textContent=T.note||'';
+  $('#dCols').innerHTML=T.cols.map(c=>`<div class="col"><span class="k ${c.pk?'pk':c.fk?'fk':''}">${c.pk?'PK':c.fk?'FK':''}</span><span>${c.n}${c.nn?'':' <span class="ty">?</span>'}${c.fk?` <span class="ref">→ ${c.fk}</span>`:''}</span><span class="ty">${c.t}</span>${c.note?`<span class="cn">${c.note}</span>`:''}</div>`).join('');
+  $('#drawer').classList.add('open');
+  for(const k in nodeEls)nodeEls[k].classList.toggle('focus',k===t);
+  edgeEls.forEach(e=>e.classList.toggle('lit',e.dataset.a===t||e.dataset.b===t));
+  gE.classList.add('dim');
+  $('#dClose').focus({preventScroll:true});
+}
+function closeDrawer(){
+  if(!focused)return;focused=null;$('#drawer').classList.remove('open');
+  for(const k in nodeEls)nodeEls[k].classList.remove('focus');
+  edgeEls.forEach(e=>e.classList.remove('lit'));
+  gE.classList.toggle('dim',!STEPS[cur].all);
+}
+
+/* ---------- Controles ---------- */
+const tl=$('#timeline');
+STEPS.forEach((s,j)=>{const b=document.createElement('button');b.className='dot';b.setAttribute('role','tab');b.title=`${j+1}. ${s.title}`;b.setAttribute('aria-label',`Paso ${j+1}: ${s.title}`);b.onclick=()=>go(j);tl.appendChild(b);});
+$('#bNext').onclick=()=>go(cur+1);$('#bPrev').onclick=()=>go(cur-1);
+$('#bReplay').onclick=()=>playStep(cur);
+$('#dClose').onclick=closeDrawer;
+const speeds=[1,1.5,2,.6];
+$('#bSpeed').onclick=e=>{speed=speeds[(speeds.indexOf(speed)+1)%speeds.length];e.currentTarget.textContent=speed+'×';};
+function toggleAuto(){auto=!auto;$('#bAuto').setAttribute('aria-pressed',auto);$('#bAuto').firstChild.textContent=auto?'❚❚ Auto ':'▶ Auto ';if(auto&&cur<STEPS.length-1)autoTimer=setTimeout(()=>go(cur+1),1500);else clearTimeout(autoTimer);}
+$('#bAuto').onclick=toggleAuto;
+function full(){if(!document.fullscreenElement)document.documentElement.requestFullscreen?.();else document.exitFullscreen?.();}
+$('#bFull').onclick=full;
+document.addEventListener('keydown',e=>{
+  if(e.target.closest&&e.target.closest('.tbl')&&(e.key===' '||e.key==='Enter'))return;
+  if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();go(cur+1);}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();go(cur-1);}
+  else if(e.key==='Escape')closeDrawer();
+  else if(e.key==='r'||e.key==='R')playStep(cur);
+  else if(e.key==='f'||e.key==='F')full();
+  else if(e.key==='a'||e.key==='A')toggleAuto();
+  else if(e.key==='Home')go(0);else if(e.key==='End')go(STEPS.length-1);
+});
+// arranque (permite #5 en la URL para abrir un paso)
+const h=parseInt(location.hash.slice(1));go(Number.isFinite(h)&&h>=1&&h<=STEPS.length?h-1:0);
+window.addEventListener('hashchange',()=>{const n=parseInt(location.hash.slice(1));if(n>=1&&n<=STEPS.length)go(n-1);});
+</script>
+</body>
+</html>
