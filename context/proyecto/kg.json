@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.24.0",
+    "version": "1.25.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -180,6 +180,11 @@
         "version": "1.24.0",
         "fecha": "2026-11-22",
         "cambio": "ADR-007 reemplaza a ADR-004; ADR-008 fija la API. T-09, T-05 y T-06 en curso."
+      },
+      {
+        "version": "1.25.0",
+        "fecha": "2026-11-22",
+        "cambio": "Modelo v0.3: defectos 2 a 9 reproducidos y corregidos en la base (T-09)."
       }
     ]
   },
@@ -6123,16 +6128,16 @@
       "id": "MODELO-DATOS",
       "tipo": "Artefacto",
       "nombre": "Modelo de datos de Nukyro",
-      "version": "0.2",
-      "estado": "Aprobado",
+      "version": "0.3",
+      "estado": "Cambios delegados (D-24), sin revisión humana",
       "archivo": "bd/modelo-datos.md",
       "ddl": "bd/schema.sql",
       "seed": "bd/seed-prueba.sql",
       "pruebas": "bd/pruebas/pruebas-reglas.sql",
       "plan": "context/planes/plan-modelo-datos.md",
-      "fecha": "2026-11-01",
-      "resumen": "35 tablas en 5 dominios (contenido y administración 16, identidad 5 con consent_events, simulación 10, estadísticas 3, bitácora 1), esquema nukyro, PostgreSQL 16. Llaves compuestas (version_id, id); referencias internas del contenido DEFERRABLE; triggers de inmutabilidad; roles nukyro_api, nukyro_admin, nukyro_jobs y nukyro_analytics.",
-      "validacion": "DDL ejecutado en PostgreSQL 16.15 (Docker); 52/52 pruebas de reglas pasan. Diagramas Mermaid confirmados por el usuario. Pruebas técnicas S1–S5 (RDS, Cognito, Alembic, concurrencia, errores diferidos) dadas por validadas por el equipo con base en otros proyectos con la misma configuración y créditos.",
+      "fecha": "2026-11-22",
+      "resumen": "36 tablas en 5 dominios (contenido y administración 16, identidad 5 con consent_events, simulación 10, estadísticas 4, bitácora 1), esquema nukyro, PostgreSQL 16. Llaves compuestas (version_id, id); referencias internas del contenido DEFERRABLE; triggers de inmutabilidad; roles nukyro_api, nukyro_admin, nukyro_jobs y nukyro_analytics.",
+      "validacion": "v0.3 ejecutada en PostgreSQL 16 (Docker) como owner sin superusuario: 239 comprobaciones (57 de reglas, 167 de defectos, 15 de concurrencia). S1 y S2 sin probar (S-04).",
       "pendientes": [
         {
           "n": 1,
@@ -6152,7 +6157,7 @@
             "T-10",
             "T-20"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09); la encuesta sigue pendiente (T-16, CONF-21)"
         },
         {
           "n": 3,
@@ -6161,7 +6166,7 @@
           "tareas": [
             "T-09"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09)"
         },
         {
           "n": 4,
@@ -6170,7 +6175,7 @@
           "tareas": [
             "T-09"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09)"
         },
         {
           "n": 5,
@@ -6179,7 +6184,7 @@
           "tareas": [
             "T-09"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09)"
         },
         {
           "n": 6,
@@ -6189,7 +6194,7 @@
             "T-09",
             "T-12"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09)"
         },
         {
           "n": 7,
@@ -6198,7 +6203,7 @@
           "tareas": [
             "T-09"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09)"
         },
         {
           "n": 8,
@@ -6208,7 +6213,7 @@
             "T-09",
             "T-21"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09)"
         },
         {
           "n": 9,
@@ -6218,7 +6223,7 @@
             "T-10",
             "T-18"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09); falta la vinculación (T-18)"
         },
         {
           "n": 10,

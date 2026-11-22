@@ -379,7 +379,7 @@ En una transacción: comprobar las tres confirmaciones y que las versiones sean 
 Consultar una sesión filtra siempre por `participant_id`: lo ajeno y lo inexistente responden igual.
 
 ### P5 · Confirmar decisión (una transacción, ADR-003)
-1. `SELECT ... FROM sessions WHERE id = :s AND participant_id = :p FOR UPDATE`: serializa las peticiones de la misma sesión.
+1. Bloquear al participante y después `SELECT ... FROM sessions WHERE id = :s AND participant_id = :p FOR UPDATE`. El orden es siempre cuenta, participante, sesión: el de las funciones de archivo.
 2. Buscar la decisión de ese nodo. Si existe, es un reintento: se responde con la confirmada, aunque la sesión haya avanzado (RN-14, defecto 1).
 3. Si no existe, validar que el nodo sea el actual y la alternativa suya; insertar la decisión y sus razones.
 4. Aplicar los efectos con sus límites e insertar `session_effects`.

@@ -62,7 +62,7 @@ Al final el usuario hace el recorrido manual y el auditor revisa el total.
 
 ## Defectos por corregir
 
-Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que falle antes del arreglo.
+Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`); el 2 sigue abierto para la encuesta (T-16) y el 9 para la vinculación (T-18). El 1 y del 10 al 13: detectados por lectura, sin reproducir (S-03).
 
 | # | Defecto | Arreglo propuesto | Tareas |
 |---|---|---|---|
