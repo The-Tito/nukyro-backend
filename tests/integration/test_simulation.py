@@ -7,16 +7,19 @@ Contenido propio con los ejemplos de ADR-009. El pre-test se marca desde la prep
 import hashlib
 import json
 import secrets as pysecrets
+import threading
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
+from fastapi import HTTPException
+from sqlalchemy import text
 
 from nukyro.db import make_engine
 from nukyro.modules.simulation import queries, service
 from nukyro.modules.simulation.schemas import AdvanceIn, DecisionIn
 
-from .conftest import WRITE
+from .conftest import ACCEPT, WRITE
 
 SESSION_TABLES = (
     "session_steps",
@@ -243,13 +246,10 @@ def test_defecto1_reintento_tras_avanzar_con_otra_alternativa_devuelve_lo_confir
 def test_cada_invalido_deja_cero_cambios(person, new_client, superuser, content):
     sid = new_session(person, content, superuser)
     late = new_session(person, content, superuser, pretest=False)
-    cases = [
-        (advance(person, late, "intro"), 409),  # pre-test sin completar
-        (decide(person, sid, "D1", "A", ["R1"]), 409),  # aún en intro
-        (advance(person, sid, "NOPE"), 422),
-        (advance(person, sid, "intro"), 200),
-    ]
-    assert [(r.status_code) for r, _ in cases[:3]] == [409, 409, 422]
+    assert advance(person, late, "intro").status_code == 409  # pre-test sin completar
+    assert decide(person, sid, "D1", "A", ["R1"]).status_code == 409  # aún en intro
+    assert advance(person, sid, "NOPE").status_code == 422
+    assert advance(person, sid, "intro").status_code == 200
     base = snapshot(superuser, sid)
     bad = [
         (decide(person, sid, "D2", "C"), 409),  # no es el nodo actual
@@ -515,3 +515,221 @@ def test_rf080_avanzar_renueva_la_actividad_del_participante(person, superuser, 
         "SELECT last_activity_at > now() - interval '1 day' FROM nukyro.participants WHERE id = %s",
         (owner,),
     ).fetchone() == (True,)
+
+
+# --- Criterios por RF de la etapa 3 (nivel integración) ---
+
+
+def values_of(db, sid):
+    return dict(
+        db.execute(
+            "SELECT v.key, sv.value FROM nukyro.session_variables sv JOIN nukyro.state_variables v "
+            "ON v.id=sv.variable_id WHERE sv.session_id=%s",
+            (sid,),
+        ).fetchall()
+    )
+
+
+def test_rf020_rf021_rf022_queda_la_alternativa_con_la_hora_del_servidor(
+    person, superuser, content
+):
+    sid = new_session(person, content, superuser)
+    advance(person, sid, "intro")
+    assert decide(person, sid, "D1", "B", ["R1"]).status_code == 200
+    node, option, fresh = superuser.execute(
+        "SELECT n.key, o.key, d.decided_at > now() - interval '1 minute' "
+        "FROM nukyro.session_decisions d JOIN nukyro.nodes n ON n.id=d.node_id "
+        "JOIN nukyro.options o ON o.id=d.option_id WHERE d.session_id=%s",
+        (sid,),
+    ).fetchone()
+    assert (node, option, fresh) == ("D1", "B", True)
+
+
+def test_rf020_rf021_rf022_alternativa_de_otro_nodo_o_fecha_del_cliente_es_422(
+    person, superuser, content
+):
+    sid = new_session(person, content, superuser)
+    advance(person, sid, "intro")
+    base = snapshot(superuser, sid)
+    assert decide(person, sid, "D1", "C", ["R1"]).status_code == 422  # C es de D2
+    for extra in ({"decided_at": "2020-01-01T00:00:00Z"}, {"id": str(uuid.uuid4())}):
+        body = {"node_key": "D1", "option_key": "A", "reason_keys": ["R1"], **extra}
+        r = person.post(f"/api/v1/sessions/{sid}/decisions", json=body, headers=WRITE)
+        assert r.status_code == 422
+    assert snapshot(superuser, sid) == base
+
+
+def test_rf023_rf025_las_razones_quedan_ligadas_a_la_decision(person, superuser, content):
+    sid = new_session(person, content, superuser)
+    advance(person, sid, "intro")
+    assert decide(person, sid, "D1", "A", ["R1", "R2"]).status_code == 200
+    linked = superuser.execute(
+        "SELECT r.key FROM nukyro.session_decision_reasons dr "
+        "JOIN nukyro.session_decisions d ON d.id=dr.session_decision_id "
+        "JOIN nukyro.justification_reasons r ON r.id=dr.reason_id "
+        "WHERE d.session_id=%s ORDER BY r.key",
+        (sid,),
+    ).fetchall()
+    assert linked == [("R1",), ("R2",)]
+
+
+def test_rf023_rf025_razon_de_otro_nodo_repetida_o_no_pedida_es_422(person, superuser, content):
+    sid = new_session(person, content, superuser)
+    advance(person, sid, "intro")
+    base = snapshot(superuser, sid)
+    assert decide(person, sid, "D1", "A", ["R1", "R1"]).status_code == 422  # repetida
+    assert decide(person, sid, "D1", "A", ["R1", "R9"]).status_code == 422  # inexistente
+    assert snapshot(superuser, sid) == base
+    assert decide(person, sid, "D1", "A", ["R1"]).status_code == 200
+    base = snapshot(superuser, sid)
+    assert decide(person, sid, "D2", "C", ["R1"]).status_code == 422  # R1 es de D1 y D2 no pide
+    assert snapshot(superuser, sid) == base
+
+
+def test_rf026_rf027_cada_sesion_parte_de_los_valores_iniciales(person, superuser, content):
+    first = new_session(person, content, superuser)
+    advance(person, first, "intro")
+    decide(person, first, "D1", "A", ["R1"])
+    second = new_session(person, content, superuser)
+    assert values_of(superuser, second) == {"p": 3, "e": 3}
+    assert values_of(superuser, first) == {"p": 1, "e": 3}
+
+
+def test_rf026_rf027_una_sesion_no_cambia_la_de_otro_participante(
+    person, new_client, superuser, content
+):
+    mine = new_session(person, content, superuser)
+    other = new_client()
+    other.post("/api/v1/participants", json=ACCEPT, headers=WRITE)
+    theirs = new_session(other, content, superuser)
+    before = snapshot(superuser, theirs)
+    advance(person, mine, "intro")
+    decide(person, mine, "D1", "B", ["R1"])
+    assert snapshot(superuser, theirs) == before
+    assert values_of(superuser, theirs) == {"p": 3, "e": 3}
+
+
+def test_rf028_rf029_los_efectos_se_aplican_en_orden_con_limites_tras_registrar(
+    person, superuser, content
+):
+    sid = new_session(person, content, superuser)
+    advance(person, sid, "intro")
+    decide(person, sid, "D1", "A", ["R1"])
+    decide(person, sid, "D2", "D")
+    rows = superuser.execute(
+        "SELECT n.key, e.old_value, e.new_value FROM nukyro.session_effects e "
+        "JOIN nukyro.session_decisions d ON d.id=e.session_decision_id "
+        "JOIN nukyro.nodes n ON n.id=d.node_id WHERE e.session_id=%s ORDER BY d.decided_at",
+        (sid,),
+    ).fetchall()
+    assert rows == [("D1", 3, 1), ("D2", 1, 0)]  # el segundo se recorta de -1 a 0
+    assert values_of(superuser, sid)["p"] == 0
+
+
+def test_rf028_rf029_una_peticion_invalida_deja_las_variables_iguales(person, superuser, content):
+    sid = new_session(person, content, superuser)
+    advance(person, sid, "intro")
+    assert decide(person, sid, "D1", "A", ["R9"]).status_code == 422
+    assert decide(person, sid, "D1", "A").status_code == 422
+    assert values_of(superuser, sid) == {"p": 3, "e": 3}
+    assert superuser.execute(
+        "SELECT count(*) FROM nukyro.session_effects WHERE session_id=%s", (sid,)
+    ).fetchone() == (0,)
+
+
+def test_rf033_rf034_rf065_el_evento_guarda_la_regla_y_las_decisiones_causantes(
+    person, superuser, content
+):
+    sid = new_session(person, content, superuser)
+    advance(person, sid, "intro")
+    decide(person, sid, "D1", "A", ["R1"])
+    decide(person, sid, "D2", "D")
+    rows = superuser.execute(
+        "SELECT r.key, n.key FROM nukyro.session_events ev JOIN nukyro.rules r ON r.id=ev.rule_id "
+        "JOIN nukyro.session_event_causes c ON c.session_event_id=ev.id "
+        "JOIN nukyro.session_decisions d ON d.id=c.session_decision_id "
+        "JOIN nukyro.nodes n ON n.id=d.node_id WHERE ev.session_id=%s ORDER BY 1, 2",
+        (sid,),
+    ).fetchall()
+    assert rows == [("RULE-EV", "D1"), ("RULE-EV", "D2"), ("RULE-MALO", "D1"), ("RULE-MALO", "D2")]
+
+
+def test_rf033_rf034_rf065_no_atribuye_una_rama_falsa_ni_otra_sesion(person, superuser, content):
+    bad = new_session(person, content, superuser)  # A y C: evento y MALO
+    good = new_session(person, content, superuser)  # B y C: sin evento
+    for sid, first in ((bad, "A"), (good, "B")):
+        advance(person, sid, "intro")
+        decide(person, sid, "D1", first, ["R1"])
+        decide(person, sid, "D2", "C")
+    assert snapshot(superuser, good)[4] == 0  # session_events de la sesión sin evento
+    assert superuser.execute(
+        "SELECT count(*) FROM nukyro.session_event_causes c "
+        "JOIN nukyro.session_decisions d ON d.id=c.session_decision_id "
+        "WHERE c.session_id=%s AND d.session_id<>c.session_id",
+        (bad,),
+    ).fetchone() == (0,)
+    # B y D: p=4 y 5; la rama falsa del any (p<=1) no se atribuye, solo D2 (chose D)
+    mixed = new_session(person, content, superuser)
+    advance(person, mixed, "intro")
+    decide(person, mixed, "D1", "B", ["R1"])
+    decide(person, mixed, "D2", "D")
+    causes = superuser.execute(
+        "SELECT DISTINCT n.key FROM nukyro.session_event_causes c "
+        "JOIN nukyro.session_decisions d ON d.id=c.session_decision_id "
+        "JOIN nukyro.nodes n ON n.id=d.node_id WHERE c.session_id=%s",
+        (mixed,),
+    ).fetchall()
+    assert causes == [("D2",)]
+
+
+def test_rf063_secreto_nodo_version_y_alternativa_validos_confirman(person, superuser, content):
+    sid = new_session(person, content, superuser)
+    advance(person, sid, "intro")
+    r = decide(person, sid, "D1", "A", ["R1"])
+    assert r.status_code == 200 and r.json()["replayed"] is False
+    assert superuser.execute(
+        "SELECT scenario_version_id FROM nukyro.session_decisions WHERE session_id=%s", (sid,)
+    ).fetchone() == (content["version"],)
+
+
+# --- Vivacidad: decidir y borrar al mismo participante (orden participante, sesión) ---
+
+
+def test_decidir_y_borrar_al_participante_a_la_vez_no_se_interbloquean(
+    api_engine, superuser, content
+):
+    def erase(participant):
+        with api_engine.begin() as conn:
+            return conn.execute(
+                text("SELECT nukyro.erase_anonymous_participant(:p)"), {"p": participant}
+            ).scalar_one()
+
+    for _ in range(40):
+        secret, sid = direct_session(superuser, content)
+        participant = superuser.execute(
+            "SELECT participant_id FROM nukyro.sessions WHERE id=%s", (sid,)
+        ).fetchone()[0]
+        service.advance(api_engine, secret, sid, AdvanceIn(from_node_key="intro"))
+        barrier = threading.Barrier(2)
+
+        def decide_now(secret=secret, sid=sid, barrier=barrier):
+            barrier.wait()
+            try:
+                body = DecisionIn(node_key="D1", option_key="A", reason_keys=["R1"])
+                return service.decide(api_engine, secret, sid, body)
+            except HTTPException as exc:  # el borrado ganó la carrera: 401 o 404
+                return exc.status_code
+
+        def erase_now(participant=participant, barrier=barrier):
+            barrier.wait()
+            return erase(participant)
+
+        with ThreadPoolExecutor(2) as pool:
+            decided, erased = pool.submit(decide_now), pool.submit(erase_now)
+            # Un interbloqueo aparecería como espera sin fin o como error de la base
+            result, erased_ok = decided.result(timeout=30), erased.result(timeout=30)
+        assert erased_ok is True
+        assert isinstance(result, dict) or result in (401, 404)
+        assert superuser.execute(
+            "SELECT count(*) FROM nukyro.participants WHERE id=%s", (participant,)
+        ).fetchone() == (0,)
