@@ -28,8 +28,24 @@ repos:
         always_run: true  # sin esto se salta cuando no hay nada preparado
         stages: [manual]
 
+  # Misma versión que uv.lock (ruff==0.17.6); solo el código Python del backend
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.17.6
+    hooks:
+      - id: ruff-check
+        files: ^(src|tests|migrations|scripts)/
+      - id: ruff-format
+        files: ^(src|tests|migrations|scripts)/
+
   - repo: local
     hooks:
+      - id: correo-noreply
+        name: el correo de git debe ser el noreply de GitHub
+        # Solo local: en CI no hay identidad de git que revisar (D-10)
+        entry: bash -c 'git config user.email | grep -q "@users\.noreply\.github\.com$" || { echo "user.email debe terminar en @users.noreply.github.com"; exit 1; }'
+        language: system
+        always_run: true
+        pass_filenames: false
       - id: validar-kg
         name: validar grafo de conocimiento
         entry: python3 context/validar_kg.py
