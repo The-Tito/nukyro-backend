@@ -172,3 +172,9 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** auditoría con Opus (3 bloqueos) y verificación final sin bloqueos. Sin revisión humana.
 - **Decisiones:** ninguna.
 - **Evidencia:** EV-04: `./scripts/verify` con sql=269, unit=217, integration=140, blackbox=77.
+
+## 2026-11-22: cierre de la segunda sesión autónoma
+- **Resultado:** E3 y E4 cerradas por delegación (PR #11 a #16). 70 de 87 RF; siguen E5 a E8. Se cerró al 85 % del límite de 5 horas: una tarea de E5 no cabía antes del seguro del 96 %.
+- **Revisión:** validador, vistas y KG al día; sin PR abiertos antes de este. Sin revisión humana del código, las puertas ni los textos.
+- **Decisiones:** esperan al usuario A-04 (release) y A-05 (encuesta). S-02 sigue por verificar.
+- **Evidencia:** EV-03, EV-04, KG v1.36.0.
