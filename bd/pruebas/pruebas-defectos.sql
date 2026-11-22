@@ -767,4 +767,39 @@ SELECT pg_temp.chk('D2-31 tras reescribir, las dos llegadas comparten xmin',
 SELECT pg_temp.chk('D2-32 tras reescribir, el orden físico no es el de llegada',
  $q$SELECT array_agg(option_key ORDER BY ctid) <> array_agg(option_key ORDER BY option_key) FROM decision_facts$q$);
 
+-- ---------------------------------------------------------------------
+-- T-14 · Hitos de la sesión de una sola escritura (RF-005, RF-061)
+-- Cada hito pasa una vez de NULL a un valor; después ni se reescribe ni se borra.
+-- ---------------------------------------------------------------------
+SELECT pg_temp.mk_anon(140);
+SELECT pg_temp.mk_session(240, 140);
+SELECT pg_temp.allow('H-01 el pre-test pasa de NULL a una fecha',
+ $q$UPDATE sessions SET pretest_completed_at = now() WHERE id = pg_temp.id('cc', 240)$q$);
+SELECT pg_temp.expect('H-02 el pre-test no se reescribe',
+ $q$UPDATE sessions SET pretest_completed_at = now() + interval '1 minute' WHERE id = pg_temp.id('cc', 240)$q$, '23514');
+SELECT pg_temp.expect('H-03 el pre-test no se borra',
+ $q$UPDATE sessions SET pretest_completed_at = NULL WHERE id = pg_temp.id('cc', 240)$q$, '23514');
+SELECT pg_temp.allow('H-04 el desenlace y su nodo se escriben juntos una vez',
+ $q$UPDATE sessions SET outcome_reached_at = now(), outcome_node_id = '00000000-0000-0000-0000-000000000044' WHERE id = pg_temp.id('cc', 240)$q$);
+SELECT pg_temp.expect('H-05 el nodo del desenlace no cambia',
+ $q$UPDATE sessions SET outcome_node_id = '00000000-0000-0000-0000-000000000045' WHERE id = pg_temp.id('cc', 240)$q$, '23514');
+SELECT pg_temp.expect('H-06 la fecha del desenlace no cambia',
+ $q$UPDATE sessions SET outcome_reached_at = outcome_reached_at + interval '1 minute' WHERE id = pg_temp.id('cc', 240)$q$, '23514');
+SELECT pg_temp.expect('H-07 el desenlace no se borra',
+ $q$UPDATE sessions SET outcome_reached_at = NULL, outcome_node_id = NULL WHERE id = pg_temp.id('cc', 240)$q$, '23514');
+SELECT pg_temp.allow('H-08 completed_at pasa de NULL a una fecha',
+ $q$UPDATE sessions SET completed_at = now() WHERE id = pg_temp.id('cc', 240)$q$);
+SELECT pg_temp.expect('H-09 completed_at no se reescribe',
+ $q$UPDATE sessions SET completed_at = completed_at + interval '1 minute' WHERE id = pg_temp.id('cc', 240)$q$, '23514');
+SELECT pg_temp.expect('H-10 completed_at no se borra',
+ $q$UPDATE sessions SET completed_at = NULL WHERE id = pg_temp.id('cc', 240)$q$, '23514');
+SELECT pg_temp.allow('H-11 repetir el mismo valor no es una reescritura',
+ $q$UPDATE sessions SET pretest_completed_at = pretest_completed_at, completed_at = completed_at WHERE id = pg_temp.id('cc', 240)$q$);
+SELECT pg_temp.allow('H-12 las demás columnas se siguen actualizando (actividad, archivo)',
+ $q$UPDATE sessions SET last_activity_at = now(), survey_answered = true, facts_written_at = now() WHERE id = pg_temp.id('cc', 240)$q$);
+SELECT pg_temp.allow('H-13 borrar al participante borra la sesión con sus hitos (cascada)',
+ $q$DELETE FROM participants WHERE id = pg_temp.id('bb', 140)$q$);
+SELECT pg_temp.chk('H-14 la sesión borrada ya no existe',
+ $q$SELECT NOT EXISTS (SELECT 1 FROM sessions WHERE id = pg_temp.id('cc', 240))$q$);
+
 SELECT pg_temp.finish();

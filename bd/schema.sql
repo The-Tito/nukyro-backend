@@ -523,6 +523,26 @@ END $$;
 CREATE TRIGGER trg_session_prior
     BEFORE INSERT ON sessions FOR EACH ROW EXECUTE FUNCTION compute_session_prior();
 
+-- Hitos de una sola escritura (RF-005, RF-061): pretest_completed_at, outcome_reached_at,
+-- outcome_node_id y completed_at pasan una vez de NULL a un valor; después no se reescriben
+-- ni se borran. Solo dispara con UPDATE de esas columnas: el archivo (facts_written_at) y las
+-- cascadas de borrado no lo tocan. Repetir el mismo valor no es una reescritura.
+CREATE FUNCTION guard_session_milestones() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF (OLD.pretest_completed_at IS NOT NULL AND NEW.pretest_completed_at IS DISTINCT FROM OLD.pretest_completed_at)
+       OR (OLD.outcome_reached_at IS NOT NULL AND NEW.outcome_reached_at IS DISTINCT FROM OLD.outcome_reached_at)
+       OR (OLD.outcome_node_id IS NOT NULL AND NEW.outcome_node_id IS DISTINCT FROM OLD.outcome_node_id)
+       OR (OLD.completed_at IS NOT NULL AND NEW.completed_at IS DISTINCT FROM OLD.completed_at) THEN
+        RAISE EXCEPTION 'Un hito de la sesión % no se reescribe ni se borra (RF-005)', OLD.id
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$;
+CREATE TRIGGER trg_guard_session_milestones
+    BEFORE UPDATE OF pretest_completed_at, outcome_reached_at, outcome_node_id, completed_at
+    ON sessions FOR EACH ROW EXECUTE FUNCTION guard_session_milestones();
+
 CREATE TABLE session_steps (
     id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     session_id           uuid NOT NULL,
