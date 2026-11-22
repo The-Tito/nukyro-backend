@@ -7,7 +7,7 @@ import sys
 
 from nukyro.config import load_admin_settings
 from nukyro.db import make_engine
-from nukyro.modules.publishing.importer import seed_demo
+from nukyro.modules.publishing.importer import SeedFailed, seed_demo
 from nukyro.modules.publishing.service import InvalidScenario
 
 DEFAULT_SCENARIO = "/app/demo/scenario-becas.json"
@@ -26,8 +26,12 @@ def main(argv: list[str] | None = None) -> int:
     try:
         created = seed_demo(engine, spec)
     except InvalidScenario as error:
-        print(f"El escenario no pasa la validación: {[(i.code, i.key) for i in error.issues]}")
+        issues = [(i.code, i.key) for i in error.issues]
+        print(f"El escenario no pasa la validación: {issues}", file=sys.stderr)
         return 1
+    except SeedFailed as error:
+        print(f"La siembra no se completó: {error}", file=sys.stderr)
+        return 2
     finally:
         engine.dispose()
     print(f"{spec['key']}: {'sembrado y publicado' if created else 'ya existía, no se toca'}")

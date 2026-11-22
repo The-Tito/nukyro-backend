@@ -10,7 +10,8 @@ import pytest
 from nukyro.db import make_engine
 from nukyro.engine.validation import validate
 from nukyro.modules.publishing import queries
-from nukyro.modules.publishing.importer import SEED_SUB, seed_demo
+from nukyro.modules.publishing.importer import SEED_SUB, SeedFailed, seed_demo
+from nukyro.modules.publishing.service import InvalidScenario
 
 SPEC = json.loads((Path(__file__).parents[2] / "demo" / "scenario-becas.json").read_text("utf-8"))
 TABLES = ("scenarios", "scenario_versions", "nodes", "options", "rules", "questions", "admin_users")
@@ -114,3 +115,53 @@ def test_sembrar_no_toca_lo_que_dejo_un_administrador(superuser, admin_engine, s
     assert superuser.execute(
         "SELECT id, status FROM nukyro.scenario_versions WHERE scenario_id=%s", (scenario,)
     ).fetchall() == [(version, state)]
+
+
+def drafts_of(db, key):
+    return db.execute(
+        "SELECT v.id, v.status, v.created_by FROM nukyro.scenarios s JOIN nukyro.scenario_versions v "
+        "ON v.scenario_id = s.id WHERE s.key = %s ORDER BY v.version_number",
+        (key,),
+    ).fetchall()
+
+
+def test_una_siembra_fallida_no_se_da_por_buena_en_silencio(superuser, admin_engine):
+    """Publicar falla (sin pre-test, D-28) y deja el borrador de la siembra; el siguiente arranque
+    no responde «ya existía»: termina con error claro, sin borrar ni publicar nada."""
+    key = f"T13-{uuid.uuid4().hex[:8]}"
+    broken = {**SPEC, "key": key, "question_sets": {
+        k: v for k, v in SPEC["question_sets"].items() if k != "pretest"
+    }}  # fmt: skip
+    with pytest.raises(InvalidScenario):
+        seed_demo(admin_engine, broken)
+    ((version, status, created_by),) = drafts_of(superuser, key)
+    assert status == "draft" and seed_admin(superuser) == [(created_by, False)]
+    before = counts(superuser)
+    for spec in (broken, {**SPEC, "key": key}):  # tampoco con el contenido ya corregido
+        with pytest.raises(SeedFailed) as error:
+            seed_demo(admin_engine, spec)
+        assert key in str(error.value)
+    assert drafts_of(superuser, key) == [
+        (version, "draft", created_by)
+    ]  # nada se borra ni se publica
+    assert counts(superuser) == before and seed_admin(superuser) == [(created_by, False)]
+
+
+def test_un_borrador_de_otro_administrador_no_es_una_siembra_fallida(superuser, admin_engine):
+    key = f"T13-{uuid.uuid4().hex[:8]}"
+    other = superuser.execute(
+        "INSERT INTO nukyro.admin_users (cognito_sub, email, display_name, is_active) "
+        "VALUES (%s, %s, 'Administrador de prueba', true) RETURNING id",
+        (f"sub-{key}", f"{key.lower()}@example.test"),
+    ).fetchone()[0]
+    scenario = superuser.execute(
+        "INSERT INTO nukyro.scenarios (key, title) VALUES (%s, %s) RETURNING id", (key, key)
+    ).fetchone()[0]
+    superuser.execute(
+        "INSERT INTO nukyro.scenario_versions (scenario_id, version_number, title, created_by) "
+        "VALUES (%s, 1, 'Trabajo de un administrador', %s)",
+        (scenario, other),
+    )
+    before = drafts_of(superuser, key)
+    assert seed_demo(admin_engine, {**SPEC, "key": key}) is False  # se respeta, sin error
+    assert drafts_of(superuser, key) == before

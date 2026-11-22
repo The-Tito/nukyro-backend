@@ -13,6 +13,12 @@ from sqlalchemy import Connection, Engine, text
 from nukyro.modules.publishing.service import publish
 
 SEED_SUB = "seed-demo"  # administrador técnico de la siembra (sin datos personales)
+
+
+class SeedFailed(Exception):
+    """Una siembra anterior falló y dejó su borrador: no se da por hecha ni se rehace sola."""
+
+
 JSON_COLUMNS = {"effects", "condition"}
 
 
@@ -243,16 +249,24 @@ def seed_demo(engine: Engine, spec: dict) -> bool:
     """Siembra y publica el escenario si no existe. Nunca toca uno existente.
 
     Corre en cada arranque de Compose: un borrador o un retiro de un administrador se respeta.
+    Si el escenario solo tiene borradores de la propia siembra, es que una siembra anterior falló
+    al publicar: se avisa con `SeedFailed` y no se borra ni se revierte nada.
     """
     with engine.connect() as conn:
-        done = conn.execute(
+        versions = conn.execute(
             text(
-                "SELECT EXISTS (SELECT 1 FROM nukyro.scenarios s JOIN nukyro.scenario_versions v "
-                "ON v.scenario_id = s.id WHERE s.key = :k)"
+                "SELECT v.status, coalesce(a.cognito_sub = :sub, false) AS own "
+                "FROM nukyro.scenarios s JOIN nukyro.scenario_versions v ON v.scenario_id = s.id "
+                "LEFT JOIN nukyro.admin_users a ON a.id = v.created_by WHERE s.key = :k"
             ),
-            {"k": spec["key"]},
-        ).scalar_one()
-    if done:
+            {"k": spec["key"], "sub": SEED_SUB},
+        ).all()
+    if versions:
+        if all(status == "draft" and own for status, own in versions):
+            raise SeedFailed(
+                f"{spec['key']}: una siembra anterior falló y dejó su borrador sin publicar. "
+                "No se borra ni se publica solo: revísalo o retíralo desde el panel de administración."  # noqa: E501
+            )
         return False
     admin = _set_admin_active(engine, True)
     try:
