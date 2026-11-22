@@ -142,3 +142,9 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** tres auditorías de la fase. Sin revisión humana.
 - **Decisiones:** A-04 abierta.
 - **Evidencia:** EV-03: `./scripts/verify` con sql=242, unit=188, integration=108, blackbox=61.
+
+## 2026-11-22: E4 planeada
+- **Resultado:** Puerta A delegada y criterios en `context/etapas/etapa-4.md`.
+- **Revisión:** `./scripts/verify` en verde sobre develop (b44b08b). Sin revisión humana.
+- **Decisiones:** A-05 abierta, sin bloquear RF-060.
+- **Evidencia:** plan de la fase.

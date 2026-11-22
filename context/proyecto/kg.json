@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.33.0",
+    "version": "1.34.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -225,6 +225,11 @@
         "version": "1.33.0",
         "fecha": "2026-11-22",
         "cambio": "E3 cerrada por delegación (D-32) con EV-03: 39 de 87 RF. A-04 abre el release a main."
+      },
+      {
+        "version": "1.34.0",
+        "fecha": "2026-11-22",
+        "cambio": "Puerta A de E4 delegada (D-32). A-05 abierta: preguntas de opción de la encuesta."
       }
     ]
   },
@@ -375,8 +380,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 494,
-    "aristas": 833,
+    "nodos": 495,
+    "aristas": 835,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 17,
@@ -396,7 +401,7 @@
       "ConjuntoPrincipios": 1,
       "Contacto": 1,
       "Cookie": 2,
-      "Decision": 51,
+      "Decision": 52,
       "Degradado": 2,
       "Descargo": 4,
       "DisenoEvaluacion": 1,
@@ -7252,10 +7257,16 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "en_curso",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
-      "buscar": "| E4 |"
+      "buscar": "| E4 |",
+      "puerta_a": {
+        "estado": "delegada",
+        "fecha": "2026-11-22",
+        "decision": "D-32",
+        "plan": "context/etapas/etapa-4.md"
+      }
     },
     {
       "id": "E5",
@@ -7488,7 +7499,7 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "en_curso",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-14 ·"
@@ -8132,6 +8143,22 @@
         {
           "doc": "D-26",
           "seccion": "consecuencia no prevista al aprobar el release"
+        }
+      ]
+    },
+    {
+      "id": "A-05",
+      "tipo": "Decision",
+      "nombre": "Preguntas de opción de la encuesta",
+      "texto": "EVAL-DISENO cambia las preguntas abiertas (decisiones difíciles, consecuencias poco claras) por opciones predefinidas, pero el modelo aprobado solo guarda seis escalas. Recomendación: dejar las seis escalas; agregar preguntas es recabar datos nuevos.",
+      "estado": "abierta",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| A-05 |",
+      "fuente": [
+        {
+          "doc": "EVAL-DISENO",
+          "seccion": "encuesta frente a survey_responses"
         }
       ]
     }
@@ -12320,6 +12347,16 @@
       "origen": "A-04",
       "relacion": "depende_de",
       "destino": "D-26"
+    },
+    {
+      "origen": "A-05",
+      "relacion": "afecta",
+      "destino": "RF-060"
+    },
+    {
+      "origen": "A-05",
+      "relacion": "afecta",
+      "destino": "EVAL-DISENO"
     }
   ],
   "conflictos": [

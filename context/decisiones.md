@@ -54,6 +54,7 @@ Al resolverse, la fila queda `cerrada` y se crea un D-xx que la cierra.
 | A-02 | **Privacidad antes del primer push.** El remoto es público y contradice D-05; además, el correo real de los commits quedaría visible. Falta decidir visibilidad y correo. | adopción | | cerrada |
 | A-03 | **Datos personales en repositorio público.** D-05 solo admite datos personales en un remoto privado y D-08 lo mantiene público: falta decidir qué se versiona. Hasta entonces esos archivos no entran a un commit. Recomendación: seudonimizar el KG y los ADR, y dejar fuera de git docs/ y la guía .docx. | E0 | D-08 | cerrada |
 | A-04 | **Release a main con el commit expuesto.** El release aprobado (D-27) llevaría e8dbae5, con datos personales (D-26), a main, que hoy no los tiene. Falta que el usuario elija: fusionar con esa consecuencia, publicar en main solo el árbol sin ese historial, o no hacer release. | E3 | D-26, D-27 | abierta |
+| A-05 | **Preguntas de opción de la encuesta.** EVAL-DISENO cambia las preguntas abiertas (decisiones difíciles, consecuencias poco claras) por opciones predefinidas, pero el modelo aprobado solo guarda seis escalas. Recomendación: dejar las seis escalas; agregar preguntas es recabar datos nuevos. | E4 | CONF-03 | abierta |
 
 ## Heredadas
 

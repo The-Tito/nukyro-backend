@@ -19,7 +19,7 @@ E1 va aparte y no bloquea el backend local. Cada RF tiene una sola fase principa
 | E1 | Cierre documental | Documentos coherentes con el KG | | | pendiente |
 | E2 | Base ejecutable y entrada | Esquema corregido y primer recorrido HTTPS hasta la base | 001-004, 062, 068, 071, 073 | E0 | cerrada |
 | E3 | Motor de simulación | Consecuencias deterministas decididas por el servidor | 006, 013-038, 063-066 | E2 | cerrada |
-| E4 | Experiencia educativa | Recorrido completo, del pre-test al resumen | 005, 007-012, 039-061, 067 | E3 | pendiente |
+| E4 | Experiencia educativa | Recorrido completo, del pre-test al resumen | 005, 007-012, 039-061, 067 | E3 | en_curso |
 | E5 | Identidad y aislamiento | Con o sin cuenta, cada persona accede solo a lo suyo | 074-077 | E4 | pendiente |
 | E6 | Ciclo de datos y estadísticas | Borrar sin perder agregados ni reidentificar | 070, 072, 078-080 | E5 | pendiente |
 | E7 | Administración y ARCO | API del panel para operar sin SQL manual | 069, 081-087 | E6 | pendiente |
@@ -226,7 +226,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-14 · Evaluaciones
 - Etapa: E4
-- Estado: pendiente
+- Estado: en_curso
 - Entregable: pre-test, post-test, transferencia y causal
 - Criterios de cierre:
   - las puntuaciones coinciden con las calculadas a mano
