@@ -17,7 +17,7 @@ E1 va aparte y no bloquea el backend local. Cada RF tiene una sola fase principa
 |---|---|---|---|---|---|
 | E0 | Adopción de la metodología | Método instalado, validado y confirmado | | | cerrada |
 | E1 | Cierre documental | Documentos coherentes con el KG | | | pendiente |
-| E2 | Base ejecutable y entrada | Esquema corregido y primer recorrido HTTPS hasta la base | 001-004, 062, 068, 071, 073 | E0 | pendiente |
+| E2 | Base ejecutable y entrada | Esquema corregido y primer recorrido HTTPS hasta la base | 001-004, 062, 068, 071, 073 | E0 | en_curso |
 | E3 | Motor de simulación | Consecuencias deterministas decididas por el servidor | 006, 013-038, 063-066 | E2 | pendiente |
 | E4 | Experiencia educativa | Recorrido completo, del pre-test al resumen | 005, 007-012, 039-061, 067 | E3 | pendiente |
 | E5 | Identidad y aislamiento | Con o sin cuenta, cada persona accede solo a lo suyo | 074-077 | E4 | pendiente |
