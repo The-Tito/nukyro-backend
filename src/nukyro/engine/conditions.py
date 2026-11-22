@@ -32,7 +32,11 @@ def validate(cond: Any, depth: int = 1) -> None:
     if "var" in cond:
         ok = set(cond) == {"var", "op", "value"}
         if not (
-            ok and isinstance(cond["var"], str) and cond["op"] in _OPS and is_int(cond["value"])
+            ok
+            and isinstance(cond["var"], str)
+            and isinstance(cond["op"], str)
+            and cond["op"] in _OPS
+            and is_int(cond["value"])
         ):
             raise _invalid()
         return

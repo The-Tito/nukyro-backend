@@ -123,3 +123,10 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** auditor con Sonnet sin bloqueos; se agregó la carrera con alternativas distintas y se precisó ADR-009.
 - **Decisiones:** D-32.
 - **Evidencia:** `./scripts/verify`; 1 000 pares concurrentes con 0 duplicados (S4) y un fallo inyectado en cada escritura sin cambios.
+
+## 2026-11-22: T-12, validación y publicación
+- **Resultado:** validador de RF-066 (23 códigos) y P12, con pre-test obligatorio.
+- **Revisión:** la dirección corrigió de rojo a verde que el validador rechazaba eventos en la ruta y no revisaba sus salidas. Auditor con Sonnet sin bloqueos.
+- **Decisiones:** D-28 aplicada.
+- **Evidencia:** `./scripts/verify`; dos sabotajes del bloqueo hicieron fallar la carrera editar contra publicar.
+- **Escáner:** un correo ficticio en `example.invalid` detuvo el push de T-12. Se cambió a `example.test` y la rama se rehízo desde develop sin tocar el escáner; la anterior nunca se subió.
