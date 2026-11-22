@@ -157,23 +157,23 @@
       ],
       "reasons": [
         {
-          "key": "r1_bb73",
-          "label": "Con más datos no hace falta revisar nada después.",
-          "correct": false
-        },
-        {
-          "key": "r1_b84c",
-          "label": "Cada dato pedido necesita un fin claro y limitado.",
+          "key": "r1_b591",
+          "label": "Guardar menos datos reduce el daño de una filtración.",
           "correct": true
         },
         {
-          "key": "r1_85eb",
+          "key": "r1_9fd3",
           "label": "Quien quiere una beca aceptará entregar cualquier dato, así que no hace falta limitar lo que se pide.",
           "correct": false
         },
         {
-          "key": "r1_81cb",
-          "label": "Tener menos datos reduce el daño si algo se filtra.",
+          "key": "r1_948b",
+          "label": "Mientras más datos se tengan, menos hay que revisar después.",
+          "correct": false
+        },
+        {
+          "key": "r1_d6f7",
+          "label": "Todo dato pedido requiere un fin claro.",
           "correct": true
         }
       ]
@@ -450,28 +450,28 @@
       ],
       "reasons": [
         {
-          "key": "r5_6499",
-          "label": "Un puntaje automático nunca se equivoca.",
+          "key": "r5_024f",
+          "label": "Explicar los criterios retrasa el proceso, así que no conviene.",
           "correct": false
         },
         {
-          "key": "r5_db24",
+          "key": "r5_7131",
           "label": "Un puntaje puede equivocarse y alguien debe poder revisarlo.",
           "correct": true
         },
         {
-          "key": "r5_203d",
-          "label": "Explicar los criterios hace más lento el proceso, así que no vale la pena.",
+          "key": "r5_45a0",
+          "label": "El puntaje automático acierta siempre.",
           "correct": false
         },
         {
-          "key": "r5_763d",
-          "label": "Las personas deben poder conocer los criterios que se aplican.",
+          "key": "r5_3139",
+          "label": "Quien solicita debe poder conocer los criterios que se aplican.",
           "correct": true
         },
         {
-          "key": "r5_a786",
-          "label": "Una decisión que afecta una beca merece una explicación.",
+          "key": "r5_cc31",
+          "label": "Si una decisión afecta una beca, merece explicarse.",
           "correct": true
         }
       ]
@@ -608,23 +608,23 @@
       ],
       "reasons": [
         {
-          "key": "r7_0ad4",
-          "label": "Quien usa la plataforma necesita saber de un riesgo que le puede afectar.",
-          "correct": true
-        },
-        {
-          "key": "r7_536e",
-          "label": "El plazo de entrega es más importante que cualquier riesgo.",
+          "key": "r7_7967",
+          "label": "Si nadie lo ha notado, no es necesario mencionarlo.",
           "correct": false
         },
         {
-          "key": "r7_99e5",
+          "key": "r7_fc68",
           "label": "Corregir antes de entregar cuesta menos que reparar un daño después.",
           "correct": true
         },
         {
-          "key": "r7_dfda",
-          "label": "Si nadie lo ha notado, no es necesario mencionarlo.",
+          "key": "r7_06fc",
+          "label": "Quien usa la plataforma necesita saber de un riesgo que le puede afectar.",
+          "correct": true
+        },
+        {
+          "key": "r7_8fb6",
+          "label": "El plazo de entrega es más importante que cualquier riesgo.",
           "correct": false
         }
       ],
@@ -688,24 +688,24 @@
       ],
       "reasons": [
         {
-          "key": "r8_1d5f",
+          "key": "r8_26f4",
+          "label": "Un aviso pronto ayuda a las personas a protegerse.",
+          "correct": true
+        },
+        {
+          "key": "r8_259c",
           "label": "Si el problema ya pasó, no hace falta revisar nada más.",
           "correct": false
         },
         {
-          "key": "r8_03af",
-          "label": "Avisar puede causar preocupación, así que conviene esperar.",
+          "key": "r8_82aa",
+          "label": "Dejar por escrito lo ocurrido ayuda a evitar que se repita.",
+          "correct": true
+        },
+        {
+          "key": "r8_f273",
+          "label": "Avisar preocupa a la gente, así que conviene esperar.",
           "correct": false
-        },
-        {
-          "key": "r8_538a",
-          "label": "Avisar pronto permite a las personas protegerse.",
-          "correct": true
-        },
-        {
-          "key": "r8_7c0e",
-          "label": "Documentar lo ocurrido ayuda a evitar que se repita.",
-          "correct": true
         }
       ],
       "h05": true
@@ -990,17 +990,17 @@
         "options": [
           {
             "key": "a",
-            "label": "Pedir todo y quitar lo que no se use cuando alguien lo reclame.",
+            "label": "Guardar todo, pero dejarlo visible solo para el personal.",
             "correct": false
           },
           {
             "key": "b",
-            "label": "Pedir todo, pero mostrarlo solo al personal.",
+            "label": "Pedir todo y quitar lo que no se use cuando alguien lo reclame.",
             "correct": false
           },
           {
             "key": "c",
-            "label": "Pedir solo el nombre de usuario y explicar para qué se usa.",
+            "label": "Limitarse al nombre de usuario y explicar para qué se usa.",
             "correct": true
           }
         ]
@@ -1013,7 +1013,7 @@
         "prompt": "Un equipo envía por mensajería común las copias de documentos de sus usuarios. ¿Qué medida reduce más el riesgo?",
         "options": [
           {
-            "key": "a",
+            "key": "c",
             "label": "Pedir que borren el mensaje después de verlo.",
             "correct": false
           },
@@ -1023,7 +1023,7 @@
             "correct": false
           },
           {
-            "key": "c",
+            "key": "a",
             "label": "Usar un canal cifrado y limitar bien quién puede recibirlo.",
             "correct": true
           }
@@ -1038,7 +1038,7 @@
         "options": [
           {
             "key": "a",
-            "label": "Pedir a las personas que cambien de teléfono.",
+            "label": "Dejarlo igual, pues la mayoría ya tiene un teléfono nuevo.",
             "correct": false
           },
           {
@@ -1048,7 +1048,7 @@
           },
           {
             "key": "c",
-            "label": "Mantenerlo así, porque la mayoría ya tiene teléfono nuevo.",
+            "label": "Sugerir a las personas que compren un teléfono nuevo.",
             "correct": false
           }
         ]
@@ -1062,17 +1062,17 @@
         "options": [
           {
             "key": "a",
-            "label": "Elijo otra biblioteca con una licencia compatible con la mía.",
+            "label": "Busco otra biblioteca cuya licencia sea compatible con la mía.",
             "correct": true
-          },
-          {
-            "key": "b",
-            "label": "La uso igual, porque es difícil que alguien lo revise.",
-            "correct": false
           },
           {
             "key": "c",
             "label": "La uso y cambio el nombre de las funciones.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Aun así la uso, porque es difícil que alguien lo revise.",
             "correct": false
           }
         ]
@@ -1085,13 +1085,13 @@
         "prompt": "Un programa de apoyos descarta solicitudes con una regla automática. ¿Qué mejora la equidad del proceso?",
         "options": [
           {
-            "key": "a",
+            "key": "b",
             "label": "Explicar la regla y permitir revisión humana.",
             "correct": true
           },
           {
-            "key": "b",
-            "label": "Aplicar la regla sin explicarla, para evitar discusiones.",
+            "key": "a",
+            "label": "Aplicarla sin explicarla, para evitar discusiones.",
             "correct": false
           },
           {
@@ -1109,18 +1109,18 @@
         "prompt": "Una semana antes de entregar, notas que un reporte muestra datos de otras personas. ¿Qué haces?",
         "options": [
           {
-            "key": "a",
-            "label": "Lo arreglo yo solo después de entregar, sin avisar a nadie.",
+            "key": "b",
+            "label": "Lo corrijo yo después de entregar, sin avisar a nadie.",
             "correct": false
           },
           {
-            "key": "b",
+            "key": "a",
             "label": "Aviso al equipo y propongo corregirlo antes de entregar.",
             "correct": true
           },
           {
             "key": "c",
-            "label": "Entrego igual y lo menciono si alguien pregunta.",
+            "label": "Entrego así y lo menciono solo si alguien pregunta.",
             "correct": false
           }
         ]
@@ -1134,18 +1134,18 @@
         "prompt": "Una tienda en línea ficticia quiere seguir guardando los datos de las personas que cerraron su cuenta, por si algún día vuelven. ¿Qué conviene hacer?",
         "options": [
           {
-            "key": "a",
-            "label": "Guardarlos sin límite de tiempo, porque el almacenamiento es barato.",
+            "key": "c",
+            "label": "Guardarlos y no mencionarlo en el aviso de privacidad, para no preocupar a nadie.",
             "correct": false
           },
           {
-            "key": "b",
-            "label": "Borrar o anonimizar lo que no necesita y fijar un plazo para el resto.",
+            "key": "a",
+            "label": "Eliminar o anonimizar lo innecesario y fijar un plazo para lo demás.",
             "correct": true
           },
           {
-            "key": "c",
-            "label": "Guardarlos y no mencionarlo en el aviso de privacidad, para no preocupar a nadie.",
+            "key": "b",
+            "label": "Conservarlos sin límite de tiempo, pues almacenar sale barato.",
             "correct": false
           }
         ]
@@ -1158,8 +1158,8 @@
         "options": [
           {
             "key": "a",
-            "label": "Dejarla igual, porque la mayoría no usa lector de pantalla.",
-            "correct": false
+            "label": "Hacer la aplicación accesible para lectores de pantalla.",
+            "correct": true
           },
           {
             "key": "b",
@@ -1168,8 +1168,8 @@
           },
           {
             "key": "c",
-            "label": "Hacer la aplicación accesible para lectores de pantalla.",
-            "correct": true
+            "label": "Mantenerla igual, pues casi nadie usa lector de pantalla.",
+            "correct": false
           }
         ]
       },
@@ -1180,18 +1180,18 @@
         "prompt": "Un equipo ficticio entrega un sistema de inventario y notas que puede borrar registros si dos personas editan a la vez. El cliente pide entregar hoy. ¿Qué haces?",
         "options": [
           {
-            "key": "a",
-            "label": "Entrego hoy, y si alguien reporta pérdida de registros, lo corrijo después.",
-            "correct": false
-          },
-          {
             "key": "b",
-            "label": "Aviso del riesgo al equipo y al cliente, y propongo corregirlo antes.",
+            "label": "Aviso del riesgo al equipo y al cliente, y propongo corregirlo antes de entregar.",
             "correct": true
           },
           {
-            "key": "c",
+            "key": "a",
             "label": "Lo arreglo yo después de entregar, sin decir nada a nadie.",
+            "correct": false
+          },
+          {
+            "key": "c",
+            "label": "Entrego hoy y, si alguien reporta pérdida de registros, lo corrijo luego.",
             "correct": false
           }
         ]
@@ -1203,19 +1203,19 @@
         "prompt": "Una agencia ficticia quiere usar en un anuncio una fotografía que encontró en un buscador de imágenes, sin autoría ni licencia visibles. ¿Qué conviene hacer?",
         "options": [
           {
-            "key": "a",
-            "label": "Buscar la autoría y la licencia, o elegir una con licencia clara.",
-            "correct": true
-          },
-          {
-            "key": "b",
+            "key": "c",
             "label": "Usarla, porque aparece en un buscador de imágenes público.",
             "correct": false
           },
           {
-            "key": "c",
-            "label": "Usarla y poner una marca de agua con el nombre de la agencia.",
+            "key": "a",
+            "label": "Ponerle una marca de agua con el nombre de la agencia y usarla.",
             "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Averiguar la autoría y la licencia, o elegir una con licencia clara.",
+            "correct": true
           }
         ]
       },
@@ -1226,19 +1226,19 @@
         "prompt": "Un hospital ficticio usa un sistema que ordena los turnos de cirugía y nadie sabe cómo se calcula el orden. ¿Qué mejora la equidad del proceso?",
         "options": [
           {
-            "key": "a",
+            "key": "b",
             "label": "Mantener los criterios en reserva y confiar en el sistema.",
             "correct": false
           },
           {
-            "key": "b",
-            "label": "Publicar los criterios en un anexo técnico, sin vía de revisión.",
-            "correct": false
+            "key": "c",
+            "label": "Explicar los criterios y ofrecer una revisión por una persona.",
+            "correct": true
           },
           {
-            "key": "c",
-            "label": "Explicar los criterios y ofrecer una revisión.",
-            "correct": true
+            "key": "a",
+            "label": "Poner los criterios en un anexo técnico, sin vía de revisión.",
+            "correct": false
           }
         ]
       }
@@ -1252,18 +1252,18 @@
         "prompt": "En tu partida apareció el aviso sobre el acceso de las personas solicitantes. ¿Qué relación del escenario lo explica?",
         "options": [
           {
-            "key": "a",
-            "label": "Apareció al azar, sin depender de ninguna medida del escenario.",
+            "key": "b",
+            "label": "El acceso ya estaba bajo antes de la primera decisión y eso activó el aviso.",
             "correct": false
           },
           {
-            "key": "b",
-            "label": "Lo activó solo la decisión de pruebas, sin relación con las anteriores.",
+            "key": "a",
+            "label": "El acceso subió a un nivel alto al salir de las pruebas y eso activó el aviso.",
             "correct": false
           },
           {
             "key": "c",
-            "label": "El acceso quedó bajo al salir de las pruebas y eso activó el aviso.",
+            "label": "Tras las pruebas el acceso quedó en un nivel bajo, y eso activó el aviso.",
             "correct": true
           }
         ]
@@ -1276,18 +1276,18 @@
         "prompt": "En tu partida apareció el aviso sobre la protección de datos. ¿Qué relación del escenario lo explica?",
         "options": [
           {
-            "key": "a",
-            "label": "La protección de datos quedó baja tras la entrega y activó el aviso.",
-            "correct": true
-          },
-          {
             "key": "b",
-            "label": "Apareció al azar al cerrar la entrega, sin depender de ninguna medida.",
+            "label": "La protección de datos subió a un nivel alto tras la entrega y activó el aviso.",
             "correct": false
           },
           {
+            "key": "a",
+            "label": "Tras la entrega la protección de datos quedó en un nivel bajo, y eso activó el aviso.",
+            "correct": true
+          },
+          {
             "key": "c",
-            "label": "Lo activó solo la decisión de entrega, sin relación con las decisiones anteriores.",
+            "label": "La protección de datos empezó la partida en un nivel bajo y eso activó el aviso.",
             "correct": false
           }
         ]
@@ -1300,18 +1300,18 @@
         "prompt": "Tu partida terminó en el desenlace de plataforma sólida. ¿Qué relación del escenario lo explica?",
         "options": [
           {
-            "key": "a",
-            "label": "Se asignó al azar al final, sin depender de las medidas del escenario.",
-            "correct": false
-          },
-          {
-            "key": "b",
+            "key": "c",
             "label": "Al terminar, datos, acceso y calidad quedaron en nivel alto a la vez.",
             "correct": true
           },
           {
-            "key": "c",
-            "label": "Dependió solo de la última decisión, sin importar las anteriores.",
+            "key": "a",
+            "label": "Al terminar, el acceso quedó bajo y eso decidió el desenlace.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Al terminar, la protección de datos quedó muy baja y eso decidió el desenlace.",
             "correct": false
           }
         ]
@@ -1325,18 +1325,18 @@
         "options": [
           {
             "key": "a",
-            "label": "Dependió solo de la protección de datos, sin importar las demás medidas.",
+            "label": "Al terminar, el acceso y la calidad quedaron bajos a la vez, y eso decidió el desenlace.",
             "correct": false
           },
           {
             "key": "b",
-            "label": "Se asignó al azar al final, sin depender de las medidas del escenario.",
-            "correct": false
+            "label": "Al terminar, algún indicador estaba bajo el nivel alto, sin llegar al crítico.",
+            "correct": true
           },
           {
             "key": "c",
-            "label": "Al terminar, algún indicador quedó bajo el nivel alto, sin llegar al crítico.",
-            "correct": true
+            "label": "Al terminar, datos, acceso y calidad quedaron en nivel alto a la vez.",
+            "correct": false
           }
         ]
       },
@@ -1348,19 +1348,19 @@
         "prompt": "Tu partida terminó en el desenlace de plataforma en crisis. ¿Qué relación del escenario lo explica?",
         "options": [
           {
-            "key": "a",
-            "label": "Al terminar, la protección de datos quedó muy baja, o el acceso y la calidad bajos.",
-            "correct": true
+            "key": "c",
+            "label": "Al terminar, datos, acceso y calidad quedaron en nivel alto a la vez.",
+            "correct": false
           },
           {
             "key": "b",
-            "label": "Se asignó al azar al final, sin depender de ninguna de las medidas del escenario.",
+            "label": "Al terminar, ningún indicador llegó al nivel crítico, aunque alguno quedó bajo el alto.",
             "correct": false
           },
           {
-            "key": "c",
-            "label": "Dependió solo de la última decisión tomada, sin importar las anteriores.",
-            "correct": false
+            "key": "a",
+            "label": "Al terminar, la protección de datos estaba muy baja, o bien el acceso y la calidad estaban bajos.",
+            "correct": true
           }
         ]
       }

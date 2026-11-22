@@ -265,7 +265,8 @@ def seed_demo(engine: Engine, spec: dict) -> bool:
         if all(status == "draft" and own for status, own in versions):
             raise SeedFailed(
                 f"{spec['key']}: una siembra anterior falló y dejó su borrador sin publicar. "
-                "No se borra ni se publica solo: revísalo o retíralo desde el panel de administración."  # noqa: E501
+                "No se borra ni se publica solo: revisa ese borrador, que creó la propia siembra, "
+                "antes de volver a sembrar."
             )
         return False
     admin = _set_admin_active(engine, True)

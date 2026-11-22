@@ -11,6 +11,7 @@ cumple en toda ruta que los muestra; donde no se puede garantizar, el texto es n
 
 import itertools
 import re
+import unicodedata
 from dataclasses import dataclass
 from functools import cache
 
@@ -165,31 +166,32 @@ def event_of(name):
 
 
 # Por pregunta causal (clave `requires`): texto de la opción -> la afirmación es cierta en esa ruta.
+INICIAL = lambda var: VARS[var]["initial"]  # noqa: E731
 CAUSAL = {
     "EV_ACCESS": {
-        "El acceso quedó bajo al salir de las pruebas y eso activó el aviso.": lambda r: changed(r, "access", ORDER[:5]) and r.after["D6"]["access"] <= 4,
-        "Apareció al azar, sin depender de ninguna medida del escenario.": sorteo,
-        "Lo activó solo la decisión de pruebas, sin relación con las anteriores.": solo_esa_decision("D6", event_of("EV_ACCESS")),
+        "Tras las pruebas el acceso quedó en un nivel bajo, y eso activó el aviso.": lambda r: changed(r, "access", ORDER[:5]) and r.after["D6"]["access"] <= 4,
+        "El acceso subió a un nivel alto al salir de las pruebas y eso activó el aviso.": lambda r: r.after["D6"]["access"] >= 7,
+        "El acceso ya estaba bajo antes de la primera decisión y eso activó el aviso.": lambda r: INICIAL("access") <= 4,
     },
     "EV_LEAK": {
-        "La protección de datos quedó baja tras la entrega y activó el aviso.": lambda r: changed(r, "privacy", ORDER[:6]) and r.after["D7"]["privacy"] <= 4,
-        "Apareció al azar al cerrar la entrega, sin depender de ninguna medida.": sorteo,
-        "Lo activó solo la decisión de entrega, sin relación con las decisiones anteriores.": solo_esa_decision("D7", event_of("EV_LEAK")),
+        "Tras la entrega la protección de datos quedó en un nivel bajo, y eso activó el aviso.": lambda r: changed(r, "privacy", ORDER[:6]) and r.after["D7"]["privacy"] <= 4,
+        "La protección de datos subió a un nivel alto tras la entrega y activó el aviso.": lambda r: r.after["D7"]["privacy"] >= 7,
+        "La protección de datos empezó la partida en un nivel bajo y eso activó el aviso.": lambda r: INICIAL("privacy") <= 4,
     },
     "OUT_SOLID": {
         "Al terminar, datos, acceso y calidad quedaron en nivel alto a la vez.": solid,
-        "Se asignó al azar al final, sin depender de las medidas del escenario.": sorteo,
-        "Dependió solo de la última decisión, sin importar las anteriores.": solo_esa_decision("D8", outcome_of),
+        "Al terminar, la protección de datos quedó muy baja y eso decidió el desenlace.": lambda r: final(r, "privacy") <= 3,
+        "Al terminar, el acceso quedó bajo y eso decidió el desenlace.": lambda r: final(r, "access") <= 5,
     },
     "OUT_MIXED": {
-        "Al terminar, algún indicador quedó bajo el nivel alto, sin llegar al crítico.": lambda r: not solid(r) and not crisis(r),
-        "Dependió solo de la protección de datos, sin importar las demás medidas.": solo_la_variable("privacy", outcome_of),
-        "Se asignó al azar al final, sin depender de las medidas del escenario.": sorteo,
+        "Al terminar, algún indicador estaba bajo el nivel alto, sin llegar al crítico.": lambda r: not solid(r) and not crisis(r),
+        "Al terminar, datos, acceso y calidad quedaron en nivel alto a la vez.": solid,
+        "Al terminar, el acceso y la calidad quedaron bajos a la vez, y eso decidió el desenlace.": lambda r: final(r, "access") <= 3 and final(r, "quality") <= 4,
     },
     "OUT_CRISIS": {
-        "Al terminar, la protección de datos quedó muy baja, o el acceso y la calidad bajos.": crisis,
-        "Se asignó al azar al final, sin depender de ninguna de las medidas del escenario.": sorteo,
-        "Dependió solo de la última decisión tomada, sin importar las anteriores.": solo_esa_decision("D8", outcome_of),
+        "Al terminar, la protección de datos estaba muy baja, o bien el acceso y la calidad estaban bajos.": crisis,
+        "Al terminar, datos, acceso y calidad quedaron en nivel alto a la vez.": solid,
+        "Al terminar, ningún indicador llegó al nivel crítico, aunque alguno quedó bajo el alto.": lambda r: not crisis(r),
     },
 }  # fmt: skip
 
@@ -274,32 +276,96 @@ def test_cada_texto_solo_afirma_lo_cierto_en_toda_ruta_que_lo_muestra():
         assert not FORBIDDEN.search(NODES[key]["title"])
 
 
+ORDENES = {  # las cinco maneras de ordenar sin leer el contenido: (indice, elemento) -> clave de orden
+    "caracteres": lambda i, x: (len(x["label"]), i),
+    "palabras": lambda i, x: (len(x["label"].split()), i),
+    "alfabetico": lambda i, x: (re.sub("[^a-z ]", "", _plano(x["label"])), i),
+    "clave": lambda i, x: (x["key"], i),
+    "posicion": lambda i, x: (i, i),
+}
+MULETILLAS = (
+    "azar",
+    "sorteo",
+    "solo",
+    "solamente",
+    "siempre",
+    "nunca",
+    "nadie",
+    "unicamente",
+    "cualquier",
+)
+
+
+def _plano(texto):
+    return "".join(
+        c for c in unicodedata.normalize("NFKD", texto.lower()) if not unicodedata.combining(c)
+    )
+
+
+def _ordenar(xs, f):
+    return [x for _, x in sorted(enumerate(xs), key=lambda p: f(*p))]
+
+
+def estrategias_ciegas(sets, decisiones):
+    """Lista CERRADA de estrategias que no leen el contenido; ninguna debe aprobar H02 a H05.
+
+    Preguntas: ordenar las opciones por caracteres, palabras, letras iniciales, clave o posicion y
+    elegir un rango fijo (primero, segundo, tercero); o descartar las que contienen una muletilla y
+    elegir la unica que queda. Razones: un rango fijo desde cada extremo o un corte contiguo fijo.
+    Devuelve las estrategias que aprueban (lista vacia = ninguna)."""
+    max_ok = {k: (3 if k == "transfer" else 2) for k in sets}  # H03: se aprueba con 4 de 5
+    max_ok["pretest"] = max_ok["posttest"] = 3  # 3 de 6 = 50 %, por debajo del 80 % de H02
+    malo = []
+    for k, q in sets.items():
+        for nombre, f in ORDENES.items():
+            for r in range(3):
+                n = sum(bool(_ordenar(x["options"], f)[r].get("correct")) for x in q)
+                if n > max_ok[k]:
+                    malo.append((k, nombre, f"rango {r}", f"{n}/{len(q)}"))
+        n = 0
+        for x in q:
+            queda = [
+                o
+                for o in x["options"]
+                if not set(re.findall("[a-z]+", _plano(o["label"]))) & set(MULETILLAS)
+            ]
+            n += len(queda) == 1 and bool(queda[0].get("correct"))
+        if n > 1:
+            malo.append((k, "muletillas", "", f"{n}/{len(q)}"))
+    ds = [n for n in decisiones if n.get("h05")]
+    cortes = [(f"rango {i}", lambda r, i=i: r[i : i + 1]) for i in range(4)]
+    cortes += [
+        (f"rango -{i + 1}", lambda r, i=i: r[len(r) - 1 - i : len(r) - i] if i < len(r) else [])
+        for i in range(4)
+    ]
+    cortes += [
+        (f"[{a}:{b}]", lambda r, a=a, b=b: r[a:b])
+        for a, b in ((0, 2), (1, 3), (2, 4), (1, -1), (1, -2), (2, -1), (-2, None))
+    ]
+    for nombre, f in ORDENES.items():
+        for c, g in cortes:
+            n = 0
+            for x in ds:
+                s = g(_ordenar(x["reasons"], f))
+                n += len(s) >= x.get("min_correct", 1) and all(o.get("correct") for o in s)
+            if n > 2:
+                malo.append(("H05", nombre, c, f"{n}/4"))
+    return malo
+
+
+def test_ninguna_estrategia_ciega_aprueba_h02_a_h05():
+    assert estrategias_ciegas(SETS, DECISIONS) == []
+
+
 def test_la_longitud_y_la_posicion_de_la_correcta_no_la_revelan():
-    """Ni la longitud ni la posición delatan la correcta: H02, H03 y H04 dependen de ello."""
+    """Longitudes distintas y a lo mas 1.5 veces la menor; la correcta no se concentra en una posicion."""
     for name, questions in SETS.items():
         cap = -(-len(questions) // 3)  # ceil(n/3)
-        by_rank = [0, 0, 0]  # corta, media, larga
         by_slot = {}
         for q in questions:
             sizes = [len(o["label"]) for o in q["options"]]
             assert len(set(sizes)) == len(sizes), (q["key"], "empate de longitud", sizes)
             assert max(sizes) <= 1.5 * min(sizes), (q["key"], sizes)
             at = next(i for i, o in enumerate(q["options"]) if o["correct"])
-            by_rank[sorted(sizes).index(sizes[at])] += 1
             by_slot[at] = by_slot.get(at, 0) + 1
-        assert max(by_rank) <= cap, (name, "rango de longitud (corta, media, larga)", by_rank, cap)
         assert max(by_slot.values()) <= cap, (name, "posición de la correcta", by_slot, cap)
-
-
-def test_la_longitud_de_las_razones_no_aprueba_h05():
-    """Quien elige razones solo por su longitud no llega a 3 de 4 (H05)."""
-    picks = [lambda r, i=i: r[i : i + 1] for i in range(4)]
-    picks += [lambda r, i=i: r[-1 - i :][:1] for i in range(4)]
-    picks += [lambda r: r[:2], lambda r: r[1:3], lambda r: r[-2:]]
-    for pick in picks:
-        hits = 0
-        for node in (n for n in DECISIONS if n.get("h05")):
-            chosen = pick(sorted(node["reasons"], key=lambda r: len(r["label"])))
-            enough = len(chosen) >= node.get("min_correct", 1)
-            hits += enough and all(r.get("correct") for r in chosen)
-        assert hits <= 2
