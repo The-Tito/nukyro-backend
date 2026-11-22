@@ -62,7 +62,7 @@ Al final el usuario hace el recorrido manual y el auditor revisa el total.
 
 ## Defectos por corregir
 
-Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`); el 2 sigue abierto para la encuesta (T-16) y el 9 para la vinculación (T-18). El 1: corregido en P5 (T-07). Del 10 al 13: detectados por lectura, sin reproducir (S-03).
+Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`); el 2 sigue abierto para la encuesta (T-16) y el 9 para la vinculación (T-18). El 1: corregido en P5 (T-07). El 10: reproducido y corregido (T-14). Del 11 al 13: detectados por lectura, sin reproducir (S-03).
 
 | # | Defecto | Arreglo propuesto | Tareas |
 |---|---|---|---|
@@ -227,6 +227,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 ### T-14 · Evaluaciones
 - Etapa: E4
 - Estado: en_curso
+- Nota: Construida y verificada. Se cierra con la auditoría de E4.
 - Entregable: pre-test, post-test, transferencia y causal
 - Criterios de cierre:
   - las puntuaciones coinciden con las calculadas a mano

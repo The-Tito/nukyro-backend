@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.34.0",
+    "version": "1.35.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -230,6 +230,11 @@
         "version": "1.34.0",
         "fecha": "2026-11-22",
         "cambio": "Puerta A de E4 delegada (D-32). A-05 abierta: preguntas de opción de la encuesta."
+      },
+      {
+        "version": "1.35.0",
+        "fecha": "2026-11-22",
+        "cambio": "T-14 construida: evaluaciones e hitos de una sola escritura; defecto 10 reproducido y corregido."
       }
     ]
   },
@@ -6182,7 +6187,7 @@
       "plan": "context/planes/plan-modelo-datos.md",
       "fecha": "2026-11-22",
       "resumen": "36 tablas en 5 dominios (contenido y administración 16, identidad 5 con consent_events, simulación 10, estadísticas 4, bitácora 1), esquema nukyro, PostgreSQL 16. Llaves compuestas (version_id, id); referencias internas del contenido DEFERRABLE; triggers de inmutabilidad; roles nukyro_api, nukyro_admin, nukyro_jobs y nukyro_analytics.",
-      "validacion": "v0.3 ejecutada en PostgreSQL 16 (Docker) como owner sin superusuario: 239 comprobaciones (57 de reglas, 167 de defectos, 15 de concurrencia). S1 y S2 sin probar (S-04).",
+      "validacion": "v0.3 ejecutada en PostgreSQL 16 (Docker) como owner sin superusuario: 256 comprobaciones (57 de reglas, 184 de defectos e hitos, 15 de concurrencia). S1 y S2 sin probar (S-04).",
       "pendientes": [
         {
           "n": 1,
@@ -6277,7 +6282,7 @@
           "tareas": [
             "T-14"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en el motor (T-07, T-14)"
         },
         {
           "n": 11,
@@ -7502,7 +7507,8 @@
       "estado": "en_curso",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
-      "buscar": "### T-14 ·"
+      "buscar": "### T-14 ·",
+      "nota": "Construida y verificada. Se cierra con la auditoría de E4."
     },
     {
       "id": "T-15",
