@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Genera .env (ignorado por git) con secretos aleatorios para el Compose local.
+# Uso: scripts/gen-env [archivo]   (por omisión .env; no sobrescribe uno existente)
+set -euo pipefail
+dest="${1:-.env}"
+if [[ -e "$dest" ]]; then
+  echo "$dest ya existe; no se sobrescribe" >&2
+  exit 1
+fi
+umask 077
+secret() { python3 -c 'import secrets; print(secrets.token_urlsafe(24))'; }
+{
+  echo "NUKYRO_DB_SUPERUSER_PASSWORD=$(secret)"
+  for rol in OWNER API ADMIN JOBS ANALYTICS; do
+    echo "NUKYRO_DB_${rol}_PASSWORD=$(secret)"
+  done
+} > "$dest"
+echo "Escrito $dest"

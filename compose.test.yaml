@@ -1,0 +1,6 @@
+# Solo para las pruebas de integración en el equipo anfitrión: publica la base en un puerto
+# aleatorio de 127.0.0.1. Uso: docker compose -f compose.yaml -f compose.test.yaml ...
+services:
+  db:
+    ports:
+      - "127.0.0.1::5432"
