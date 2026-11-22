@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.26.0",
+    "version": "1.27.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -190,6 +190,11 @@
         "version": "1.26.0",
         "fecha": "2026-11-22",
         "cambio": "E2 cerrada por delegación (D-24) con EV-02: 8 de 87 RF, 2 de ellos con interfaz pendiente."
+      },
+      {
+        "version": "1.27.0",
+        "fecha": "2026-11-22",
+        "cambio": "Puerta A de E3 delegada; ADR-009 especifica el motor (T-11). T-07 en curso."
       }
     ]
   },
@@ -340,8 +345,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 484,
-    "aristas": 795,
+    "nodos": 485,
+    "aristas": 807,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 16,
@@ -349,7 +354,7 @@
       "pendiente": 5
     },
     "por_tipo": {
-      "ADR": 8,
+      "ADR": 9,
       "Aplicacion": 2,
       "Arquitectura": 1,
       "Artefacto": 4,
@@ -6729,7 +6734,7 @@
       "tipo": "Etapa",
       "nombre": "Motor de simulación",
       "texto": "Consecuencias deterministas decididas por el servidor",
-      "estado": "pendiente",
+      "estado": "en_curso",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "| E3 |",
@@ -6740,7 +6745,13 @@
         }
       ],
       "salida": "los recorridos esperados coinciden, 1 000 pares concurrentes dan 0 duplicados, un fallo en cada escritura no deja cambios y cada contenido inválido se rechaza",
-      "reafirmar": "la especificación con ejemplos a mano antes de programar y que el cliente no decide nada"
+      "reafirmar": "la especificación con ejemplos a mano antes de programar y que el cliente no decide nada",
+      "puerta_a": {
+        "estado": "delegada",
+        "fecha": "2026-11-22",
+        "decision": "D-24",
+        "plan": "context/etapas/etapa-3.md"
+      }
     },
     {
       "id": "T-01",
@@ -6856,7 +6867,7 @@
       "tipo": "Tarea",
       "nombre": "Motor de simulación",
       "texto": "motor puro, proceso P5, avance y reanudación",
-      "estado": "pendiente",
+      "estado": "en_curso",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-07 ·",
@@ -7342,10 +7353,11 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
-      "buscar": "### T-11 ·"
+      "buscar": "### T-11 ·",
+      "nota": "Especificación aceptada por delegación (D-24), sin revisión del usuario. Se comprueba con los ejemplos en T-07."
     },
     {
       "id": "T-12",
@@ -7881,6 +7893,21 @@
           "seccion": "verificación delegada"
         }
       ]
+    },
+    {
+      "id": "ADR-009",
+      "tipo": "ADR",
+      "nombre": "Especificación del motor de simulación",
+      "estado": "Aceptada",
+      "fecha": "2026-11-22",
+      "archivo": "context/adr/ADR-009-especificacion-motor.md",
+      "fuente": [
+        {
+          "doc": "D-24",
+          "seccion": "Puerta A de E3, delegada"
+        }
+      ],
+      "nota": "Aceptada por delegación (D-24), sin revisión humana."
     }
   ],
   "aristas": [
@@ -11877,6 +11904,66 @@
       "origen": "EV-02",
       "relacion": "respalda",
       "destino": "T-10"
+    },
+    {
+      "origen": "ADR-009",
+      "relacion": "afecta",
+      "destino": "RF-028"
+    },
+    {
+      "origen": "ADR-009",
+      "relacion": "afecta",
+      "destino": "RF-030"
+    },
+    {
+      "origen": "ADR-009",
+      "relacion": "afecta",
+      "destino": "RF-032"
+    },
+    {
+      "origen": "ADR-009",
+      "relacion": "afecta",
+      "destino": "RF-034"
+    },
+    {
+      "origen": "ADR-009",
+      "relacion": "afecta",
+      "destino": "RF-063"
+    },
+    {
+      "origen": "ADR-009",
+      "relacion": "afecta",
+      "destino": "RF-064"
+    },
+    {
+      "origen": "ADR-009",
+      "relacion": "afecta",
+      "destino": "RF-065"
+    },
+    {
+      "origen": "ADR-009",
+      "relacion": "afecta",
+      "destino": "RF-066"
+    },
+    {
+      "origen": "ADR-009",
+      "relacion": "afecta",
+      "destino": "RN-14"
+    },
+    {
+      "origen": "ADR-009",
+      "relacion": "concreta",
+      "destino": "ADR-001"
+    },
+    {
+      "origen": "ADR-009",
+      "relacion": "concreta",
+      "destino": "ADR-003"
+    },
+    {
+      "origen": "T-11",
+      "relacion": "produce",
+      "destino": "ADR-009"
     }
   ],
   "conflictos": [

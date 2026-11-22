@@ -18,7 +18,7 @@ E1 va aparte y no bloquea el backend local. Cada RF tiene una sola fase principa
 | E0 | Adopción de la metodología | Método instalado, validado y confirmado | | | cerrada |
 | E1 | Cierre documental | Documentos coherentes con el KG | | | pendiente |
 | E2 | Base ejecutable y entrada | Esquema corregido y primer recorrido HTTPS hasta la base | 001-004, 062, 068, 071, 073 | E0 | cerrada |
-| E3 | Motor de simulación | Consecuencias deterministas decididas por el servidor | 006, 013-038, 063-066 | E2 | pendiente |
+| E3 | Motor de simulación | Consecuencias deterministas decididas por el servidor | 006, 013-038, 063-066 | E2 | en_curso |
 | E4 | Experiencia educativa | Recorrido completo, del pre-test al resumen | 005, 007-012, 039-061, 067 | E3 | pendiente |
 | E5 | Identidad y aislamiento | Con o sin cuenta, cada persona accede solo a lo suyo | 074-077 | E4 | pendiente |
 | E6 | Ciclo de datos y estadísticas | Borrar sin perder agregados ni reidentificar | 070, 072, 078-080 | E5 | pendiente |
@@ -185,7 +185,8 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-11 · Especificación del motor
 - Etapa: E3
-- Estado: pendiente
+- Estado: cerrada
+- Nota: Especificación aceptada por delegación (D-24), sin revisión del usuario. Se comprueba con los ejemplos en T-07.
 - Entregable: ADR-009 con ejemplos calculados a mano
 - Criterios de cierre:
   - define condiciones, efectos, precedencia y causas
@@ -194,7 +195,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-07 · Motor de simulación
 - Etapa: E3
-- Estado: pendiente
+- Estado: en_curso
 - Entregable: motor puro, proceso P5, avance y reanudación
 - Criterios de cierre:
   - cada proceso tiene pruebas

@@ -12,5 +12,6 @@ Cada ADR explica una decisión difícil de revertir: su contexto, las alternativ
 | [ADR-006](ADR-006-repositorio-publico-seudonimizado.md) | Repositorio público con contexto seudonimizado | Aceptada | 2026-11-22 |
 | [ADR-007](ADR-007-copia-anonima-al-cerrar.md) | Copia anónima solo al borrar o bloquear | Aceptada | 2026-11-22 |
 | [ADR-008](ADR-008-estructura-seguridad-api.md) | Estructura y seguridad de la API | Aceptada | 2026-11-22 |
+| [ADR-009](ADR-009-especificacion-motor.md) | Especificación del motor de simulación | Aceptada | 2026-11-22 |
 
 **Formato:** encabezado con `id`, `titulo`, `estado` (Propuesta · Aceptada · Reemplazada por ADR-nnn), `fecha`, `decisores` y `kg` (nodos relacionados), seguido de Contexto, Decisión, Alternativas consideradas, Consecuencias y Trazabilidad.
