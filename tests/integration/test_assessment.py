@@ -299,7 +299,7 @@ def test_la_escritura_sin_csrf_es_403(person, full):
 def test_rf011_el_porcentaje_es_el_calculado_a_mano(person, superuser, full):
     sid = at_pretest_done(person, full, {"P1": "b", "P2": "c"})  # 1 de 2
     got = person.get(url(sid, "pretest")).json()
-    assert got["submitted"] is True and got["score"] == 50.0
+    assert got["submitted"] is True and got["score"] is None  # no sale antes de terminar
     assert row(
         superuser,
         "SELECT answered_count, correct_count, score FROM nukyro.assessment_attempts WHERE session_id = %s",
@@ -322,10 +322,18 @@ def test_rf011_incompleto_que_exige_todas_es_409_sin_puntuacion(person, superuse
     )
 
 
-def test_rf011_si_no_exige_todas_el_porcentaje_es_sobre_las_respondidas(person, lenient):
+def test_rf011_si_no_exige_todas_el_porcentaje_es_sobre_las_respondidas(person, superuser, lenient):
     sid = start(person, lenient)
     fill(person, sid, "pretest", {"P1": "b"})
-    assert submit(person, sid, "pretest").json()["score"] == 100.0  # 1 de 1 respondidas
+    assert submit(person, sid, "pretest").json()["score"] is None
+    assert (
+        row(
+            superuser,
+            "SELECT t.score::float FROM nukyro.assessment_attempts t JOIN nukyro.question_sets q ON q.id = t.question_set_id WHERE t.session_id = %s AND q.set_type = 'pretest'",
+            sid,
+        )[0]
+        == 100.0
+    )  # 1 de 1 respondidas
 
 
 def test_rf011_cero_respondidas_no_puntua(person, superuser, lenient):
@@ -348,7 +356,7 @@ def test_rf011_enviar_dos_veces_devuelve_lo_mismo_y_no_recalifica(person, superu
     )
     again = submit(person, sid, "pretest")
     assert again.status_code == 200 and again.json() == person.get(url(sid, "pretest")).json()
-    assert again.json()["score"] == 100.0
+    assert again.json()["score"] is None and float(first[1]) == 100.0
     assert (
         row(
             superuser,
@@ -439,10 +447,26 @@ def test_rf050_rf051_rf052_rf058_el_orden_es_posttest_transferencia_causal(perso
     assert row(superuser, "SELECT completed_at FROM nukyro.sessions WHERE id = %s", sid)[0] is None
     fill(person, sid, "posttest", {"T1": "c", "T2": "b"})  # 1 de 2
     r = submit(person, sid, "posttest")
-    assert r.status_code == 200 and r.json()["score"] == 50.0
+    assert r.status_code == 200 and r.json()["score"] is None
+    assert (
+        row(
+            superuser,
+            "SELECT t.score::float FROM nukyro.assessment_attempts t JOIN nukyro.question_sets q ON q.id = t.question_set_id WHERE t.session_id = %s AND q.set_type = 'posttest'",
+            sid,
+        )[0]
+        == 50.0
+    )
     assert person.get(url(sid, "causal")).status_code == 409  # falta transferencia
     fill(person, sid, "transfer", {"X1": "b"})
-    assert submit(person, sid, "transfer").json()["score"] == 100.0
+    assert submit(person, sid, "transfer").json()["score"] is None
+    assert (
+        row(
+            superuser,
+            "SELECT t.score::float FROM nukyro.assessment_attempts t JOIN nukyro.question_sets q ON q.id = t.question_set_id WHERE t.session_id = %s AND q.set_type = 'transfer'",
+            sid,
+        )[0]
+        == 100.0
+    )
     assert row(superuser, "SELECT completed_at FROM nukyro.sessions WHERE id = %s", sid)[0] is None
     # Recorrido A: EV activado y OUT_A; CB (OUT_B) no ocurrió
     causal = person.get(url(sid, "causal")).json()

@@ -49,7 +49,9 @@ def _view(conn: Connection, session, kind, s, attempt) -> dict:
     for o in queries.options(conn, session, s["id"]):
         by_question.setdefault(o["question_id"], []).append({"key": o["key"], "label": o["label"]})
     submitted = bool(attempt and attempt["submitted_at"])
-    score = attempt["score"] if submitted else None
+    # La nota sale al terminar las evaluaciones: antes revelaría respuestas (defecto 11)
+    finished = submitted and queries.hitos(conn, session)["completed_at"] is not None
+    score = attempt["score"] if finished else None
     return {
         "type": kind,
         "submitted": submitted,

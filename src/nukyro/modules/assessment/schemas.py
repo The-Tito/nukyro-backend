@@ -26,7 +26,7 @@ class AssessmentOut(BaseModel):
     submitted: bool
     answered: int
     total: int
-    score: float | None  # porcentaje de esta evaluación, solo tras enviarla (RF-049)
+    score: float | None  # porcentaje de esta evaluación, solo al terminar todas (RF-049)
     questions: list[QuestionOut]
 
 

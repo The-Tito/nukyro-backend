@@ -137,7 +137,7 @@ def test_rf050_antes_del_desenlace_el_posttest_la_transferencia_y_la_causal_son_
 def test_recorrido_completo_con_puntuaciones_calculadas_a_mano(person, outcome):
     sid = start(person)
     do_pretest(person, sid, outcome)
-    assert person.get(url(sid, "pretest")).json()["score"] == EVALUACIONES[outcome]["pretest"][1]
+    assert person.get(url(sid, "pretest")).json()["score"] is None  # revelaría respuestas
     assert person.get(f"/api/v1/sessions/{sid}").json()["state"] == "in_scenario"
     play(person, sid, outcome)
     assert person.get(f"/api/v1/sessions/{sid}").json()["state"] == "outcome_reached"
@@ -156,11 +156,14 @@ def test_recorrido_completo_con_puntuaciones_calculadas_a_mano(person, outcome):
         done = submit(person, sid, kind)
         assert done.status_code == 200, done.text
         assert done.json()["submitted"] is True and not keys(done.json()) & SECRETS
-        assert done.json()["score"] == EVALUACIONES[outcome][kind][1]
-        scores[kind] = done.json()["score"]
+        if kind != "causal":
+            assert done.json()["score"] is None  # ninguna nota antes de terminar
         assert submit(person, sid, kind).json() == done.json()  # repetir no recalifica
         expected = "completed" if kind == "causal" else "outcome_reached"
         assert person.get(f"/api/v1/sessions/{sid}").json()["state"] == expected
+    for kind in ("pretest", *ORDEN_FINAL):
+        scores[kind] = person.get(url(sid, kind)).json()["score"]
+        assert scores[kind] == EVALUACIONES[outcome][kind][1]
     # RF-049: una puntuación por evaluación; ninguna nota global de la persona
     assert set(scores) == {"pretest", *ORDEN_FINAL}
     final = person.get(f"/api/v1/sessions/{sid}")
