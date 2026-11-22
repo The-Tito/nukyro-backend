@@ -12,6 +12,9 @@ Modelo lógico y físico de la base de datos de Nukyro, el simulador de decision
 
 **Fuente de verdad:** `context/proyecto/kg.json`. Este documento cita sus identificadores: RF, RN, RNF, OR, ADR y CONF.
 
+> **Revisión del 2026-11-22:** la v0.2 tiene 13 defectos pendientes (`MODELO-DATOS.pendientes` del KG, `context/plan.md`)
+> y P5 y P9 cambian por D-19 a D-21. No migrar ni implementar §7 tal cual hasta T-09.
+
 ## 0. Convenciones
 
 | Tema | Convención | Origen |

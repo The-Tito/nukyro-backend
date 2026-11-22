@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.19.0",
+    "version": "1.20.1",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -150,6 +150,16 @@
         "version": "1.19.0",
         "fecha": "2026-11-22",
         "cambio": "T-01 y E0 cerradas (D-12): A-03 aplicada y auditoría atendida en lo que bloqueaba."
+      },
+      {
+        "version": "1.20.0",
+        "fecha": "2026-11-22",
+        "cambio": "T-08: plan del backend E2 a E8, D-15 a D-23, fase de cada RF, CONF-15 a CONF-21, S-03, S-04, CA-01 a CA-03 y defectos del modelo."
+      },
+      {
+        "version": "1.20.1",
+        "fecha": "2026-11-22",
+        "cambio": "T-08 en pausa por indicación del usuario, con lo hecho y lo que falta."
       }
     ]
   },
@@ -274,6 +284,7 @@
       "se_analiza_en",
       "se_aplica_en",
       "se_basa_en",
+      "se_planea_en",
       "se_rige_por",
       "se_vincula_a",
       "sigue",
@@ -299,19 +310,20 @@
     ]
   },
   "estadisticas": {
-    "nodos": 438,
-    "aristas": 616,
-    "conflictos": 14,
+    "nodos": 478,
+    "aristas": 756,
+    "conflictos": 21,
     "conflictos_por_estado": {
-      "resuelto": 13,
+      "resuelto": 16,
       "propuesta": 0,
-      "pendiente": 1
+      "pendiente": 5
     },
     "por_tipo": {
       "ADR": 6,
       "Aplicacion": 2,
       "Arquitectura": 1,
       "Artefacto": 4,
+      "CambioAlcance": 3,
       "CategoriaDatos": 7,
       "ClaseUsuario": 2,
       "Color": 6,
@@ -319,14 +331,14 @@
       "ConjuntoPrincipios": 1,
       "Contacto": 1,
       "Cookie": 2,
-      "Decision": 32,
+      "Decision": 41,
       "Degradado": 2,
       "Descargo": 4,
       "DisenoEvaluacion": 1,
       "Documento": 9,
       "EntidadDominio": 18,
       "Escenario": 1,
-      "Etapa": 4,
+      "Etapa": 9,
       "Evaluacion": 1,
       "Finalidad": 14,
       "FlujoExperiencia": 1,
@@ -363,8 +375,8 @@
       "RequerimientoInterfaz": 18,
       "RequerimientoNoFuncional": 19,
       "Rol": 2,
-      "Supuesto": 2,
-      "Tarea": 7,
+      "Supuesto": 4,
+      "Tarea": 28,
       "Tipografia": 1,
       "TonoVoz": 1
     }
@@ -6035,7 +6047,8 @@
           "doc": "DECISION-USUARIO",
           "seccion": "2026-11-01"
         }
-      ]
+      ],
+      "nota": "Superado por D-19 a D-21 en cuándo y qué se copia. Sigue Aceptada solo hasta que ADR-007 lo reemplace (T-09): no implementar su §2."
     },
     {
       "id": "ADR-005",
@@ -6099,7 +6112,130 @@
       "fecha": "2026-11-01",
       "resumen": "35 tablas en 5 dominios (contenido y administración 16, identidad 5 con consent_events, simulación 10, estadísticas 3, bitácora 1), esquema nukyro, PostgreSQL 16. Llaves compuestas (version_id, id); referencias internas del contenido DEFERRABLE; triggers de inmutabilidad; roles nukyro_api, nukyro_admin, nukyro_jobs y nukyro_analytics.",
       "validacion": "DDL ejecutado en PostgreSQL 16.15 (Docker); 52/52 pruebas de reglas pasan. Diagramas Mermaid confirmados por el usuario. Pruebas técnicas S1–S5 (RDS, Cognito, Alembic, concurrencia, errores diferidos) dadas por validadas por el equipo con base en otros proyectos con la misma configuración y créditos.",
-      "pendientes": [],
+      "pendientes": [
+        {
+          "n": 1,
+          "defecto": "P5 rechaza el reintento válido (RN-14)",
+          "arreglo_propuesto": "buscar la decisión antes de validar el nodo actual",
+          "tareas": [
+            "T-07"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        },
+        {
+          "n": 2,
+          "defecto": "xmin, orden y transacción ligan los hechos con la persona",
+          "arreglo_propuesto": "copia al cerrar, reescritura aleatoria y jobs sin lectura de hechos",
+          "tareas": [
+            "T-09",
+            "T-10",
+            "T-20"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        },
+        {
+          "n": 3,
+          "defecto": "INSERT de hechos con RETURNING falla",
+          "arreglo_propuesto": "funciones restringidas de archivo y borrado, sin dar SELECT",
+          "tareas": [
+            "T-09"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        },
+        {
+          "n": 4,
+          "defecto": "No se puede borrar un administrador que creó o publicó una versión publicada",
+          "arreglo_propuesto": "RESTRICT y desactivar con is_active",
+          "tareas": [
+            "T-09"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        },
+        {
+          "n": 5,
+          "defecto": "Se publica sin borrador, se retira un borrador o se altera una versión al retirarla",
+          "arreglo_propuesto": "trigger de INSERT y comparación de la fila completa",
+          "tareas": [
+            "T-09"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        },
+        {
+          "n": 6,
+          "defecto": "Carrera entre editar y publicar",
+          "arreglo_propuesto": "bloqueo compartido al editar y exclusivo al publicar",
+          "tareas": [
+            "T-09",
+            "T-12"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        },
+        {
+          "n": 7,
+          "defecto": "API y panel pueden alterar decisiones, versión, bloqueo e identidad",
+          "arreglo_propuesto": "permisos por columna y triggers",
+          "tareas": [
+            "T-09"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        },
+        {
+          "n": 8,
+          "defecto": "Jobs no puede bloquear ni copiar antes de borrar",
+          "arreglo_propuesto": "función única con orden cuenta, participante y sesión",
+          "tareas": [
+            "T-09",
+            "T-21"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        },
+        {
+          "n": 9,
+          "defecto": "Dos inicios o una vinculación dan dos primeras sesiones",
+          "arreglo_propuesto": "bloquear al participante y recalcular todas",
+          "tareas": [
+            "T-10",
+            "T-18"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        },
+        {
+          "n": 10,
+          "defecto": "Marcar todas las razones aprueba H05",
+          "arreglo_propuesto": "mínimo correcto y ninguna incorrecta",
+          "tareas": [
+            "T-14"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        },
+        {
+          "n": 11,
+          "defecto": "La reconstrucción revela las respuestas causales",
+          "arreglo_propuesto": "responder antes de ver la reconstrucción",
+          "tareas": [
+            "T-15"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        },
+        {
+          "n": 12,
+          "defecto": "El upsert puede recrear una cuenta purgada",
+          "arreglo_propuesto": "rechazar tokens anteriores a la baja",
+          "tareas": [
+            "T-18"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        },
+        {
+          "n": 13,
+          "defecto": "ARCO no guarda la verificación ni define la limitación",
+          "arreglo_propuesto": "definir ambos y el calendario hábil",
+          "tareas": [
+            "T-25"
+          ],
+          "estado": "detectado por lectura, sin reproducir"
+        }
+      ],
       "fuente": [
         {
           "doc": "MODELO-DATOS",
@@ -6521,34 +6657,38 @@
     {
       "id": "E2",
       "tipo": "Etapa",
-      "nombre": "Base ejecutable",
-      "texto": "API arrancable y esquema creado por Alembic",
+      "nombre": "Base ejecutable y entrada",
+      "texto": "Esquema corregido y primer recorrido HTTPS hasta la base",
       "estado": "pendiente",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "| E2 |",
       "fuente": [
         {
-          "doc": "D-12",
-          "seccion": "propuesta del asistente, aprobada por el usuario"
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
-      ]
+      ],
+      "salida": "una base vacía migra igual a `bd/schema.sql` con owner sin superusuario, cada defecto de E2 pasa de rojo a verde y la entrada funciona por HTTPS",
+      "reafirmar": "las 52 pruebas reales antes de tocar el esquema, S3 (Alembic) y las versiones de las dependencias"
     },
     {
       "id": "E3",
       "tipo": "Etapa",
       "nombre": "Motor de simulación",
-      "texto": "Procesos P5, P9, P10 y P12 probados",
+      "texto": "Consecuencias deterministas decididas por el servidor",
       "estado": "pendiente",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "| E3 |",
       "fuente": [
         {
-          "doc": "D-12",
-          "seccion": "propuesta del asistente, aprobada por el usuario"
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
-      ]
+      ],
+      "salida": "los recorridos esperados coinciden, 1 000 pares concurrentes dan 0 duplicados, un fallo en cada escritura no deja cambios y cada contenido inválido se rechaza",
+      "reafirmar": "la especificación con ejemplos a mano antes de programar y que el cliente no decide nada"
     },
     {
       "id": "T-01",
@@ -6618,48 +6758,66 @@
       "id": "T-05",
       "tipo": "Tarea",
       "nombre": "Base de la API y migración inicial",
-      "texto": "proyecto FastAPI con Alembic en este repositorio",
+      "texto": "FastAPI, Compose con TLS local, Alembic y roles",
       "estado": "pendiente",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-05 ·",
       "fuente": [
         {
-          "doc": "D-12",
-          "seccion": "propuesta del asistente, aprobada por el usuario"
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
+      ],
+      "criterios": [
+        "`alembic upgrade head` crea el esquema en PostgreSQL 16 vacío, con owner sin superusuario",
+        "el esquema equivale a `bd/schema.sql`",
+        "pasan las pruebas SQL vigentes, con los cambios aprobados en la Puerta A",
+        "la API arranca con una conexión por rol"
       ]
     },
     {
       "id": "T-06",
       "tipo": "Tarea",
       "nombre": "Revisiones automáticas del backend",
-      "texto": "CI y hooks de Python",
+      "texto": "CI, hooks de Python y `scripts/verify`",
       "estado": "pendiente",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-06 ·",
       "fuente": [
         {
-          "doc": "D-12",
-          "seccion": "propuesta del asistente, aprobada por el usuario"
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
+      ],
+      "criterios": [
+        "CI corre las pruebas SQL y de la API",
+        "formato y lint con versión fija",
+        "`./scripts/verify` falla ante una prueba fallida u omitida"
       ]
     },
     {
       "id": "T-07",
       "tipo": "Tarea",
       "nombre": "Motor de simulación",
-      "texto": "procesos P5, P9, P10 y P12 de `bd/modelo-datos.md` §7",
+      "texto": "motor puro, proceso P5, avance y reanudación",
       "estado": "pendiente",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-07 ·",
       "fuente": [
         {
-          "doc": "D-12",
-          "seccion": "propuesta del asistente, aprobada por el usuario"
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
+      ],
+      "criterios": [
+        "cada proceso tiene pruebas",
+        "confirmar es idempotente aunque el nodo haya avanzado (ADR-003, RN-14)",
+        "1 000 pares concurrentes dan 0 duplicados (S4)",
+        "el cliente no determina consecuencias (ARQ)",
+        "defecto 1 reproducido y corregido"
       ]
     },
     {
@@ -6791,6 +6949,777 @@
         {
           "doc": "D-09",
           "seccion": "respaldo por otro medio, sin comprobar"
+        }
+      ]
+    },
+    {
+      "id": "D-15",
+      "tipo": "Decision",
+      "nombre": "Backend funcional solo local",
+      "texto": "El backend se da por terminado funcionando completo en Docker local, con un emisor de tokens simulado. Sin AWS, sin Cognito real y sin gasto en este plan.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-15 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-16",
+      "tipo": "Decision",
+      "nombre": "Sin fechas por ahora",
+      "texto": "El plan del backend no lleva fechas ni estimaciones hasta que el usuario las indique.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-16 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-17",
+      "tipo": "Decision",
+      "nombre": "Contenido solo de demostración",
+      "texto": "El plan usa un escenario y documentos legales ficticios, marcados como demostración. El contenido real queda fuera.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-17 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-18",
+      "tipo": "Decision",
+      "nombre": "Correos como funcionalidad futura",
+      "texto": "Los correos no bloquean el backend: no hay envío propio en este plan y se pueden agregar después. CONF-18 sigue pendiente.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-18 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-19",
+      "tipo": "Decision",
+      "nombre": "Copia anónima al cerrar los datos",
+      "texto": "Mientras los datos existen, los reportes se calculan sobre ellos y excluyen a quien se opuso. La copia anónima se crea solo antes de borrar o bloquear. ADR-007 reemplazará a ADR-004.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-19 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-20",
+      "tipo": "Decision",
+      "nombre": "Agregar antes de bloquear",
+      "texto": "El resultado anónimo se genera antes de bloquear una cuenta, salvo oposición o minoría de edad. Durante el bloqueo los datos no se usan y al purgar solo se borra.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-20 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-21",
+      "tipo": "Decision",
+      "nombre": "Métricas por tema y de abandono",
+      "texto": "El backend soporta aciertos por tema y punto de abandono como resultados anónimos, con umbral de 10 participantes.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-21 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-22",
+      "tipo": "Decision",
+      "nombre": "Dos puertas por fase",
+      "texto": "De E2 a E8 cada fase se reafirma y planea, el usuario la aprueba (Puerta A), se construye y comprueba, y el usuario la cierra con evidencia (Puerta B). Sustituye «un paso a la vez» dentro de esas fases. Entre puertas solo se detiene por conflicto, desvío, permiso o bloqueo.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-22 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-23",
+      "tipo": "Decision",
+      "nombre": "Plan del backend aprobado",
+      "texto": "Se aprueba el plan E2 a E8, que sustituye la parte E2 y E3 de D-12. La aprobación autoriza solo T-08 en local, sin commit ni push. Construir cada fase requiere su Puerta A.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-23 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "E4",
+      "tipo": "Etapa",
+      "nombre": "Experiencia educativa",
+      "texto": "Recorrido completo, del pre-test al resumen",
+      "salida": "tres recorridos dan los resultados calculados a mano, nada filtra respuestas, efectos o reglas antes de tiempo y nada califica a la persona",
+      "reafirmar": "criterios de H04 y H05, orden causal y CONF-21",
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "| E4 |"
+    },
+    {
+      "id": "E5",
+      "tipo": "Etapa",
+      "nombre": "Identidad y aislamiento",
+      "texto": "Con o sin cuenta, cada persona accede solo a lo suyo",
+      "salida": "los tokens inválidos se rechazan, la vinculación concurrente deja una primera sesión y una ruta sin caso de acceso ajeno hace fallar la suite",
+      "reafirmar": "el contrato de tokens de Cognito y qué queda simulado",
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "| E5 |"
+    },
+    {
+      "id": "E6",
+      "tipo": "Etapa",
+      "nombre": "Ciclo de datos y estadísticas",
+      "texto": "Borrar sin perder agregados ni reidentificar",
+      "salida": "el agregado es igual antes y después de borrar, opuesto y menor no dejan copia, 9 se suprime y 10 se muestra, y los cruces por xmin u orden no identifican",
+      "reafirmar": "el texto del Aviso contra lo implementado, el riesgo residual de reidentificación y RN-20",
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "| E6 |"
+    },
+    {
+      "id": "E7",
+      "tipo": "Etapa",
+      "nombre": "Administración y ARCO",
+      "texto": "API del panel para operar sin SQL manual",
+      "salida": "un escenario creado solo por API se juega completo, los seis derechos funcionan en sus plazos límite, al cerrar no queda documento y la bitácora no guarda respuestas",
+      "reafirmar": "calendario de inhábiles, efecto de «limitación» y verificación manual sin correo, que decide el usuario",
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "| E7 |"
+    },
+    {
+      "id": "E8",
+      "tipo": "Etapa",
+      "nombre": "Aceptación del backend",
+      "texto": "Backend funcional demostrado de punta a punta",
+      "salida": "se cumple la definición de backend funcional de este plan",
+      "reafirmar": "los 87 RF uno por uno y toda la deuda abierta",
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "| E8 |"
+    },
+    {
+      "id": "T-08",
+      "tipo": "Tarea",
+      "nombre": "Activar el plan del backend",
+      "texto": "KG, vistas, protocolo por fase y validador",
+      "criterios": [
+        "el KG registra D-15 a D-23, E2 a E8, T-05 a T-28 y una fase por RF",
+        "el validador rechaza una etapa sin Puerta A, una cerrada sin evidencia o Puerta B y un RF sin fase o con dos",
+        "el usuario confirma el cierre"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "en_curso",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-08 ·",
+      "nota": "En pausa desde el 2026-11-22 por indicación del usuario: se retoma en un chat nuevo. Hecho: registro en el KG y vistas, sin revisar ni auditar. Falta: protocolo (/fase, plantilla, CLAUDE.md, retomar), reglas del validador con sus pruebas, auditoría y revisión del usuario."
+    },
+    {
+      "id": "T-09",
+      "tipo": "Tarea",
+      "nombre": "Decisiones de base y esquema corregido",
+      "texto": "ADR-007, ADR-008, esquema, modelo y pruebas SQL",
+      "criterios": [
+        "ADR-007 reemplaza a ADR-004 y declara el riesgo residual (D-19 a D-21)",
+        "ADR-008 fija la estructura y la seguridad de la API",
+        "cada defecto de E2 tiene una prueba que falló con el esquema anterior",
+        "ninguna regla se debilita: los cambios a T01, T32, T36 y T39 se aprueban en la Puerta A",
+        "defecto 2 reproducido y corregido",
+        "defecto 3 reproducido y corregido",
+        "defecto 4 reproducido y corregido",
+        "defecto 5 reproducido y corregido",
+        "defecto 6 reproducido y corregido",
+        "defecto 7 reproducido y corregido",
+        "defecto 8 reproducido y corregido"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-09 ·"
+    },
+    {
+      "id": "T-10",
+      "tipo": "Tarea",
+      "nombre": "Recorrido de entrada",
+      "texto": "aceptación, participante y sesión por HTTPS",
+      "criterios": [
+        "sin las tres aceptaciones no hay sesión (RF-073)",
+        "la cookie cumple RF-062 y la base solo guarda el hash",
+        "dos inicios simultáneos dejan una primera sesión",
+        "un prototipo comprueba el archivo anónimo sin vínculo por xmin u orden",
+        "defecto 2 reproducido y corregido",
+        "defecto 9 reproducido y corregido"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-10 ·"
+    },
+    {
+      "id": "T-11",
+      "tipo": "Tarea",
+      "nombre": "Especificación del motor",
+      "texto": "ADR-009 con ejemplos calculados a mano",
+      "criterios": [
+        "define condiciones, efectos, precedencia y causas",
+        "define el avance sin decisión y los ciclos",
+        "el usuario la aprueba antes de programar el motor"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-11 ·"
+    },
+    {
+      "id": "T-12",
+      "tipo": "Tarea",
+      "nombre": "Validación y publicación",
+      "texto": "validador de RF-066 y proceso P12",
+      "criterios": [
+        "cada tipo de contenido inválido se rechaza",
+        "editar y publicar a la vez no altera una versión publicada",
+        "defecto 6 reproducido y corregido"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-12 ·"
+    },
+    {
+      "id": "T-13",
+      "tipo": "Tarea",
+      "nombre": "Escenario de demostración",
+      "texto": "contenido ficticio completo",
+      "criterios": [
+        "8 decisiones, 3 variables, 2 eventos, 3 desenlaces y sus evaluaciones",
+        "está marcado como demostración y pasa RF-066"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-13 ·"
+    },
+    {
+      "id": "T-14",
+      "tipo": "Tarea",
+      "nombre": "Evaluaciones",
+      "texto": "pre-test, post-test, transferencia y causal",
+      "criterios": [
+        "las puntuaciones coinciden con las calculadas a mano",
+        "marcar todas las razones no aprueba H05",
+        "las respuestas correctas no salen antes de tiempo",
+        "defecto 10 reproducido y corregido"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-14 ·"
+    },
+    {
+      "id": "T-15",
+      "tipo": "Tarea",
+      "nombre": "Reconstrucción y resumen",
+      "texto": "recorrido causal, retroalimentación, referencias y resumen",
+      "criterios": [
+        "las preguntas causales se responden antes de ver la reconstrucción",
+        "solo atribuye relaciones del contenido y nada califica a la persona",
+        "defecto 11 reproducido y corregido"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-15 ·"
+    },
+    {
+      "id": "T-16",
+      "tipo": "Tarea",
+      "nombre": "Encuesta no vinculada",
+      "texto": "encuesta de RF-060",
+      "criterios": [
+        "CONF-21 resuelto por el usuario",
+        "la respuesta no se liga a la sesión ni a la cuenta"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-16 ·"
+    },
+    {
+      "id": "T-17",
+      "tipo": "Tarea",
+      "nombre": "Verificación de tokens",
+      "texto": "verificador OIDC y emisor simulado aparte",
+      "criterios": [
+        "rechaza firma, emisor, audiencia, tipo, vencimiento y grupo inválidos",
+        "el emisor no entra en la imagen de la API"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-17 ·"
+    },
+    {
+      "id": "T-18",
+      "tipo": "Tarea",
+      "nombre": "Cuenta y vinculación",
+      "texto": "cuenta, consentimientos y proceso P10",
+      "criterios": [
+        "la vinculación concurrente es idempotente y deja una primera sesión",
+        "un token anterior a la baja no recrea la cuenta",
+        "defecto 9 reproducido y corregido",
+        "defecto 12 reproducido y corregido"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-18 ·"
+    },
+    {
+      "id": "T-19",
+      "tipo": "Tarea",
+      "nombre": "Aislamiento y CSRF",
+      "texto": "protección de todas las rutas",
+      "criterios": [
+        "cada ruta tiene un caso de acceso ajeno",
+        "una escritura de origen ajeno se rechaza"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-19 ·"
+    },
+    {
+      "id": "T-20",
+      "tipo": "Tarea",
+      "nombre": "Derechos del participante",
+      "texto": "descarga, oposición, bloqueo y borrado",
+      "criterios": [
+        "se agrega antes de bloquear, salvo oposición o minoría de edad",
+        "el bloqueo es terminal y purgar solo borra",
+        "defecto 2 reproducido y corregido"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-20 ·"
+    },
+    {
+      "id": "T-21",
+      "tipo": "Tarea",
+      "nombre": "Caducidad y purgas",
+      "texto": "tareas idempotentes con fecha inyectable",
+      "criterios": [
+        "se prueban los límites de 30 días, 12 meses y 90 días",
+        "repetir una tarea o cruzarla con una petición no duplica ni pierde datos",
+        "defecto 8 reproducido y corregido"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-21 ·"
+    },
+    {
+      "id": "T-22",
+      "tipo": "Tarea",
+      "nombre": "Reportes agregados",
+      "texto": "reportes con aciertos por tema y abandono",
+      "criterios": [
+        "el agregado es igual antes y después de borrar",
+        "con 9 se suprime y con 10 se muestra",
+        "dos cortes no permiten despejar a una persona"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-22 ·"
+    },
+    {
+      "id": "T-23",
+      "tipo": "Tarea",
+      "nombre": "Acceso administrativo",
+      "texto": "autorización por grupo y bitácora",
+      "criterios": [
+        "sin el grupo de administradores no hay acceso",
+        "la bitácora no guarda respuestas ni secretos"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-23 ·"
+    },
+    {
+      "id": "T-24",
+      "tipo": "Tarea",
+      "nombre": "API de contenido",
+      "texto": "crear, editar, copiar, validar, publicar y retirar",
+      "criterios": [
+        "un escenario creado solo por API se juega completo",
+        "lo publicado no se edita"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-24 ·"
+    },
+    {
+      "id": "T-25",
+      "tipo": "Tarea",
+      "nombre": "API de derechos ARCO",
+      "texto": "solicitudes, plazos, verificación y documentos",
+      "criterios": [
+        "el usuario decidió el calendario, la limitación y la verificación manual",
+        "los seis derechos se prueban en sus plazos límite",
+        "al cerrar no queda documento",
+        "defecto 13 reproducido y corregido"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-25 ·"
+    },
+    {
+      "id": "T-26",
+      "tipo": "Tarea",
+      "nombre": "Matriz de aceptación",
+      "texto": "matriz de RF, RN, RNF, OR e interfaces, y sabotajes",
+      "criterios": [
+        "los 87 RF tienen prueba ejecutada y estado declarado",
+        "cada sabotaje hace fallar la suite"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-26 ·"
+    },
+    {
+      "id": "T-27",
+      "tipo": "Tarea",
+      "nombre": "Seguridad y operación local",
+      "texto": "seguridad, carga, logs, respaldo y restauración",
+      "criterios": [
+        "P5 cumple P95 menor de 200 ms con 150 usuarios",
+        "restaurar no resucita a quien se dio de baja"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-27 ·"
+    },
+    {
+      "id": "T-28",
+      "tipo": "Tarea",
+      "nombre": "Entrega del backend",
+      "texto": "guía local, OpenAPI y procedimiento de dependencias",
+      "criterios": [
+        "la guía funciona desde un clon limpio",
+        "RNF-16 tiene responsable y frecuencia",
+        "el usuario completa el recorrido manual"
+      ],
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ],
+      "estado": "pendiente",
+      "fecha": "2026-11-22",
+      "ruta": "context/plan.md",
+      "buscar": "### T-28 ·"
+    },
+    {
+      "id": "S-03",
+      "tipo": "Supuesto",
+      "nombre": "Defectos del diseño detectados por lectura",
+      "texto": "Los 13 defectos de MODELO-DATOS.pendientes ocurren al ejecutar el esquema y los procesos.",
+      "estado": "por_verificar",
+      "fecha": "2026-11-22",
+      "ruta": "context/supuestos.md",
+      "buscar": "| S-03 |",
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ]
+    },
+    {
+      "id": "S-04",
+      "tipo": "Supuesto",
+      "nombre": "El simulador equivale a Cognito y Docker a RDS",
+      "texto": "Lo probado en local (D-15) funcionará con Cognito y RDS reales. S1 y S2 no se probaron en este proyecto.",
+      "estado": "por_verificar",
+      "fecha": "2026-11-22",
+      "ruta": "context/supuestos.md",
+      "buscar": "| S-04 |",
+      "fuente": [
+        {
+          "doc": "D-23",
+          "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
+        }
+      ]
+    },
+    {
+      "id": "CA-01",
+      "tipo": "CambioAlcance",
+      "nombre": "Backend en Docker local con emisor simulado",
+      "texto": "Lo acordado: AWS con RDS y Cognito reales. Lo que se hará: Backend en Docker local con emisor simulado. Alcance elegido por el usuario; no demuestra la infraestructura.",
+      "estado": "vigente",
+      "fecha": "2026-11-22",
+      "ruta": "context/cambios-alcance.md",
+      "buscar": "| CA-01 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "CA-02",
+      "tipo": "CambioAlcance",
+      "nombre": "Sin envío propio en este plan",
+      "texto": "Lo acordado: Correos del Aviso. Lo que se hará: Sin envío propio en este plan. No bloquean el backend; CONF-18 sigue pendiente.",
+      "estado": "vigente",
+      "fecha": "2026-11-22",
+      "ruta": "context/cambios-alcance.md",
+      "buscar": "| CA-02 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "CA-03",
+      "tipo": "CambioAlcance",
+      "nombre": "Solo escenario de demostración",
+      "texto": "Lo acordado: Escenario real de becas. Lo que se hará: Solo escenario de demostración. No valida pedagogía ni hipótesis.",
+      "estado": "vigente",
+      "fecha": "2026-11-22",
+      "ruta": "context/cambios-alcance.md",
+      "buscar": "| CA-03 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
         }
       ]
     }
@@ -9762,11 +10691,6 @@
     },
     {
       "origen": "T-05",
-      "relacion": "pertenece_a",
-      "destino": "E2"
-    },
-    {
-      "origen": "T-05",
       "relacion": "implementa",
       "destino": "D-04"
     },
@@ -9774,16 +10698,6 @@
       "origen": "T-05",
       "relacion": "implementa",
       "destino": "ADR-005"
-    },
-    {
-      "origen": "T-06",
-      "relacion": "pertenece_a",
-      "destino": "E2"
-    },
-    {
-      "origen": "T-07",
-      "relacion": "pertenece_a",
-      "destino": "E3"
     },
     {
       "origen": "T-07",
@@ -9894,6 +10808,721 @@
       "origen": "D-09",
       "relacion": "afecta",
       "destino": "PER-DOCENTE"
+    },
+    {
+      "origen": "D-23",
+      "relacion": "afecta",
+      "destino": "E2"
+    },
+    {
+      "origen": "RF-001",
+      "relacion": "se_planea_en",
+      "destino": "E2"
+    },
+    {
+      "origen": "RF-002",
+      "relacion": "se_planea_en",
+      "destino": "E2"
+    },
+    {
+      "origen": "RF-003",
+      "relacion": "se_planea_en",
+      "destino": "E2"
+    },
+    {
+      "origen": "RF-004",
+      "relacion": "se_planea_en",
+      "destino": "E2"
+    },
+    {
+      "origen": "RF-062",
+      "relacion": "se_planea_en",
+      "destino": "E2"
+    },
+    {
+      "origen": "RF-068",
+      "relacion": "se_planea_en",
+      "destino": "E2"
+    },
+    {
+      "origen": "RF-071",
+      "relacion": "se_planea_en",
+      "destino": "E2"
+    },
+    {
+      "origen": "RF-073",
+      "relacion": "se_planea_en",
+      "destino": "E2"
+    },
+    {
+      "origen": "D-23",
+      "relacion": "afecta",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-006",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-013",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-014",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-015",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-016",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-017",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-018",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-019",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-020",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-021",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-022",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-023",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-024",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-025",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-026",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-027",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-028",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-029",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-030",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-031",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-032",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-033",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-034",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-035",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-036",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-037",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-038",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-063",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-064",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-065",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "RF-066",
+      "relacion": "se_planea_en",
+      "destino": "E3"
+    },
+    {
+      "origen": "E4",
+      "relacion": "depende_de",
+      "destino": "E3"
+    },
+    {
+      "origen": "D-23",
+      "relacion": "afecta",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-005",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-007",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-008",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-009",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-010",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-011",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-012",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-039",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-040",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-041",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-042",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-043",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-044",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-045",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-046",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-047",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-048",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-049",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-050",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-051",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-052",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-053",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-054",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-055",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-056",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-057",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-058",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-059",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-060",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-061",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "RF-067",
+      "relacion": "se_planea_en",
+      "destino": "E4"
+    },
+    {
+      "origen": "E5",
+      "relacion": "depende_de",
+      "destino": "E4"
+    },
+    {
+      "origen": "D-23",
+      "relacion": "afecta",
+      "destino": "E5"
+    },
+    {
+      "origen": "RF-074",
+      "relacion": "se_planea_en",
+      "destino": "E5"
+    },
+    {
+      "origen": "RF-075",
+      "relacion": "se_planea_en",
+      "destino": "E5"
+    },
+    {
+      "origen": "RF-076",
+      "relacion": "se_planea_en",
+      "destino": "E5"
+    },
+    {
+      "origen": "RF-077",
+      "relacion": "se_planea_en",
+      "destino": "E5"
+    },
+    {
+      "origen": "E6",
+      "relacion": "depende_de",
+      "destino": "E5"
+    },
+    {
+      "origen": "D-23",
+      "relacion": "afecta",
+      "destino": "E6"
+    },
+    {
+      "origen": "RF-070",
+      "relacion": "se_planea_en",
+      "destino": "E6"
+    },
+    {
+      "origen": "RF-072",
+      "relacion": "se_planea_en",
+      "destino": "E6"
+    },
+    {
+      "origen": "RF-078",
+      "relacion": "se_planea_en",
+      "destino": "E6"
+    },
+    {
+      "origen": "RF-079",
+      "relacion": "se_planea_en",
+      "destino": "E6"
+    },
+    {
+      "origen": "RF-080",
+      "relacion": "se_planea_en",
+      "destino": "E6"
+    },
+    {
+      "origen": "E7",
+      "relacion": "depende_de",
+      "destino": "E6"
+    },
+    {
+      "origen": "D-23",
+      "relacion": "afecta",
+      "destino": "E7"
+    },
+    {
+      "origen": "RF-069",
+      "relacion": "se_planea_en",
+      "destino": "E7"
+    },
+    {
+      "origen": "RF-081",
+      "relacion": "se_planea_en",
+      "destino": "E7"
+    },
+    {
+      "origen": "RF-082",
+      "relacion": "se_planea_en",
+      "destino": "E7"
+    },
+    {
+      "origen": "RF-083",
+      "relacion": "se_planea_en",
+      "destino": "E7"
+    },
+    {
+      "origen": "RF-084",
+      "relacion": "se_planea_en",
+      "destino": "E7"
+    },
+    {
+      "origen": "RF-085",
+      "relacion": "se_planea_en",
+      "destino": "E7"
+    },
+    {
+      "origen": "RF-086",
+      "relacion": "se_planea_en",
+      "destino": "E7"
+    },
+    {
+      "origen": "RF-087",
+      "relacion": "se_planea_en",
+      "destino": "E7"
+    },
+    {
+      "origen": "E8",
+      "relacion": "depende_de",
+      "destino": "E7"
+    },
+    {
+      "origen": "D-23",
+      "relacion": "afecta",
+      "destino": "E8"
+    },
+    {
+      "origen": "T-08",
+      "relacion": "pertenece_a",
+      "destino": "E2"
+    },
+    {
+      "origen": "T-09",
+      "relacion": "pertenece_a",
+      "destino": "E2"
+    },
+    {
+      "origen": "T-05",
+      "relacion": "pertenece_a",
+      "destino": "E2"
+    },
+    {
+      "origen": "T-06",
+      "relacion": "pertenece_a",
+      "destino": "E2"
+    },
+    {
+      "origen": "T-10",
+      "relacion": "pertenece_a",
+      "destino": "E2"
+    },
+    {
+      "origen": "T-11",
+      "relacion": "pertenece_a",
+      "destino": "E3"
+    },
+    {
+      "origen": "T-07",
+      "relacion": "pertenece_a",
+      "destino": "E3"
+    },
+    {
+      "origen": "T-12",
+      "relacion": "pertenece_a",
+      "destino": "E3"
+    },
+    {
+      "origen": "T-13",
+      "relacion": "pertenece_a",
+      "destino": "E3"
+    },
+    {
+      "origen": "T-14",
+      "relacion": "pertenece_a",
+      "destino": "E4"
+    },
+    {
+      "origen": "T-15",
+      "relacion": "pertenece_a",
+      "destino": "E4"
+    },
+    {
+      "origen": "T-16",
+      "relacion": "pertenece_a",
+      "destino": "E4"
+    },
+    {
+      "origen": "T-17",
+      "relacion": "pertenece_a",
+      "destino": "E5"
+    },
+    {
+      "origen": "T-18",
+      "relacion": "pertenece_a",
+      "destino": "E5"
+    },
+    {
+      "origen": "T-19",
+      "relacion": "pertenece_a",
+      "destino": "E5"
+    },
+    {
+      "origen": "T-20",
+      "relacion": "pertenece_a",
+      "destino": "E6"
+    },
+    {
+      "origen": "T-21",
+      "relacion": "pertenece_a",
+      "destino": "E6"
+    },
+    {
+      "origen": "T-22",
+      "relacion": "pertenece_a",
+      "destino": "E6"
+    },
+    {
+      "origen": "T-23",
+      "relacion": "pertenece_a",
+      "destino": "E7"
+    },
+    {
+      "origen": "T-24",
+      "relacion": "pertenece_a",
+      "destino": "E7"
+    },
+    {
+      "origen": "T-25",
+      "relacion": "pertenece_a",
+      "destino": "E7"
+    },
+    {
+      "origen": "T-26",
+      "relacion": "pertenece_a",
+      "destino": "E8"
+    },
+    {
+      "origen": "T-27",
+      "relacion": "pertenece_a",
+      "destino": "E8"
+    },
+    {
+      "origen": "T-28",
+      "relacion": "pertenece_a",
+      "destino": "E8"
+    },
+    {
+      "origen": "T-09",
+      "relacion": "depende_de",
+      "destino": "T-08"
+    },
+    {
+      "origen": "T-05",
+      "relacion": "depende_de",
+      "destino": "T-09"
+    },
+    {
+      "origen": "T-10",
+      "relacion": "depende_de",
+      "destino": "T-05"
+    },
+    {
+      "origen": "T-11",
+      "relacion": "depende_de",
+      "destino": "T-10"
+    },
+    {
+      "origen": "T-07",
+      "relacion": "depende_de",
+      "destino": "T-11"
+    },
+    {
+      "origen": "T-12",
+      "relacion": "depende_de",
+      "destino": "T-11"
+    },
+    {
+      "origen": "T-13",
+      "relacion": "depende_de",
+      "destino": "T-12"
+    },
+    {
+      "origen": "T-08",
+      "relacion": "implementa",
+      "destino": "D-22"
+    },
+    {
+      "origen": "T-08",
+      "relacion": "implementa",
+      "destino": "D-23"
+    },
+    {
+      "origen": "T-09",
+      "relacion": "implementa",
+      "destino": "D-19"
+    },
+    {
+      "origen": "T-09",
+      "relacion": "implementa",
+      "destino": "D-20"
+    },
+    {
+      "origen": "T-09",
+      "relacion": "implementa",
+      "destino": "D-21"
+    },
+    {
+      "origen": "T-13",
+      "relacion": "implementa",
+      "destino": "D-17"
+    },
+    {
+      "origen": "T-17",
+      "relacion": "implementa",
+      "destino": "D-15"
+    },
+    {
+      "origen": "D-19",
+      "relacion": "afecta",
+      "destino": "ADR-004"
+    },
+    {
+      "origen": "D-20",
+      "relacion": "afecta",
+      "destino": "ADR-004"
+    },
+    {
+      "origen": "D-21",
+      "relacion": "afecta",
+      "destino": "ADR-004"
+    },
+    {
+      "origen": "D-15",
+      "relacion": "afecta",
+      "destino": "CA-01"
+    },
+    {
+      "origen": "D-18",
+      "relacion": "afecta",
+      "destino": "CA-02"
+    },
+    {
+      "origen": "D-17",
+      "relacion": "afecta",
+      "destino": "CA-03"
     }
   ],
   "conflictos": [
@@ -10373,6 +12002,179 @@
         "DOC-AVP22",
         "MODO-ANONIMO",
         "RF-073"
+      ]
+    },
+    {
+      "id": "CONF-15",
+      "tema": "Oposición a estadísticas frente a copias ya escritas",
+      "estado": "resuelto",
+      "posturas": [
+        {
+          "doc": "DOC-AVP22",
+          "seccion": "§5.2",
+          "afirma": "Tras oponerse, los resultados no entran en nuevos cálculos."
+        },
+        {
+          "doc": "ADR-004",
+          "seccion": "§3",
+          "afirma": "Los resultados ya escritos no se retiran."
+        }
+      ],
+      "resolucion": "Mientras los datos existen, los reportes se calculan sobre ellos y excluyen a quien se opuso. La copia anónima se crea solo antes de borrar o bloquear. ADR-007 reemplazará a ADR-004. (D-19).",
+      "afecta": [
+        "ADR-004",
+        "RF-079",
+        "PROC-10"
+      ],
+      "decidido": {
+        "doc": "DECISION-USUARIO",
+        "seccion": "2026-11-22"
+      }
+    },
+    {
+      "id": "CONF-16",
+      "tema": "Uso de datos durante el bloqueo",
+      "estado": "resuelto",
+      "posturas": [
+        {
+          "doc": "DOC-AVP22",
+          "seccion": "§10",
+          "afirma": "Los datos bloqueados no se usan en las actividades de la plataforma."
+        },
+        {
+          "doc": "MODELO-DATOS",
+          "seccion": "§7 P9",
+          "afirma": "Los hechos se generan al purgar una cuenta bloqueada."
+        }
+      ],
+      "resolucion": "El resultado anónimo se genera antes de bloquear una cuenta, salvo oposición o minoría de edad. Durante el bloqueo los datos no se usan y al purgar solo se borra. (D-20).",
+      "afecta": [
+        "RET-BLOQUEO",
+        "RF-080",
+        "ADR-004"
+      ],
+      "decidido": {
+        "doc": "DECISION-USUARIO",
+        "seccion": "2026-11-22"
+      }
+    },
+    {
+      "id": "CONF-17",
+      "tema": "Métricas prometidas que el modelo no guarda",
+      "estado": "resuelto",
+      "posturas": [
+        {
+          "doc": "DOC-AVP22",
+          "seccion": "procesos 11 y 12",
+          "afirma": "Se calculan aciertos por tema y dónde se abandona."
+        },
+        {
+          "doc": "MODELO-DATOS",
+          "seccion": "§3",
+          "afirma": "session_facts no guarda ninguno."
+        }
+      ],
+      "resolucion": "El backend soporta aciertos por tema y punto de abandono como resultados anónimos, con umbral de 10 participantes. (D-21).",
+      "afecta": [
+        "PROC-09",
+        "PROC-10",
+        "MODELO-DATOS"
+      ],
+      "decidido": {
+        "doc": "DECISION-USUARIO",
+        "seccion": "2026-11-22"
+      }
+    },
+    {
+      "id": "CONF-18",
+      "tema": "Correos del Aviso frente a RIC-03",
+      "estado": "pendiente",
+      "posturas": [
+        {
+          "doc": "DOC-AVP22",
+          "seccion": "proceso 9, §11",
+          "afirma": "Hay boletín, avisos y código ARCO por correo."
+        },
+        {
+          "doc": "DOC-REQ11",
+          "seccion": "RIC-03",
+          "afirma": "Solo se requieren los correos de Cognito."
+        }
+      ],
+      "resolucion": "Pendiente. No bloquea el backend local (D-18). Se decide al agregar correos o antes del piloto.",
+      "afecta": [
+        "RIC-03",
+        "FIN-S01",
+        "FIN-S02",
+        "ARCO"
+      ]
+    },
+    {
+      "id": "CONF-19",
+      "tema": "Banner de cookies sin requerimiento",
+      "estado": "pendiente",
+      "posturas": [
+        {
+          "doc": "DOC-AVP22",
+          "seccion": "§6, §8",
+          "afirma": "Hay banner y preferencias de cookies."
+        },
+        {
+          "doc": "DOC-REQ11",
+          "seccion": "7",
+          "afirma": "Ningún RF lo pide."
+        }
+      ],
+      "resolucion": "Pendiente. No bloquea el backend local. Se decide con la interfaz (A-01).",
+      "afecta": [
+        "FIN-S03",
+        "COOK-ANALITICAS"
+      ]
+    },
+    {
+      "id": "CONF-20",
+      "tema": "Código público frente a los Términos",
+      "estado": "pendiente",
+      "posturas": [
+        {
+          "doc": "DOC-TYC",
+          "seccion": "4.2",
+          "afirma": "Se prohíbe intentar obtener el código fuente."
+        },
+        {
+          "doc": "D-08",
+          "seccion": "decisión",
+          "afirma": "El repositorio es público."
+        }
+      ],
+      "resolucion": "Pendiente. No bloquea el backend local. Se decide al redactar los Términos v1.1 (T-02).",
+      "afecta": [
+        "DOC-TYC",
+        "PROH-01",
+        "LIC-USO"
+      ]
+    },
+    {
+      "id": "CONF-21",
+      "tema": "Encuesta no vinculada frente a la oposición",
+      "estado": "pendiente",
+      "posturas": [
+        {
+          "doc": "DOC-REQ11",
+          "seccion": "RF-060",
+          "afirma": "La encuesta se guarda al enviarla sin vínculo, así que no se puede retirar."
+        },
+        {
+          "doc": "D-19",
+          "seccion": "decisión",
+          "afirma": "Los reportes excluyen a quien se opuso."
+        }
+      ],
+      "resolucion": "Pendiente. No bloquea E2 ni E3. Lo decide el usuario en la Puerta A de E4.",
+      "afecta": [
+        "RF-060",
+        "RF-079",
+        "ENCUESTA-APP"
       ]
     }
   ]
