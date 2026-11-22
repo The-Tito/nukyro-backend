@@ -117,3 +117,9 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** alcance comprobado: un solo commit remoto, main limpio, sin forks, mismo árbol que d6ab902.
 - **Decisiones:** D-26 a D-31, CONF-21 resuelto. S-02 sigue por verificar: no se indicó dónde está el respaldo.
 - **Evidencia:** escáner acotado con `^e8dbae5`: 0 hallazgos.
+
+## 2026-11-22: T-07 cerrada y D-32
+- **Resultado:** caja negra de E3, matriz `tests/trazabilidad-e3.md` y prueba de vivacidad. El usuario pidió continuar hasta finalizar el backend.
+- **Revisión:** auditor con Sonnet sin bloqueos; se agregó la carrera con alternativas distintas y se precisó ADR-009.
+- **Decisiones:** D-32.
+- **Evidencia:** `./scripts/verify`; 1 000 pares concurrentes con 0 duplicados (S4) y un fallo inyectado en cada escritura sin cambios.

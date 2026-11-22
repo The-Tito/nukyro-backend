@@ -62,7 +62,7 @@ Al final el usuario hace el recorrido manual y el auditor revisa el total.
 
 ## Defectos por corregir
 
-Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`); el 2 sigue abierto para la encuesta (T-16) y el 9 para la vinculación (T-18). El 1 y del 10 al 13: detectados por lectura, sin reproducir (S-03).
+Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`); el 2 sigue abierto para la encuesta (T-16) y el 9 para la vinculación (T-18). El 1: corregido en P5 (T-07). Del 10 al 13: detectados por lectura, sin reproducir (S-03).
 
 | # | Defecto | Arreglo propuesto | Tareas |
 |---|---|---|---|
@@ -195,8 +195,8 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-07 · Motor de simulación
 - Etapa: E3
-- Estado: en_curso
-- Nota: El usuario fusionó el motor y P5 con el PR #10 antes de terminar la tarea. Falta: caja negra de E3, revisar las consultas de P5 y auditoría. La regla del pre-test se decidió en D-28 (T-12).
+- Estado: cerrada
+- Nota: Cerrada el 2026-11-22 por delegación (D-24, D-32): PR #10, caja negra y auditoría sin bloqueos. Sin revisión humana.
 - Entregable: motor puro, proceso P5, avance y reanudación
 - Criterios de cierre:
   - cada proceso tiene pruebas

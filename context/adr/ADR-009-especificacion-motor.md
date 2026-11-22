@@ -78,6 +78,10 @@ El resumen solo atribuye estas relaciones, con el `relation_type` y la explicaci
 - El destino de una regla `event` no crea paso ni cuenta para `visited`; para publicar sí cuenta como alcanzable.
   Dos reglas pueden mostrar el mismo evento: cada una se registra una vez por sesión.
 - Una variable repetida en los efectos de una alternativa es válida: es causa si algún efecto la cambió.
+- Una petición rechazada no cambia nada, tampoco la actividad del participante: solo renueva la que se acepta.
+- Publicar rechaza todo nodo inaccesible: el contenido no tiene cómo justificar uno (RF-066).
+- `visited` sobre un evento solo mostrado es válido y siempre falso.
+- El pre-test lo exige P12 y la puerta del primer nodo la aplica P5; el motor puro no lo conoce.
 - Un `not` sin variables puede no tener decisiones causantes: solo se atribuye la regla, no se inventa una causa.
 
 ### Ejemplos calculados a mano

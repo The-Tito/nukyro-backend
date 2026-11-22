@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.30.0",
+    "version": "1.31.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -210,6 +210,11 @@
         "version": "1.30.0",
         "fecha": "2026-11-22",
         "cambio": "D-32: la ejecución delegada sigue hasta finalizar el backend, sin parada al cerrar E3."
+      },
+      {
+        "version": "1.31.0",
+        "fecha": "2026-11-22",
+        "cambio": "T-07 cerrada: motor, P5 y sus criterios comprobados; defecto 1 corregido."
       }
     ]
   },
@@ -6171,7 +6176,7 @@
           "tareas": [
             "T-07"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en P5 (T-07)"
         },
         {
           "n": 2,
@@ -6882,7 +6887,7 @@
       "tipo": "Tarea",
       "nombre": "Motor de simulación",
       "texto": "motor puro, proceso P5, avance y reanudación",
-      "estado": "en_curso",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-07 ·",
@@ -6899,7 +6904,7 @@
         "el cliente no determina consecuencias (ARQ)",
         "defecto 1 reproducido y corregido"
       ],
-      "nota": "El usuario fusionó el motor y P5 con el PR #10 antes de terminar la tarea. Falta: caja negra de E3, revisar las consultas de P5 y auditoría. La regla del pre-test se decidió en D-28 (T-12)."
+      "nota": "Cerrada el 2026-11-22 por delegación (D-24, D-32): PR #10, caja negra y auditoría sin bloqueos. Sin revisión humana."
     },
     {
       "id": "D-09",

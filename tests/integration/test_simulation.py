@@ -733,3 +733,33 @@ def test_decidir_y_borrar_al_participante_a_la_vez_no_se_interbloquean(
         assert superuser.execute(
             "SELECT count(*) FROM nukyro.participants WHERE id=%s", (participant,)
         ).fetchone() == (0,)
+
+
+def test_dos_alternativas_a_la_vez_dejan_una_sola_decision(api_engine, superuser, content):
+    for _ in range(25):
+        secret, sid = direct_session(superuser, content)
+        service.advance(api_engine, secret, sid, AdvanceIn(from_node_key="intro"))
+        barrier = threading.Barrier(2)
+
+        def choose(option, secret=secret, sid=sid, barrier=barrier):
+            barrier.wait()
+            body = DecisionIn(node_key="D1", option_key=option, reason_keys=["R1"])
+            return service.decide(api_engine, secret, sid, body)
+
+        with ThreadPoolExecutor(2) as pool:
+            first, second = pool.map(choose, ("A", "B"))
+        assert first["confirmed"] == second["confirmed"]
+        assert sorted([first["replayed"], second["replayed"]]) == [False, True]
+        # Los efectos son solo los de la confirmada: A deja p en 1; B, en 5
+        assert superuser.execute(
+            "SELECT count(*) OVER (), o.key, sv.value FROM nukyro.session_decisions d "
+            "JOIN nukyro.options o ON o.id = d.option_id "
+            "JOIN nukyro.session_variables sv ON sv.session_id = d.session_id "
+            "JOIN nukyro.state_variables v ON v.id = sv.variable_id AND v.key = 'p' "
+            "WHERE d.session_id = %s",
+            (sid,),
+        ).fetchone() == (
+            1,
+            first["confirmed"]["option_key"],
+            {"A": 1, "B": 5}[first["confirmed"]["option_key"]],
+        )
