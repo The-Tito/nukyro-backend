@@ -105,3 +105,9 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Decisiones:** ADR-009.
 - **Evidencia:** `context/etapas/etapa-3.md`.
 - **Auditoría de T-11:** Sonnet recalculó los cuatro ejemplos; 5 observaciones sin bloqueo, precisadas en ADR-009.
+
+## 2026-11-22: T-07 a medias y cierre de sesión por límite de uso
+- **Resultado:** motor puro y P5 con sus rutas, en `feature/T-07-motor`, sin fusionar.
+- **Revisión:** la dirección corrigió de rojo a verde tres fallos del motor (un evento en la ruta no avanzaba, variables sin límite, justificación no pedida) y uno de P5 (no renovaba la actividad: RF-080 habría borrado a alguien activo).
+- **Decisiones:** ninguna. Pendiente: qué hace una versión sin pre-test al llegar al desenlace (el CHECK lo exige y hoy da 409).
+- **Evidencia:** `./scripts/verify` con sql=242, unit=59, integration=45, blackbox=40. Sin caja negra de E3 ni auditor.

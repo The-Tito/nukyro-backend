@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.27.0",
+    "version": "1.28.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -195,6 +195,11 @@
         "version": "1.27.0",
         "fecha": "2026-11-22",
         "cambio": "Puerta A de E3 delegada; ADR-009 especifica el motor (T-11). T-07 en curso."
+      },
+      {
+        "version": "1.28.0",
+        "fecha": "2026-11-22",
+        "cambio": "T-07 a medias al cierre de la sesión: motor y P5 en su rama, sin auditar ni fusionar."
       }
     ]
   },
@@ -6883,7 +6888,8 @@
         "1 000 pares concurrentes dan 0 duplicados (S4)",
         "el cliente no determina consecuencias (ARQ)",
         "defecto 1 reproducido y corregido"
-      ]
+      ],
+      "nota": "A medias al cierre del 2026-11-22: motor y P5 en feature/T-07-motor, sin fusionar, verify en verde. Falta: pruebas de caja negra de E3, regla de las versiones sin pre-test, auditoría y fusión."
     },
     {
       "id": "D-09",
