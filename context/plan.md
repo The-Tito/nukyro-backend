@@ -123,8 +123,8 @@ Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que 
 
 ### T-08 · Activar el plan del backend
 - Etapa: E2
-- Estado: en_curso
-- Nota: Retomada el 2026-11-22 con D-24. Protocolo, reglas del validador y sus pruebas en curso; la revisión humana queda pendiente.
+- Estado: cerrada
+- Nota: Cerrada el 2026-11-22 por delegación (D-24) con EV-01. El usuario no la ha revisado.
 - Entregable: KG, vistas, protocolo por fase y validador
 - Criterios de cierre:
   - el KG registra D-15 a D-23, E2 a E8, T-05 a T-28 y una fase por RF
@@ -133,7 +133,7 @@ Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que 
 
 ### T-09 · Decisiones de base y esquema corregido
 - Etapa: E2
-- Estado: pendiente
+- Estado: en_curso
 - Entregable: ADR-007, ADR-008, esquema, modelo y pruebas SQL
 - Criterios de cierre:
   - ADR-007 reemplaza a ADR-004 y declara el riesgo residual (D-19 a D-21)
@@ -150,7 +150,7 @@ Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que 
 
 ### T-05 · Base de la API y migración inicial
 - Etapa: E2
-- Estado: pendiente
+- Estado: en_curso
 - Entregable: FastAPI, Compose con TLS local, Alembic y roles
 - Criterios de cierre:
   - `alembic upgrade head` crea el esquema en PostgreSQL 16 vacío, con owner sin superusuario
@@ -160,7 +160,7 @@ Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que 
 
 ### T-06 · Revisiones automáticas del backend
 - Etapa: E2
-- Estado: pendiente
+- Estado: en_curso
 - Entregable: CI, hooks de Python y `scripts/verify`
 - Criterios de cierre:
   - CI corre las pruebas SQL y de la API
