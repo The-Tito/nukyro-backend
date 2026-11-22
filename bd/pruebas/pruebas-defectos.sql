@@ -188,8 +188,8 @@ SELECT pg_temp.chk('D2-06 PUBLIC no tiene nada sobre los hechos',
         AND NOT EXISTS (SELECT 1 FROM pg_class c, aclexplode(c.relacl) a
                          WHERE c.relnamespace = 'nukyro'::regnamespace
                            AND c.relname IN ('session_facts', 'decision_facts', 'topic_facts') AND a.grantee = 0)$q$);
-SELECT pg_temp.chk('D2-07 survey_responses: api solo inserta; jobs y analítica no leen',
- $q$SELECT has_table_privilege('nukyro_api', 'nukyro.survey_responses', 'INSERT')
+SELECT pg_temp.chk('D2-07 survey_responses: api ni inserta ni lee (solo submit_survey); jobs y analítica no leen',
+ $q$SELECT NOT has_table_privilege('nukyro_api', 'nukyro.survey_responses', 'INSERT')
         AND NOT has_table_privilege('nukyro_api', 'nukyro.survey_responses', 'SELECT')
         AND NOT has_table_privilege('nukyro_api', 'nukyro.survey_responses', 'UPDATE')
         AND NOT has_any_column_privilege('nukyro_jobs', 'nukyro.survey_responses', 'SELECT')
@@ -210,9 +210,9 @@ SELECT pg_temp.expect('D3-04 api no lee session_facts', $q$SELECT count(*) FROM 
 SELECT pg_temp.expect('D3-05 api no lee decision_facts', $q$SELECT count(*) FROM nukyro.decision_facts$q$, '42501');
 SELECT pg_temp.expect('D3-06 api no lee topic_facts', $q$SELECT count(*) FROM nukyro.topic_facts$q$, '42501');
 SELECT pg_temp.expect('D3-07 api no borra hechos', $q$DELETE FROM nukyro.session_facts$q$, '42501');
-SELECT pg_temp.allow('D3-08 api inserta una encuesta anónima',
+SELECT pg_temp.expect('D3-08 api no inserta encuestas directamente (T-16)',
  $q$INSERT INTO nukyro.survey_responses (scenario_version_id, week_start, is_first_session, usefulness)
-    VALUES ('00000000-0000-0000-0000-000000000011', date_trunc('week', now())::date, true, 4)$q$);
+    VALUES ('00000000-0000-0000-0000-000000000011', date_trunc('week', now())::date, true, 4)$q$, '42501');
 SELECT pg_temp.expect('D3-09 api no lee las encuestas', $q$SELECT count(*) FROM nukyro.survey_responses$q$, '42501');
 SELECT pg_temp.expect('D3-10 api no modifica las encuestas', $q$UPDATE nukyro.survey_responses SET usefulness = 5$q$, '42501');
 RESET ROLE;
@@ -801,5 +801,62 @@ SELECT pg_temp.allow('H-13 borrar al participante borra la sesión con sus hitos
  $q$DELETE FROM participants WHERE id = pg_temp.id('bb', 140)$q$);
 SELECT pg_temp.chk('H-14 la sesión borrada ya no existe',
  $q$SELECT NOT EXISTS (SELECT 1 FROM sessions WHERE id = pg_temp.id('cc', 240))$q$);
+
+-- G · T-16: submit_survey (D-29, ADR-007)
+-- ---------------------------------------------------------------------
+SELECT pg_temp.mk_anon(401); SELECT pg_temp.mk_rich_session(401, 401);   -- terminada, responde
+SELECT pg_temp.mk_anon(402); SELECT pg_temp.mk_session(402, 402);        -- sin terminar
+SELECT pg_temp.mk_anon(403); SELECT pg_temp.mk_rich_session(403, 403);   -- se opone
+UPDATE participants SET exclude_from_stats = true WHERE id = pg_temp.id('bb', 403);
+SELECT set_config('nukyro_t.last', (SELECT last_activity_at::text FROM sessions WHERE id = pg_temp.id('cc', 401)), false);
+
+SELECT pg_temp.chk('S-01 submit_survey: definer, search_path fijo, EXECUTE a api y a nadie más',
+ $q$SELECT p.prosecdef AND p.proconfig IS NOT NULL AND p.proconfig::text LIKE '%search_path%'
+        AND has_function_privilege('nukyro_api', p.oid, 'EXECUTE')
+        AND NOT has_function_privilege('nukyro_jobs', p.oid, 'EXECUTE')
+        AND NOT has_function_privilege('nukyro_analytics', p.oid, 'EXECUTE')
+        AND NOT has_function_privilege('nukyro_admin', p.oid, 'EXECUTE')
+        AND NOT EXISTS (SELECT 1 FROM aclexplode(p.proacl) a WHERE a.grantee = 0)
+      FROM pg_proc p WHERE p.proname = 'submit_survey' AND p.pronamespace = 'nukyro'::regnamespace$q$);
+SET ROLE nukyro_api;
+SELECT pg_temp.expect('S-02 una sesión sin terminar se rechaza (55000)',
+ $q$SELECT nukyro.submit_survey(pg_temp.id('cc', 402), 4::smallint)$q$, '55000');
+SELECT pg_temp.expect('S-03 el participante opuesto se rechaza (42501)',
+ $q$SELECT nukyro.submit_survey(pg_temp.id('cc', 403), 4::smallint)$q$, '42501');
+SELECT pg_temp.expect('S-04 una sesión inexistente se rechaza (P0002)',
+ $q$SELECT nukyro.submit_survey(pg_temp.id('cc', 499), 4::smallint)$q$, 'P0002');
+SELECT pg_temp.expect('S-05 una escala fuera de 1 a 5 se rechaza (23514)',
+ $q$SELECT nukyro.submit_survey(pg_temp.id('cc', 401), 4::smallint, 9::smallint)$q$, '23514');
+SELECT pg_temp.allow('S-06 la sesión terminada responde',
+ $q$SELECT nukyro.submit_survey(pg_temp.id('cc', 401), 4::smallint, 3::smallint)$q$);
+SELECT pg_temp.expect('S-07 solo se responde una vez (23505)',
+ $q$SELECT nukyro.submit_survey(pg_temp.id('cc', 401), 5::smallint)$q$, '23505');
+RESET ROLE;
+SELECT pg_temp.chk('S-08 queda survey_answered y la actividad de la sesión no cambia',
+ $q$SELECT survey_answered AND last_activity_at::text = current_setting('nukyro_t.last')
+      FROM sessions WHERE id = pg_temp.id('cc', 401)$q$);
+SELECT pg_temp.chk('S-09 lo rechazado no dejó nada: sin terminar y opuesto siguen sin marca',
+ $q$SELECT NOT EXISTS (SELECT 1 FROM sessions WHERE id IN (pg_temp.id('cc', 402), pg_temp.id('cc', 403)) AND survey_answered)
+        AND (SELECT count(*) FROM survey_responses WHERE clarity = 3) = 1$q$);
+SELECT pg_temp.chk('S-10 la semana es la UTC de inicio de la sesión (lunes 2026-11-30)',
+ $q$SELECT week_start = DATE '2026-11-30' FROM survey_responses WHERE clarity = 3$q$);
+SELECT set_config('nukyro_t.sx1', (SELECT xmin::text FROM survey_responses LIMIT 1), false);
+
+-- Diez envíos más, cada uno en su transacción (\gexec): arribo con (claridad, impacto) = índice 0 a 9
+SELECT pg_temp.mk_anon(410 + g), pg_temp.mk_rich_session(410 + g, 410 + g) FROM generate_series(0, 9) g;
+SELECT format('SET ROLE nukyro_api; SELECT nukyro.submit_survey(%L, 3::smallint, %s::smallint, %s::smallint); RESET ROLE;',
+              pg_temp.id('cc', 410 + g), g / 5 + 1, g % 5 + 1)
+  FROM generate_series(0, 9) g ORDER BY g \gexec
+SELECT pg_temp.chk('S-11 tras varios envíos todas las filas comparten xmin, distinto del primero',
+ $q$SELECT (SELECT count(DISTINCT xmin::text) FROM survey_responses) = 1
+        AND (SELECT xmin::text FROM survey_responses LIMIT 1) <> current_setting('nukyro_t.sx1')$q$);
+SELECT pg_temp.chk('S-12 el orden físico no es el de llegada',
+ $q$SELECT array_agg((clarity - 1) * 5 + decision_impact ORDER BY ctid)
+        <> array_agg((clarity - 1) * 5 + decision_impact ORDER BY (clarity - 1) * 5 + decision_impact)
+      FROM survey_responses WHERE decision_impact IS NOT NULL$q$);
+SELECT pg_temp.chk('S-13 hay once encuestas con claridad y las sesiones quedan marcadas',
+ $q$SELECT (SELECT count(*) FROM survey_responses WHERE clarity IS NOT NULL) = 11
+        AND (SELECT count(*) FROM sessions WHERE survey_answered AND id IN
+             (SELECT pg_temp.id('cc', 410 + g) FROM generate_series(0, 9) g)) = 10$q$);
 
 SELECT pg_temp.finish();
