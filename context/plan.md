@@ -207,7 +207,8 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-12 · Validación y publicación
 - Etapa: E3
-- Estado: pendiente
+- Estado: cerrada
+- Nota: Cerrada el 2026-11-22 por delegación (D-24, D-32) con auditoría sin bloqueos. Sin revisión humana.
 - Entregable: validador de RF-066 y proceso P12
 - Criterios de cierre:
   - cada tipo de contenido inválido se rechaza

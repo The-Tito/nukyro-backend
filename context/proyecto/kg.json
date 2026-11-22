@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.31.0",
+    "version": "1.32.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -215,6 +215,11 @@
         "version": "1.31.0",
         "fecha": "2026-11-22",
         "cambio": "T-07 cerrada: motor, P5 y sus criterios comprobados; defecto 1 corregido."
+      },
+      {
+        "version": "1.32.0",
+        "fecha": "2026-11-22",
+        "cambio": "T-12 cerrada: validador de RF-066 con pre-test obligatorio y publicación P12; defecto 6 corregido."
       }
     ]
   },
@@ -6224,7 +6229,7 @@
             "T-09",
             "T-12"
           ],
-          "estado": "reproducido y corregido en la base (T-09)"
+          "estado": "reproducido y corregido en la base y en la publicación (T-09, T-12)"
         },
         {
           "n": 7,
@@ -7396,10 +7401,11 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
-      "buscar": "### T-12 ·"
+      "buscar": "### T-12 ·",
+      "nota": "Cerrada el 2026-11-22 por delegación (D-24, D-32) con auditoría sin bloqueos. Sin revisión humana."
     },
     {
       "id": "T-13",
