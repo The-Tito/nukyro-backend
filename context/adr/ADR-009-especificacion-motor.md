@@ -73,6 +73,13 @@ El resumen solo atribuye estas relaciones, con el `relation_type` y la explicaci
   correctas suficientes.
 - **Hacia el cliente** no salen variables, efectos, reglas, destinos ni cuáles razones son correctas.
 
+### Precisiones
+
+- El destino de una regla `event` no crea paso ni cuenta para `visited`; para publicar sí cuenta como alcanzable.
+  Dos reglas pueden mostrar el mismo evento: cada una se registra una vez por sesión.
+- Una variable repetida en los efectos de una alternativa es válida: es causa si algún efecto la cambió.
+- Un `not` sin variables puede no tener decisiones causantes: solo se atribuye la regla, no se inventa una causa.
+
 ### Ejemplos calculados a mano
 
 Variables: `p` = 3 entre 0 y 5; `e` = 3 entre 0 y 5. En D1: A = `p -2`, B = `p +3`. En D2: C = `e +1`, D = `p -2`.
