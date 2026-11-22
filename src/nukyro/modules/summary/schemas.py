@@ -57,6 +57,7 @@ class ResultOut(BaseModel):
     type: str
     score: float | None
     correct_count: int
+    answered: int
     total: int
 
 

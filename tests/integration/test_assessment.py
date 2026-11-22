@@ -29,7 +29,7 @@ CORRECT = {
 }
 
 
-def build(superuser, *, finals=True, lenient=False):
+def build(superuser, *, finals=True, lenient=False, extra=None):
     key = f"T14-{uuid.uuid4().hex[:8]}"
     ex = superuser.execute
     sid = ex(
@@ -113,6 +113,8 @@ def build(superuser, *, finals=True, lenient=False):
         qset("posttest", [("T1", None), ("T2", None)])
         qset("transfer", [("X1", None)])
         qset("causal", [("CE", "EV"), ("CA", "OUT_A"), ("CB", "OUT_B"), ("CN", None)])
+    if extra:
+        extra(ex, v, ids, lo)
     ex(
         "UPDATE nukyro.scenario_versions SET status='published', published_at=now() WHERE id=%s",
         (v,),

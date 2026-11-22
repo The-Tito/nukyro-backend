@@ -7,6 +7,7 @@ from fastapi import HTTPException
 from sqlalchemy import Engine
 
 from nukyro.modules.assessment import queries as assessment_queries
+from nukyro.modules.assessment import service as assessment_service
 from nukyro.modules.assessment.scoring import difference
 from nukyro.modules.entry import queries as entry_queries
 from nukyro.modules.summary import queries
@@ -29,6 +30,11 @@ def _reference(r) -> dict:
     }
 
 
+def _applicable(sets: dict, r) -> int:
+    s = sets.get(r["set_type"])
+    return len(s["questions"]) if s else r["answered_count"]
+
+
 def get_summary(engine: Engine, secret: str, session_id: str) -> dict:
     try:
         session = UUID(session_id)
@@ -44,6 +50,7 @@ def get_summary(engine: Engine, secret: str, session_id: str) -> dict:
             raise HTTPException(404)
         if row["completed_at"] is None:
             raise HTTPException(409)  # antes de terminar revelaría respuestas (defecto 11)
+        queries_hitos = assessment_queries.hitos(conn, session)
         reasons, feedback, refs = defaultdict(list), defaultdict(list), defaultdict(list)
         for r in queries.chosen_reasons(conn, session):
             reasons[r["session_decision_id"]].append({"key": r["key"], "label": r["label"]})
@@ -80,12 +87,15 @@ def get_summary(engine: Engine, secret: str, session_id: str) -> dict:
             }
             for e in queries.events(conn, session)
         ]
+        # total: preguntas aplicables a esta sesión (RF-058); answered: las respondidas
+        sets = assessment_service._load(conn, session, queries_hitos["version"])
         results = [
             {
                 "type": r["set_type"],
                 "score": None if r["score"] is None else float(r["score"]),
                 "correct_count": r["correct_count"],
-                "total": r["answered_count"],
+                "answered": r["answered_count"],
+                "total": _applicable(sets, r),
             }
             for r in queries.results(conn, session)
         ]
