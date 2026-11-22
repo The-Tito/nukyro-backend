@@ -35,6 +35,7 @@ Vista del KG (`context/proyecto/kg.json`): si difieren, manda el KG y se corrige
 | ADR-006 | 2026-11-22 | **Repositorio público con contexto seudonimizado.** Concreta D-09. | usuario | Aceptada | context/adr/ADR-006-repositorio-publico-seudonimizado.md |
 | ADR-007 | 2026-11-22 | **Copia anónima solo al borrar o bloquear.** Diseño delegado (D-24), sin revisión humana. | asistente (declarada) | Aceptada | context/adr/ADR-007-copia-anonima-al-cerrar.md |
 | ADR-008 | 2026-11-22 | **Estructura y seguridad de la API.** Diseño delegado (D-24), sin revisión humana. | asistente (declarada) | Aceptada | context/adr/ADR-008-estructura-seguridad-api.md |
+| ADR-009 | 2026-11-22 | **Especificación del motor de simulación.** Diseño delegado (D-24), sin revisión humana. | asistente (declarada) | Aceptada | context/adr/ADR-009-especificacion-motor.md |
 
 ## Abiertas
 

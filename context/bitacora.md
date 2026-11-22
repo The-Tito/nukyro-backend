@@ -98,3 +98,10 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** auditor con Opus, hallazgos atendidos; no se volvió a auditar después del arreglo. Sin revisión humana.
 - **Decisiones:** ninguna.
 - **Evidencia:** EV-02: `./scripts/verify` con sql=242, unit=14, integration=26, blackbox=40.
+
+## 2026-11-22: E3 planeada y T-11, especificación del motor
+- **Resultado:** Puerta A de E3 delegada y ADR-009 con cuatro recorridos calculados a mano.
+- **Revisión:** `./scripts/verify` en verde sobre develop (705dd90) antes de planear. Sin auditor ni revisión humana de ADR-009.
+- **Decisiones:** ADR-009.
+- **Evidencia:** `context/etapas/etapa-3.md`.
+- **Auditoría de T-11:** Sonnet recalculó los cuatro ejemplos; 5 observaciones sin bloqueo, precisadas en ADR-009.
