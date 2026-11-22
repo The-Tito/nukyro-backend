@@ -1,0 +1,36 @@
+{
+  "proyecto": "Tienda en línea con catálogo heterogéneo",
+  "_nota": "Ejemplo para contrastar: catálogo muy variable y sesiones de alto volumen. Valores ilustrativos [SUPUESTO].",
+  "dominios": [
+    {"id": "pedidos", "nombre": "Pedidos, pagos e inventario", "peso": 0.40, "criticidad": "alta"},
+    {"id": "catalogo", "nombre": "Catálogo (talla/color vs pulgadas/resolución)", "peso": 0.40, "criticidad": "media"},
+    {"id": "sesiones", "nombre": "Sesiones y carrito temporal", "peso": 0.20, "criticidad": "baja"}
+  ],
+  "puntajes": {
+    "pedidos": {
+      "postgresql": {"forma": 5, "lectura": 5, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 5},
+      "mongodb":    {"forma": 3, "lectura": 4, "integridad": 3, "imprevistas": 3, "escala": 5, "especial": 3, "operacion": 4},
+      "redis":      {"forma": 1, "lectura": 3, "integridad": 1, "imprevistas": 1, "escala": 5, "especial": 3, "operacion": 4}
+    },
+    "catalogo": {
+      "postgresql": {"forma": 3, "lectura": 3, "integridad": 4, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 5,
+                     "por_que": "Con JSONB funciona, pero las 40 familias de atributos y la ficha completa piden muchas expresiones indexadas"},
+      "mongodb":    {"forma": 5, "lectura": 5, "integridad": 4, "imprevistas": 4, "escala": 5, "especial": 4, "operacion": 4}
+    },
+    "sesiones": {
+      "postgresql": {"forma": 4, "lectura": 3, "integridad": 4, "imprevistas": 4, "escala": 3, "especial": 2, "operacion": 5},
+      "mongodb":    {"forma": 4, "lectura": 4, "integridad": 4, "imprevistas": 3, "escala": 4, "especial": 4, "operacion": 4},
+      "redis":      {"forma": 5, "lectura": 5, "integridad": 3, "imprevistas": 2, "escala": 5, "especial": 5, "operacion": 4}
+    }
+  },
+  "cruces": [
+    {"de": "pedidos", "a": "catalogo", "mitigado": true, "descripcion": "El pedido copia nombre y precio del catálogo; el catálogo no es fuente de verdad del cobro"}
+  ],
+  "arquitecturas": [
+    {"id": "R1", "nombre": "Solo PostgreSQL (JSONB en catálogo)", "asignacion": {"pedidos": "postgresql", "catalogo": "postgresql", "sesiones": "postgresql"}},
+    {"id": "R2", "nombre": "Solo MongoDB", "asignacion": {"pedidos": "mongodb", "catalogo": "mongodb", "sesiones": "mongodb"}},
+    {"id": "R3", "nombre": "PostgreSQL + MongoDB (catálogo)", "asignacion": {"pedidos": "postgresql", "catalogo": "mongodb", "sesiones": "postgresql"}},
+    {"id": "R4", "nombre": "PostgreSQL + MongoDB + Redis", "asignacion": {"pedidos": "postgresql", "catalogo": "mongodb", "sesiones": "redis"}},
+    {"id": "R5", "nombre": "Redis en pedidos (control del veto)", "asignacion": {"pedidos": "redis", "catalogo": "mongodb", "sesiones": "redis"}}
+  ]
+}

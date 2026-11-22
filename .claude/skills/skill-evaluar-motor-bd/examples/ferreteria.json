@@ -1,0 +1,39 @@
+{
+  "proyecto": "Ferretería · POS, inventario y cobranza",
+  "_nota": "Ejemplo resuelto con datos del caso de la materia. Las justificaciones van en 'por_que' y el script las ignora.",
+  "dominios": [
+    {"id": "ventas", "nombre": "Venta e inventario (kardex)", "peso": 0.50, "criticidad": "alta",
+     "por_que": "P-venta 75/día [DATO] × criticidad 3; toca producto, existencia, venta y pago en una escritura"},
+    {"id": "credito", "nombre": "Crédito y abonos", "peso": 0.25, "criticidad": "alta",
+     "por_que": "Saldos de crédito: dinero; sólo existen en esta base"},
+    {"id": "catalogo", "nombre": "Catálogo de productos", "peso": 0.15, "criticidad": "media",
+     "por_que": "4,000 SKUs [SUPUESTO], forma fija con campos SAT; precargado en la terminal"},
+    {"id": "bitacora", "nombre": "Bitácora de operaciones", "peso": 0.10, "criticidad": "baja",
+     "por_que": "Sólo inserción; parte del detalle es JSON variable"}
+  ],
+  "puntajes": {
+    "ventas": {
+      "postgresql": {"forma": 5, "lectura": 5, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 5,
+                     "por_que": "Escritura multi-entidad con bloqueo FOR UPDATE; 0.055 TPS; RDS gestionado"},
+      "mongodb":    {"forma": 3, "lectura": 4, "integridad": 3, "imprevistas": 3, "escala": 5, "especial": 3, "operacion": 3,
+                     "por_que": "Necesita transacción multi-documento (replica set) en cada venta; kardex inmutable vía roles"}
+    },
+    "credito": {
+      "postgresql": {"forma": 5, "lectura": 5, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 5},
+      "mongodb":    {"forma": 4, "lectura": 4, "integridad": 3, "imprevistas": 3, "escala": 5, "especial": 3, "operacion": 3}
+    },
+    "catalogo": {
+      "postgresql": {"forma": 5, "lectura": 5, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 5},
+      "mongodb":    {"forma": 4, "lectura": 5, "integridad": 4, "imprevistas": 3, "escala": 5, "especial": 3, "operacion": 3}
+    },
+    "bitacora": {
+      "postgresql": {"forma": 4, "lectura": 4, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 4, "operacion": 5,
+                     "por_que": "JSONB para el detalle variable; BRIN por fecha"},
+      "mongodb":    {"forma": 5, "lectura": 4, "integridad": 4, "imprevistas": 3, "escala": 5, "especial": 4, "operacion": 3}
+    }
+  },
+  "cruces": [
+    {"de": "ventas", "a": "credito", "mitigado": false, "descripcion": "La venta a crédito crea el saldo pendiente en la misma operación"},
+    {"de": "ventas", "a": "bitacora", "mitigado": true, "descripcion": "Cada venta registra su bitácora; tolerable vía outbox"}
+  ]
+}
