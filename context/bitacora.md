@@ -111,3 +111,9 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** la dirección corrigió de rojo a verde tres fallos del motor (un evento en la ruta no avanzaba, variables sin límite, justificación no pedida) y uno de P5 (no renovaba la actividad: RF-080 habría borrado a alguien activo).
 - **Decisiones:** ninguna. Pendiente: qué hace una versión sin pre-test al llegar al desenlace (el CHECK lo exige y hoy da 409).
 - **Evidencia:** `./scripts/verify` con sql=242, unit=59, integration=45, blackbox=40. Sin caja negra de E3 ni auditor.
+
+## 2026-11-22: sesión retomada y respuestas del usuario
+- **Resultado:** el usuario aceptó las recomendaciones pendientes y pidió continuar. Había fusionado el PR #10 con el botón de GitHub, lo que expuso datos de su perfil en e8dbae5: decidió dejarlo.
+- **Revisión:** alcance comprobado: un solo commit remoto, main limpio, sin forks, mismo árbol que d6ab902.
+- **Decisiones:** D-26 a D-31, CONF-21 resuelto. S-02 sigue por verificar: no se indicó dónde está el respaldo.
+- **Evidencia:** escáner acotado con `^e8dbae5`: 0 hallazgos.

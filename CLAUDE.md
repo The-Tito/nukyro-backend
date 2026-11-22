@@ -88,7 +88,7 @@ Los documentos de `docs/` no se sobrescriben: un cambio produce una versión nue
 - Un commit por implementación, Conventional Commits en español: `tipo(alcance): descripción (T-xx, D-xx)`.
 - Sin coautoría ni líneas de atribución de IA en commits o PR.
 - Sin commit ni push si el usuario no lo pide (D-24 los autoriza para E2 a E8 mientras rija). Sin push directo a `main` ni `develop`, salvo la fusión de D-11. Nunca `--no-verify`.
-- Fusión (D-11): con el PR abierto, `git merge --no-ff` local en `develop` y push. Nunca `gh pr merge` ni el botón de GitHub: publican nombre y correo del perfil (ADR-006).
+- Fusión (D-11): con el PR abierto, `git merge --no-ff` local en `develop` y push. Nunca `gh pr merge` ni el botón de GitHub: publican nombre y correo del perfil (ADR-006). e8dbae5 es la única excepción (D-26).
 - Nunca secretos ni datos personales en git: el remoto es público (D-09). Personas por id `PER-xx`; firma `The-Tito` con noreply (D-10).
 
 ## Entorno y comandos

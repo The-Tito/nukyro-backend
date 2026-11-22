@@ -39,7 +39,7 @@ Comando `/fase`; lo comprueba `context/validar_kg.py`. Mientras rija D-24 las pu
 |---|---|---|
 | E2 | las 52 pruebas reales antes de tocar el esquema, S3 (Alembic) y las versiones de las dependencias | una base vacía migra igual a `bd/schema.sql` con owner sin superusuario, cada defecto de E2 pasa de rojo a verde y la entrada funciona por HTTPS |
 | E3 | la especificación con ejemplos a mano antes de programar y que el cliente no decide nada | los recorridos esperados coinciden, 1 000 pares concurrentes dan 0 duplicados, un fallo en cada escritura no deja cambios y cada contenido inválido se rechaza |
-| E4 | criterios de H04 y H05, orden causal y CONF-21 | tres recorridos dan los resultados calculados a mano, nada filtra respuestas, efectos o reglas antes de tiempo y nada califica a la persona |
+| E4 | criterios de H04 y H05, orden causal y D-29 (CONF-21) | tres recorridos dan los resultados calculados a mano, nada filtra respuestas, efectos o reglas antes de tiempo y nada califica a la persona |
 | E5 | el contrato de tokens de Cognito y qué queda simulado | los tokens inválidos se rechazan, la vinculación concurrente deja una primera sesión y una ruta sin caso de acceso ajeno hace fallar la suite |
 | E6 | el texto del Aviso contra lo implementado, el riesgo residual de reidentificación y RN-20 | el agregado es igual antes y después de borrar, opuesto y menor no dejan copia, 9 se suprime y 10 se muestra, y los cruces por xmin u orden no identifican |
 | E7 | calendario de inhábiles, efecto de «limitación» y verificación manual sin correo, que decide el usuario | un escenario creado solo por API se juega completo, los seis derechos funcionan en sus plazos límite, al cerrar no queda documento y la bitácora no guarda respuestas |
@@ -196,7 +196,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 ### T-07 · Motor de simulación
 - Etapa: E3
 - Estado: en_curso
-- Nota: A medias al cierre del 2026-11-22: motor y P5 en feature/T-07-motor, sin fusionar, verify en verde. Falta: pruebas de caja negra de E3, regla de las versiones sin pre-test, auditoría y fusión.
+- Nota: El usuario fusionó el motor y P5 con el PR #10 antes de terminar la tarea. Falta: caja negra de E3, revisar las consultas de P5 y auditoría. La regla del pre-test se decidió en D-28 (T-12).
 - Entregable: motor puro, proceso P5, avance y reanudación
 - Criterios de cierre:
   - cada proceso tiene pruebas

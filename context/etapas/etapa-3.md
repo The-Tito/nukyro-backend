@@ -48,7 +48,7 @@ antes de programar. El motor es puro: se prueba sin base. P5 solo carga, llama a
 | RF-036, RF-037 | Los cuatro ejemplos de ADR-009 dan su final | El mismo recorrido siempre da el mismo final | unitarias |
 | RF-063 | Secreto, nodo, versión y alternativa válidos confirman | Cada inválido: rechazo y cero cambios | integración |
 | RF-064 | 1 000 pares concurrentes: 0 duplicados; el reintento devuelve lo confirmado | Un fallo en cada escritura no deja cambios | integración |
-| RF-066 | Un contenido válido se publica | Cada tipo de contenido inválido se rechaza | unitarias, integración |
+| RF-066 | Un contenido válido se publica | Cada tipo de contenido inválido se rechaza, también uno sin pre-test válido (D-28) | unitarias, integración |
 
 ## Contrato y esquema
 
@@ -78,6 +78,8 @@ No se prevén cambios al esquema.
 
 **Delegada el 2026-11-22 (D-24).** Nadie revisó este documento ni ADR-009 antes de construir. Cubre los criterios
 de arriba, commits y PR de la fase y Docker local. No agrega dependencias.
+
+**Ampliada por el usuario el 2026-11-22 (D-28):** publicar exige pre-test. El usuario revisa la fase al cerrarla (D-27).
 
 ## Puerta B
 

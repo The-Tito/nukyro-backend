@@ -66,9 +66,9 @@ El resumen solo atribuye estas relaciones, con el `relation_type` y la explicaci
   traiga otra alternativa o la sesión haya avanzado (RN-14). Si no, el nodo debe ser el actual.
 - **Razones:** si se exige justificación, al menos una y sin repetir; si no se exige, ninguna. Es correcta con el
   mínimo de correctas y ninguna incorrecta (defecto 10).
-- **Pre-test:** si la versión lo tiene, no se sale del primer nodo sin completarlo.
+- **Pre-test:** toda versión publicada lo tiene (D-28, RF-007) y no se sale del primer nodo sin completarlo.
 - **Inicio y ciclos:** hay un solo nodo `intro`. El grafo de rutas es acíclico: un nodo se visita una vez.
-- **Publicar exige:** gramática y claves válidas; destinos de la misma versión y del tipo correcto; todo nodo
+- **Publicar exige:** un pre-test con preguntas y una opción correcta por cada una (D-28); gramática y claves válidas; destinos de la misma versión y del tipo correcto; todo nodo
   alcanzable; toda ruta termina en desenlace; toda decisión con alternativa válida y, si se justifica, con razones
   correctas suficientes.
 - **Hacia el cliente** no salen variables, efectos, reglas, destinos ni cuáles razones son correctas.

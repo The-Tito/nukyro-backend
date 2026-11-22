@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.28.0",
+    "version": "1.29.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -200,6 +200,11 @@
         "version": "1.28.0",
         "fecha": "2026-11-22",
         "cambio": "T-07 a medias al cierre de la sesión: motor y P5 en su rama, sin auditar ni fusionar."
+      },
+      {
+        "version": "1.29.0",
+        "fecha": "2026-11-22",
+        "cambio": "Respuestas del usuario: D-26 a D-31; CONF-21 resuelto; criterios de E3 ampliados con el pre-test obligatorio."
       }
     ]
   },
@@ -350,13 +355,13 @@
     ]
   },
   "estadisticas": {
-    "nodos": 485,
-    "aristas": 807,
+    "nodos": 491,
+    "aristas": 823,
     "conflictos": 21,
     "conflictos_por_estado": {
-      "resuelto": 16,
+      "resuelto": 17,
       "propuesta": 0,
-      "pendiente": 5
+      "pendiente": 4
     },
     "por_tipo": {
       "ADR": 9,
@@ -371,7 +376,7 @@
       "ConjuntoPrincipios": 1,
       "Contacto": 1,
       "Cookie": 2,
-      "Decision": 43,
+      "Decision": 49,
       "Degradado": 2,
       "Descargo": 4,
       "DisenoEvaluacion": 1,
@@ -6889,7 +6894,7 @@
         "el cliente no determina consecuencias (ARQ)",
         "defecto 1 reproducido y corregido"
       ],
-      "nota": "A medias al cierre del 2026-11-22: motor y P5 en feature/T-07-motor, sin fusionar, verify en verde. Falta: pruebas de caja negra de E3, regla de las versiones sin pre-test, auditoría y fusión."
+      "nota": "El usuario fusionó el motor y P5 con el PR #10 antes de terminar la tarea. Falta: caja negra de E3, revisar las consultas de P5 y auditoría. La regla del pre-test se decidió en D-28 (T-12)."
     },
     {
       "id": "D-09",
@@ -7914,6 +7919,108 @@
         }
       ],
       "nota": "Aceptada por delegación (D-24), sin revisión humana."
+    },
+    {
+      "id": "D-26",
+      "tipo": "Decision",
+      "nombre": "Excepción del commit de fusión del PR #10",
+      "texto": "El commit e8dbae5, fusionado por el usuario con el botón de GitHub, expone datos de su perfil. El usuario decidió dejarlo: no se reescribe develop. Es la única excepción a D-09 y D-10; el escáner previo al push excluye solo ese commit (^e8dbae5) y lo anterior, ya revisado. El asistente sigue creando y fusionando los PR (D-11), sin botón.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-26 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-27",
+      "tipo": "Decision",
+      "nombre": "Continuar hasta cerrar E3",
+      "texto": "D-24 sigue vigente hasta cerrar E3. Al cerrarla se hace el release a main y el asistente se detiene para que el usuario revise antes de E4.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-27 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-28",
+      "tipo": "Decision",
+      "nombre": "Pre-test obligatorio al publicar",
+      "texto": "Una versión solo se publica si tiene un pre-test válido (RF-007). Amplía los criterios de E3 fijados en su Puerta A (RF-066, T-12).",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-28 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-29",
+      "tipo": "Decision",
+      "nombre": "Sin encuesta para quien se opuso",
+      "texto": "La encuesta de satisfacción no se ofrece ni se acepta de quien se opuso a las estadísticas.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-29 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-30",
+      "tipo": "Decision",
+      "nombre": "Reglas de ARCO para E7",
+      "texto": "Plazos con el calendario oficial de días inhábiles; «limitación» excluye de los reportes sin borrar; la identidad se verifica a mano y queda constancia.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-30 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-31",
+      "tipo": "Decision",
+      "nombre": "Revisiones diferidas y ruta de las evaluaciones",
+      "texto": "Los textos legales (CONF-14, CONF-18 a CONF-20 y un posible Aviso v2.3) se ven en E6; el reporte PDF y los diagramas se actualizan al cerrar E6. La skill evaluar-motor-bd guarda en context/evaluaciones/.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-31 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
     }
   ],
   "aristas": [
@@ -11970,6 +12077,86 @@
       "origen": "T-11",
       "relacion": "produce",
       "destino": "ADR-009"
+    },
+    {
+      "origen": "D-26",
+      "relacion": "afecta",
+      "destino": "D-09"
+    },
+    {
+      "origen": "D-26",
+      "relacion": "afecta",
+      "destino": "D-10"
+    },
+    {
+      "origen": "D-26",
+      "relacion": "afecta",
+      "destino": "D-11"
+    },
+    {
+      "origen": "D-27",
+      "relacion": "afecta",
+      "destino": "D-24"
+    },
+    {
+      "origen": "D-27",
+      "relacion": "afecta",
+      "destino": "E3"
+    },
+    {
+      "origen": "D-27",
+      "relacion": "afecta",
+      "destino": "E4"
+    },
+    {
+      "origen": "D-28",
+      "relacion": "afecta",
+      "destino": "RF-007"
+    },
+    {
+      "origen": "D-28",
+      "relacion": "afecta",
+      "destino": "RF-066"
+    },
+    {
+      "origen": "D-28",
+      "relacion": "afecta",
+      "destino": "ADR-009"
+    },
+    {
+      "origen": "D-28",
+      "relacion": "afecta",
+      "destino": "T-12"
+    },
+    {
+      "origen": "D-29",
+      "relacion": "afecta",
+      "destino": "RF-060"
+    },
+    {
+      "origen": "D-29",
+      "relacion": "afecta",
+      "destino": "RF-079"
+    },
+    {
+      "origen": "D-29",
+      "relacion": "afecta",
+      "destino": "T-16"
+    },
+    {
+      "origen": "D-30",
+      "relacion": "afecta",
+      "destino": "T-25"
+    },
+    {
+      "origen": "D-31",
+      "relacion": "afecta",
+      "destino": "E6"
+    },
+    {
+      "origen": "D-31",
+      "relacion": "afecta",
+      "destino": "MODELO-DATOS"
     }
   ],
   "conflictos": [
@@ -12604,7 +12791,7 @@
     {
       "id": "CONF-21",
       "tema": "Encuesta no vinculada frente a la oposición",
-      "estado": "pendiente",
+      "estado": "resuelto",
       "posturas": [
         {
           "doc": "DOC-REQ11",
@@ -12617,12 +12804,16 @@
           "afirma": "Los reportes excluyen a quien se opuso."
         }
       ],
-      "resolucion": "Pendiente. No bloquea E2 ni E3. Lo decide el usuario en la Puerta A de E4.",
+      "resolucion": "La encuesta no se ofrece ni se acepta de quien se opuso (D-29). Una respuesta enviada antes de oponerse sigue sin vínculo y no se puede retirar (RF-060).",
       "afecta": [
         "RF-060",
         "RF-079",
         "ENCUESTA-APP"
-      ]
+      ],
+      "decidido": {
+        "doc": "DECISION-USUARIO",
+        "seccion": "2026-11-22"
+      }
     }
   ]
 }
