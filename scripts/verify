@@ -79,11 +79,13 @@ if [[ ! -f "$SQL_RUNNER" ]]; then
   exit 1
 fi
 bash "$SQL_RUNNER" 2>&1 | tee "$TMP/sql.out"
-sql_pass="$(grep -c 'PASS' "$TMP/sql.out" || true)"
-if grep -q 'FAIL' "$TMP/sql.out" || [[ "$sql_pass" -eq 0 ]]; then
-  echo "Pruebas SQL: hubo FAIL o ninguna PASS" >&2
+# El ejecutor sale con error si algo falla; además se exige el resumen de las tres suites sin FAIL
+suites="$(grep -cE '^-- [a-z]+: [0-9]+ PASS, 0 FAIL ' "$TMP/sql.out" || true)"
+if [[ "$suites" -ne 3 ]]; then
+  echo "Pruebas SQL: faltan suites o hubo FAIL" >&2
   exit 1
 fi
+sql_pass="$(sed -nE 's/^-- [a-z]+: ([0-9]+) PASS.*/\1/p' "$TMP/sql.out" | awk '{ t += $1 } END { print t }')"
 COUNTS="${COUNTS}sql=$sql_pass "
 
 run_pytest unit uv run --frozen pytest tests/unit
