@@ -93,4 +93,10 @@ esquema de arriba, commits, PR y Docker local. No agrega dependencias ni datos a
 
 ## Puerta B
 
-Pendiente.
+**Delegada el 2026-11-22 (D-32), sin revisión humana.** Evidencia: EV-04 (commit `90822ec`).
+
+- **Comprobar:** `./scripts/verify`. Esperado: `verify OK` con sql=269, unit=217, integration=140, blackbox=77.
+- **Demostrados:** 19 RF. **Backend demostrado, interfaz pendiente:** RF-007, 008, 009, 039, 041, 042, 048, 050, 052, 057, 060 y 067.
+  Acumulado: 70 de 87.
+- **No probado:** RDS y Cognito (S-04); calidad pedagógica del instrumento; la encuesta con cuenta bloqueada se prueba en E5.
+- **Abierto:** A-05 (preguntas de opción de la encuesta).

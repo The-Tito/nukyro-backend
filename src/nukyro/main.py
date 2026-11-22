@@ -17,6 +17,7 @@ from nukyro.modules.entry import service as entry_service
 from nukyro.modules.entry.routes import router as entry_router
 from nukyro.modules.simulation.routes import router as simulation_router
 from nukyro.modules.summary.routes import router as summary_router
+from nukyro.modules.survey.routes import router as survey_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("nukyro")
@@ -88,6 +89,7 @@ def create_app() -> FastAPI:
     app.include_router(simulation_router)
     app.include_router(assessment_router)
     app.include_router(summary_router)
+    app.include_router(survey_router)
     return app
 
 

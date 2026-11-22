@@ -926,6 +926,65 @@ BEGIN
     RETURN true;
 END $$;
 
+-- api: guarda la encuesta de una sesión terminada (D-29, ADR-007). Bloquea al participante y
+-- luego a la sesión; rechaza al opuesto o con cuenta bloqueada (42501), la sesión sin terminar
+-- (55000) y la ya respondida (23505). Marca solo survey_answered (no toca last_activity_at),
+-- inserta con la semana UTC de INICIO de la sesión y reescribe la tabla entera con id nuevo y en
+-- orden aleatorio: todas las filas comparten xmin y el orden físico no sigue al de llegada.
+-- Si se agrega una columna a survey_responses, hay que agregarla aquí.
+CREATE FUNCTION submit_survey(
+    p_session uuid, p_usefulness smallint, p_clarity smallint DEFAULT NULL,
+    p_decision_impact smallint DEFAULT NULL, p_causal_understanding smallint DEFAULT NULL,
+    p_summary_usefulness smallint DEFAULT NULL, p_would_repeat smallint DEFAULT NULL
+) RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+DECLARE
+    v_participant uuid;
+    v_account uuid;
+    v_excluded boolean;
+    v_version uuid;
+    v_completed timestamptz;
+    v_answered boolean;
+    v_week date;
+    v_first boolean;
+BEGIN
+    SELECT s.participant_id INTO v_participant FROM nukyro.sessions s WHERE s.id = p_session;
+    IF NOT FOUND THEN RAISE EXCEPTION 'La sesión % no existe', p_session USING ERRCODE = 'no_data_found'; END IF;
+    SELECT p.account_id, p.exclude_from_stats INTO v_account, v_excluded
+      FROM nukyro.participants p WHERE p.id = v_participant FOR UPDATE;
+    SELECT s.scenario_version_id, s.completed_at, s.survey_answered,
+           date_trunc('week', s.started_at AT TIME ZONE 'UTC')::date, s.is_first_session
+      INTO v_version, v_completed, v_answered, v_week, v_first
+      FROM nukyro.sessions s WHERE s.id = p_session FOR UPDATE;
+    IF NOT FOUND THEN RAISE EXCEPTION 'La sesión % no existe', p_session USING ERRCODE = 'no_data_found'; END IF;
+    IF v_completed IS NULL THEN
+        RAISE EXCEPTION 'La sesión % no ha terminado' , p_session USING ERRCODE = 'object_not_in_prerequisite_state';
+    END IF;
+    IF v_excluded OR EXISTS (SELECT 1 FROM nukyro.accounts a WHERE a.id = v_account AND a.status = 'blocked') THEN
+        RAISE EXCEPTION 'La encuesta no se ofrece a quien se opuso al uso estadístico' USING ERRCODE = 'insufficient_privilege';
+    END IF;
+    IF v_answered THEN
+        RAISE EXCEPTION 'La sesión % ya respondió la encuesta', p_session USING ERRCODE = 'unique_violation';
+    END IF;
+
+    UPDATE nukyro.sessions SET survey_answered = true WHERE id = p_session;
+
+    LOCK TABLE nukyro.survey_responses IN ACCESS EXCLUSIVE MODE;
+    INSERT INTO nukyro.survey_responses (scenario_version_id, week_start, is_first_session, usefulness, clarity,
+                                         decision_impact, causal_understanding, summary_usefulness, would_repeat)
+    VALUES (v_version, v_week, v_first, p_usefulness, p_clarity, p_decision_impact, p_causal_understanding,
+            p_summary_usefulness, p_would_repeat);
+
+    WITH d AS (DELETE FROM nukyro.survey_responses
+               RETURNING scenario_version_id, week_start, is_first_session, usefulness, clarity,
+                         decision_impact, causal_understanding, summary_usefulness, would_repeat)
+    INSERT INTO nukyro.survey_responses (scenario_version_id, week_start, is_first_session, usefulness, clarity,
+                                         decision_impact, causal_understanding, summary_usefulness, would_repeat)
+    SELECT scenario_version_id, week_start, is_first_session, usefulness, clarity,
+           decision_impact, causal_understanding, summary_usefulness, would_repeat FROM d ORDER BY random();
+END $$;
+
 -- api, admin, jobs: bloquea una cuenta (terminal, D-20). Orden: cuenta, participante,
 -- sesiones. Salvo oposición o menor de edad, archiva y reescribe. Si la cuenta ya
 -- está bloqueada no hace nada y devuelve false.
@@ -1073,7 +1132,7 @@ GRANT UPDATE (value, updated_at) ON nukyro.session_variables TO nukyro_api;
 GRANT UPDATE (submitted_at, answered_count, correct_count, score) ON nukyro.assessment_attempts TO nukyro_api;
 GRANT UPDATE (option_id, answered_at) ON nukyro.assessment_answers TO nukyro_api;
 GRANT SELECT, INSERT ON nukyro.consent_events TO nukyro_api;
-GRANT INSERT ON nukyro.survey_responses TO nukyro_api;          -- solo INSERT: ni lee ni modifica
+GRANT EXECUTE ON FUNCTION nukyro.submit_survey(uuid, smallint, smallint, smallint, smallint, smallint, smallint) TO nukyro_api;
 GRANT EXECUTE ON FUNCTION nukyro.erase_anonymous_participant(uuid) TO nukyro_api;
 GRANT EXECUTE ON FUNCTION nukyro.block_account(uuid, text, timestamptz) TO nukyro_api;
 

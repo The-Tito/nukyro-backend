@@ -61,3 +61,9 @@ Solo peticiones que deciden algo, inician una tarea o corrigen el rumbo.
 **Prompt:** «si a todo, continua con el desarrollo, ya fusione el pr», «continuamos haciendo tu los prs y fusionando, nada mas» y «continuaras solo hasta finalizar el backend, dame un porcentaje estomado de cuanto llevas desarrollado y cuanto falta»
 **Resultado:** D-26 a D-32, validador y publicación, DEMO-BECAS y E3 cerrada por delegación (EV-03)
 **Revisión humana:** decisiones respondidas por el usuario; código, puertas y textos pendientes de revisar
+
+## 2026-11-22: E4, experiencia educativa (T-14, T-15, T-16)
+**Modelo:** Claude Opus 5.5 (plan, revisión y auditoría), Claude Sonnet (programación, pruebas y verificación final)
+**Prompt:** «continuaras solo hasta finalizar el backend» (D-32)
+**Resultado:** evaluaciones, resumen y encuesta; E4 cerrada por delegación (EV-04)
+**Revisión humana:** pendiente

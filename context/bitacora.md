@@ -154,3 +154,21 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** la dirección cerró de rojo a verde una fuga: la puntuación salía al enviar cada evaluación y revelaba respuestas. T30 se adaptó al trigger sin cambiar su regla.
 - **Decisiones:** la puntuación se ve al terminar todas las evaluaciones.
 - **Evidencia:** `./scripts/verify` con sql=256, unit=217, integration=129, blackbox=69; defecto 10 visto en rojo.
+
+## 2026-11-22: T-15, reconstrucción y resumen
+- **Resultado:** resumen con historial, causas guardadas, retroalimentación, referencias y resultados por evaluación (PR #15).
+- **Revisión:** la auditoría de E4 halló pruebas que no afirmaban lo declarado; se agregó integración con valores exactos.
+- **Decisiones:** ninguna.
+- **Evidencia:** defecto 11 y filtro por alternativa vistos en rojo, también por la dirección (`tests/evidencia-rojo-e4.md`).
+
+## 2026-11-22: T-16, encuesta no vinculada
+- **Resultado:** `submit_survey`; la API ya no inserta encuestas directamente. Opuesto: no se ofrece ni se acepta (D-29).
+- **Revisión:** diff de la función y de D2-07 y D3-08, que fijaban el INSERT viejo.
+- **Decisiones:** A-05 sigue abierta.
+- **Evidencia:** 13 pruebas SQL nuevas (xmin común y orden físico).
+
+## 2026-11-22: E4 cerrada por delegación
+- **Resultado:** Puerta B delegada (D-32). 70 de 87 RF.
+- **Revisión:** auditoría con Opus (3 bloqueos) y verificación final sin bloqueos. Sin revisión humana.
+- **Decisiones:** ninguna.
+- **Evidencia:** EV-04: `./scripts/verify` con sql=269, unit=217, integration=140, blackbox=77.

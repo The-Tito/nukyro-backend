@@ -23,7 +23,7 @@ cualquier FAIL, error de psql o conteo de PASS menor al esperado (constantes `ES
 La línea `ERROR` de T10b es esperada: es el rechazo al `COMMIT` de la referencia diferida.
 `evidencia-rojo.md` registra lo que falló al correr estas pruebas contra el esquema original, antes de corregir.
 
-Resultado esperado: `reglas: 57 PASS`, `defectos: 184 PASS`, `concurrencia: 15 PASS` y `== TODAS LAS SUITES PASARON ==`.
+Resultado esperado: `reglas: 57 PASS`, `defectos: 197 PASS`, `concurrencia: 15 PASS` y `== TODAS LAS SUITES PASARON ==`.
 
 Último resultado: 2026-11-22, PostgreSQL 16, esquema con los defectos 2 a 9 corregidos: 57 + 184 + 15, 0 FAIL.
 

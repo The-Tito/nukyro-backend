@@ -1,6 +1,6 @@
 # Trazabilidad de la etapa 4 (T-14): RF, prueba positiva y prueba negativa
 
-Fuente: etapa-4, «Criterios por RF». Cubre los RF de T-14 y T-15; los de T-16 quedan para su tarea. `B2` es `tests/blackbox/test_summary.py`.
+Fuente: etapa-4, «Criterios por RF». Cubre los RF de T-14, T-15 y T-16. `B2` es `tests/blackbox/test_summary.py`; `B3`, `tests/blackbox/test_survey.py`; `I2`, `tests/integration/test_survey.py`.
 Prefijos: `B` caja negra (`tests/blackbox/test_assessment.py`, `test_demo.py`), `I` integración
 (`tests/integration/test_assessment.py`), `U` unitarias (`tests/unit/test_assessment.py`, `test_engine.py`,
 `test_demo_scenario.py`), `S` SQL (`bd/pruebas/pruebas-defectos.sql`, pruebas H-01 a H-14).
@@ -18,13 +18,17 @@ Prefijos: `B` caja negra (`tests/blackbox/test_assessment.py`, `test_demo.py`), 
 | RF-059 | U `test_conteos_exactos` (cuatro decisiones con justificación), U `test_recorrido_calculado_a_mano_con_el_motor`, I `test_defecto_10_marcar_todas_las_razones_no_aprueba_la_justificacion` | U `test_defecto_10_marcar_todas_las_razones_no_aprueba` (visto en rojo con la regla vieja), U `test_justification` |
 | RF-061 | U `test_rf061_la_fecha_de_corte_es_un_dato_de_entrada`, I `test_una_version_sin_conjuntos_finales_se_completa_al_llegar_al_desenlace` | U `test_rf061_con_desenlace_no_hay_abandono`, U `test_rf061_una_sesion_posterior_al_corte_no_cuenta`, S H-12 (la actividad y el archivo de la sesión se siguen actualizando) |
 | RF-039 | B2 `test_rf039_a_rf057_el_resumen_de_cada_recorrido_es_el_calculado_a_mano` (historial en orden, alternativa y razones elegidas, tres recorridos) | B2 (ninguna alternativa no elegida ni `is_correct` en la respuesta) |
-| RF-040, RF-041 | B2 `test_rf039_a_rf057_...` (consecuencias de eventos y transiciones con decisiones causantes y `causal` o `risk` por recorrido) | B2 (sin valores de variables; un riesgo sale como `risk`, no como causal) |
-| RF-042, RF-043 | B2 `test_rf039_a_rf057_...` (retroalimentación de la decisión y de su alternativa) | B2 `test_rf057_defecto_11_el_resumen_es_409_hasta_terminar_las_evaluaciones` (visto en rojo con la puerta sabotada) |
-| RF-044, RF-045 | B2 `test_rf039_a_rf057_...` (referencias con tipo, título y fuente por decisión) | B2 (D2 no hereda la referencia legal de D4) |
-| RF-046, RF-047, RF-048 | B2 `test_rf039_a_rf057_...` (legal con jurisdicción, versión, sección y vigencia; alcance limitado) | B2 (`is_law` solo en lo legal; lo demás sin jurisdicción) |
-| RF-049 | B2 `test_rf039_a_rf057_...` (puntuación, aciertos y total por evaluación) | B2 (ninguna nota global ni juicio en la respuesta) |
-| RF-056 | U `test_rf056_diferencia_en_puntos_solo_si_hay_pre_y_post`, B2 `test_rf039_a_rf057_...` (pre, post y diferencia a mano) | U `test_rf056_diferencia_en_puntos_solo_si_hay_pre_y_post` (sin uno, no hay diferencia) |
-| RF-057, RF-067 | B2 `test_rf057_defecto_11_el_resumen_es_409_hasta_terminar_las_evaluaciones` (200 al terminar), B2 `test_rf039_a_rf057_...` | B2 `test_rf057_defecto_11_...` (409 antes), B2 `test_rf067_un_resumen_ajeno_o_inexistente_es_404_y_sin_cookie_401` |
+| RF-040, RF-041 | B2 `test_rf039_a_rf057_el_resumen_de_cada_recorrido_es_el_calculado_a_mano` (consecuencias de eventos y transiciones con decisiones causantes y `causal` o `risk` por recorrido) | B2 (sin valores de variables; un riesgo sale como `risk`, no como causal) |
+| RF-042, RF-043 | B2 `test_rf039_a_rf057_el_resumen_de_cada_recorrido_es_el_calculado_a_mano` (retroalimentación de la decisión y de su alternativa) | B2 `test_rf057_defecto_11_el_resumen_es_409_hasta_terminar_las_evaluaciones` (visto en rojo con la puerta sabotada) |
+| RF-044, RF-045 | B2 `test_rf039_a_rf057_el_resumen_de_cada_recorrido_es_el_calculado_a_mano` (referencias con tipo, título y fuente por decisión) | B2 (D2 no hereda la referencia legal de D4) |
+| RF-046, RF-047, RF-048 | B2 `test_rf039_a_rf057_el_resumen_de_cada_recorrido_es_el_calculado_a_mano` (legal con jurisdicción, versión, sección y vigencia; alcance limitado) | B2 (`is_law` solo en lo legal; lo demás sin jurisdicción) |
+| RF-049 | B2 `test_rf039_a_rf057_el_resumen_de_cada_recorrido_es_el_calculado_a_mano` (puntuación, aciertos y total por evaluación) | B2 (ninguna nota global ni juicio en la respuesta) |
+| RF-056 | U `test_rf056_diferencia_en_puntos_solo_si_hay_pre_y_post`, B2 `test_rf039_a_rf057_el_resumen_de_cada_recorrido_es_el_calculado_a_mano` (pre, post y diferencia a mano) | U `test_rf056_diferencia_en_puntos_solo_si_hay_pre_y_post` (sin uno, no hay diferencia) |
+| RF-057, RF-067 | B2 `test_rf057_defecto_11_el_resumen_es_409_hasta_terminar_las_evaluaciones` (200 al terminar), B2 `test_rf039_a_rf057_el_resumen_de_cada_recorrido_es_el_calculado_a_mano` | B2 `test_rf057_defecto_11_el_resumen_es_409_hasta_terminar_las_evaluaciones` (409 antes), B2 `test_rf067_un_resumen_ajeno_o_inexistente_es_404_y_sin_cookie_401` |
+| RF-060 | S pruebas S-01 y S-06 a S-13 de `bd/pruebas/pruebas-defectos.sql` (función del owner, una vez, marca solo `survey_answered`, semana UTC de inicio, xmin común, orden físico distinto), I2 `test_rf060_al_terminar_se_ofrece_con_nota_enlace_omitir_y_las_seis_escalas`, I2 `test_rf060_envia_una_vez_marca_solo_respondida_y_no_renueva_la_actividad`, B3 `test_rf060_tras_terminar_se_ofrece_se_responde_una_vez_y_solo_queda_respondida` | S S-02 a S-05 (sin terminar, opuesto, inexistente, escala fuera de rango), I2 `test_d29_el_participante_opuesto_no_la_ve_y_enviar_es_403`, I2 `test_rf060_escala_fuera_de_rango_o_sin_obligatoria_es_422_y_no_deja_nada`, I2 `test_rf060_sin_terminar_no_se_ofrece_y_enviar_es_409`, I2 `test_rf060_sin_vinculo_las_filas_comparten_xmin_y_no_hay_id_ni_fecha_de_la_sesion`, B3 `test_rf060_una_sesion_ajena_es_404` |
 
 Notas. Las puntuaciones de los tres recorridos de DEMO-BECAS salen de `tests/evaluaciones.py` (calculadas a mano).
-No hay prueba de caja negra de «abandonar no impide reanudar» con el paso del tiempo: solo la función pura con corte inyectado.
+«Abandonar no impide reanudar» (RF-061): I `tests/integration/test_summary.py::test_rf061_abandonar_no_impide_reanudar` (sesión de 40 días, abandonada según `is_abandoned`, avanza con 200).
+Resumen por la API real: I `test_summary.py::test_rf042_a_rf048_el_resumen_trae_lo_propio_de_cada_decision` (general y alternativa elegida, referencias sin herencia, causas y relation_type), `test_rf011_results_total_son_las_aplicables_y_answered_las_respondidas` y `test_rf057_defecto_11_el_resumen_es_409_hasta_terminar_las_evaluaciones`.
+Evidencia en rojo de la puerta 409 y del filtro por alternativa: `tests/evidencia-rojo-e4.md`.
+No probado de RF-060: cuenta bloqueada (solo el opuesto por `exclude_from_stats`); concurrencia de dos envíos de la misma sesión.
