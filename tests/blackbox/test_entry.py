@@ -169,6 +169,7 @@ def test_rf062_el_secreto_no_sale_en_ningun_cuerpo(person):
     assert secret
     for response in (
         person.get("/api/v1/entry"),
+        person.post("/api/v1/participants", json=ACCEPT, headers=WRITE),
         start(person),
         person.get("/api/v1/sessions"),
         person.post("/api/v1/sessions", json={"scenario_key": 1}, headers=WRITE),

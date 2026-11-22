@@ -21,7 +21,9 @@ Hay que fijar cómo se organiza el backend y dónde se impone cada regla antes d
    puntuación nunca vienen del cliente.
 4. **Sesión anónima:** 256 bits aleatorios en una cookie `__Host-` Secure, HttpOnly, SameSite. La base guarda SHA-256.
 5. **Aislamiento:** toda consulta filtra por el participante autenticado. Lo ajeno y lo inexistente dan 404.
-6. **CSRF:** toda escritura exige Origin exacto y `X-Nukyro-Request: 1`.
+6. **CSRF:** toda escritura exige Origin exacto y `X-Nukyro-Request: 1`. Excepción declarada: un GET autenticado
+   renueva `last_activity_at` (RF-080) sin esas cabeceras. Con SameSite=Lax, un enlace externo puede renovar esa
+   fecha, pero no leer ni cambiar otra cosa. Se revisa en E5 (T-19).
 7. **Defensa en la base:** permisos por columna, triggers y funciones restringidas.
 8. **Errores y logs:** código estable, sin repetir la entrada ni registrar cookies, cuerpos o secretos.
 9. **Local:** HTTPS con CA local; el emisor de identidad simulado nunca entra en la imagen de la API.

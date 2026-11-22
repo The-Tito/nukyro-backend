@@ -46,7 +46,8 @@ def insert_acceptances(conn: Connection, participant, privacy: str, terms: str) 
         text(
             "INSERT INTO nukyro.document_acceptances "
             "(participant_id, document_type, document_version) "
-            "VALUES (:p, 'age_18_plus', NULL), (:p, 'privacy_notice', :pv), (:p, 'terms', :tv)"
+            "VALUES (:p, 'age_18_plus', NULL), (:p, 'privacy_notice', :pv), (:p, 'terms', :tv) "
+            "ON CONFLICT DO NOTHING"
         ),
         {"p": participant, "pv": privacy, "tv": terms},
     )

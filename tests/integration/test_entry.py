@@ -126,6 +126,31 @@ def test_rf001_los_rechazos_de_sesion_no_escriben(person, superuser):
     assert counts(superuser) == before
 
 
+def test_rf073_al_cambiar_la_version_se_acepta_de_nuevo_con_la_misma_cookie(person, superuser):
+    pid = participant_id(superuser, person)
+    # Como si hubiera aceptado una versión anterior de los documentos
+    superuser.execute(
+        "UPDATE nukyro.document_acceptances SET document_version = 'DEMO-0' "
+        "WHERE participant_id = %s AND document_type <> 'age_18_plus'",
+        (pid,),
+    )
+    assert person.post("/api/v1/sessions", json=SCENARIO, headers=WRITE).status_code == 422
+    again = person.post("/api/v1/participants", json=ACCEPT, headers=WRITE)
+    assert (again.status_code, again.json()["status"]) == (200, "existing")
+    assert participant_id(superuser, person) == pid
+    assert person.post("/api/v1/sessions", json=SCENARIO, headers=WRITE).status_code == 201
+    assert superuser.execute(
+        "SELECT count(*) FROM nukyro.document_acceptances WHERE participant_id = %s", (pid,)
+    ).fetchone() == (5,)
+
+
+def test_rf001_sin_cookie_no_se_escribe(new_client, superuser):
+    client = new_client()
+    before = counts(superuser)
+    assert client.post("/api/v1/sessions", json=SCENARIO, headers=WRITE).status_code == 401
+    assert counts(superuser) == before
+
+
 def test_rf073_sin_las_tres_aceptaciones_vigentes_no_hay_sesion(person, superuser):
     pid = participant_id(superuser, person)
     before = counts(superuser)
