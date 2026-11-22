@@ -104,3 +104,4 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** `./scripts/verify` en verde sobre develop (705dd90) antes de planear. Sin auditor ni revisión humana de ADR-009.
 - **Decisiones:** ADR-009.
 - **Evidencia:** `context/etapas/etapa-3.md`.
+- **Auditoría de T-11:** Sonnet recalculó los cuatro ejemplos; 5 observaciones sin bloqueo, precisadas en ADR-009.
