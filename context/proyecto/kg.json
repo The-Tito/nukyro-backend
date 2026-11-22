@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.32.0",
+    "version": "1.33.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -220,6 +220,11 @@
         "version": "1.32.0",
         "fecha": "2026-11-22",
         "cambio": "T-12 cerrada: validador de RF-066 con pre-test obligatorio y publicación P12; defecto 6 corregido."
+      },
+      {
+        "version": "1.33.0",
+        "fecha": "2026-11-22",
+        "cambio": "E3 cerrada por delegación (D-32) con EV-03: 39 de 87 RF. A-04 abre el release a main."
       }
     ]
   },
@@ -370,8 +375,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 492,
-    "aristas": 826,
+    "nodos": 494,
+    "aristas": 833,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 17,
@@ -391,7 +396,7 @@
       "ConjuntoPrincipios": 1,
       "Contacto": 1,
       "Cookie": 2,
-      "Decision": 50,
+      "Decision": 51,
       "Degradado": 2,
       "Descargo": 4,
       "DisenoEvaluacion": 1,
@@ -439,7 +444,7 @@
       "Tarea": 28,
       "Tipografia": 1,
       "TonoVoz": 1,
-      "Evidencia": 2
+      "Evidencia": 3
     }
   },
   "nodos": [
@@ -6759,7 +6764,7 @@
       "tipo": "Etapa",
       "nombre": "Motor de simulación",
       "texto": "Consecuencias deterministas decididas por el servidor",
-      "estado": "en_curso",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "| E3 |",
@@ -6776,6 +6781,44 @@
         "fecha": "2026-11-22",
         "decision": "D-24",
         "plan": "context/etapas/etapa-3.md"
+      },
+      "puerta_b": {
+        "estado": "delegada",
+        "fecha": "2026-11-22",
+        "decision": "D-32"
+      },
+      "rf_estado": {
+        "RF-006": "demostrado",
+        "RF-013": "backend demostrado, interfaz pendiente",
+        "RF-014": "backend demostrado, interfaz pendiente",
+        "RF-015": "demostrado",
+        "RF-016": "demostrado",
+        "RF-017": "demostrado",
+        "RF-018": "backend demostrado, interfaz pendiente",
+        "RF-019": "backend demostrado, interfaz pendiente",
+        "RF-020": "backend demostrado, interfaz pendiente",
+        "RF-021": "demostrado",
+        "RF-022": "demostrado",
+        "RF-023": "demostrado",
+        "RF-024": "demostrado",
+        "RF-025": "demostrado",
+        "RF-026": "demostrado",
+        "RF-027": "demostrado",
+        "RF-028": "demostrado",
+        "RF-029": "demostrado",
+        "RF-030": "demostrado",
+        "RF-031": "demostrado",
+        "RF-032": "demostrado",
+        "RF-033": "demostrado",
+        "RF-034": "demostrado",
+        "RF-035": "backend demostrado, interfaz pendiente",
+        "RF-036": "demostrado",
+        "RF-037": "demostrado",
+        "RF-038": "backend demostrado, interfaz pendiente",
+        "RF-063": "demostrado",
+        "RF-064": "demostrado",
+        "RF-065": "demostrado",
+        "RF-066": "demostrado"
       }
     },
     {
@@ -7422,10 +7465,11 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
-      "buscar": "### T-13 ·"
+      "buscar": "### T-13 ·",
+      "nota": "Cerrada el 2026-11-22 por delegación (D-24, D-32) con EV-03. Sin revisión humana de los textos."
     },
     {
       "id": "T-14",
@@ -8053,6 +8097,41 @@
         {
           "doc": "DECISION-USUARIO",
           "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "EV-03",
+      "tipo": "Evidencia",
+      "nombre": "E3 comprobada",
+      "estado": "vigente",
+      "fecha": "2026-11-22",
+      "commit": "9376c6a",
+      "comando": "./scripts/verify",
+      "texto": "Verificación acumulada, recorrido de las 6 561 rutas de la demostración y tres auditorías de la fase.",
+      "resultado": "sql=242, unit=188, integration=108, blackbox=61; 6 561 rutas; 0 estrategias ciegas de la lista cerrada; auditorías con Opus y Sonnet, la última sin bloqueos",
+      "ruta": "context/bitacora.md",
+      "buscar": "EV-03",
+      "fuente": [
+        {
+          "doc": "D-32",
+          "seccion": "verificación delegada"
+        }
+      ]
+    },
+    {
+      "id": "A-04",
+      "tipo": "Decision",
+      "nombre": "Release a main con el commit expuesto",
+      "texto": "El release aprobado (D-27) llevaría e8dbae5, con datos personales (D-26), a main, que hoy no los tiene. Falta que el usuario elija: fusionar con esa consecuencia, publicar en main solo el árbol sin ese historial, o no hacer release.",
+      "estado": "abierta",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| A-04 |",
+      "fuente": [
+        {
+          "doc": "D-26",
+          "seccion": "consecuencia no prevista al aprobar el release"
         }
       ]
     }
@@ -12206,6 +12285,41 @@
       "origen": "D-32",
       "relacion": "afecta",
       "destino": "D-24"
+    },
+    {
+      "origen": "EV-03",
+      "relacion": "respalda",
+      "destino": "E3"
+    },
+    {
+      "origen": "EV-03",
+      "relacion": "respalda",
+      "destino": "T-07"
+    },
+    {
+      "origen": "EV-03",
+      "relacion": "respalda",
+      "destino": "T-11"
+    },
+    {
+      "origen": "EV-03",
+      "relacion": "respalda",
+      "destino": "T-12"
+    },
+    {
+      "origen": "EV-03",
+      "relacion": "respalda",
+      "destino": "T-13"
+    },
+    {
+      "origen": "A-04",
+      "relacion": "afecta",
+      "destino": "D-27"
+    },
+    {
+      "origen": "A-04",
+      "relacion": "depende_de",
+      "destino": "D-26"
     }
   ],
   "conflictos": [

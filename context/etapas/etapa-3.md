@@ -54,7 +54,7 @@ antes de programar. El motor es puro: se prueba sin base. P5 solo carga, llama a
 
 | Método y ruta | Entrada | Salida |
 |---|---|---|
-| `GET /api/v1/sessions/{id}` | | Sesión, nodo, alternativas, razones y eventos narrativos |
+| `GET /api/v1/sessions/{id}` | | Sesión, introducción de su versión, nodo, alternativas, razones y eventos narrativos |
 | `POST /api/v1/sessions/{id}/decisions` | `node_key`, `option_key`, `reason_keys` | 200: confirmada y estado actual; `replayed` si es reintento |
 | `POST /api/v1/sessions/{id}/advance` | `from_node_key` | 200: estado actual |
 
@@ -83,4 +83,12 @@ de arriba, commits y PR de la fase y Docker local. No agrega dependencias.
 
 ## Puerta B
 
-Pendiente.
+**Delegada el 2026-11-22 (D-32), sin revisión humana.** Evidencia: EV-03 (commit `9376c6a`).
+
+- **Comprobar:** `./scripts/verify`. Esperado: `verify OK` con sql=242, unit=188, integration=108, blackbox=61.
+- **Demostrados:** 24 RF. **Backend demostrado, interfaz pendiente:** RF-013, 014, 018, 019, 020, 035 y 038. Acumulado: 39 de 87.
+- **S4:** 1 000 pares concurrentes, 0 duplicados.
+- **No probado:** RDS y Cognito (S-04); que los textos sean buenos reactivos (juicio humano); el recorrido manual.
+- **Residual declarado:** las pistas de forma se prueban contra una lista cerrada de estrategias. Al azar, 3 de 4 en H05
+  ocurre cerca del 30 % de las veces: es un límite del instrumento, no del código.
+- **Abierto:** release a main (A-04).

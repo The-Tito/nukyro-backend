@@ -416,3 +416,95 @@ def test_variable_sin_limites_y_decision_sin_justificacion():
     state = decide(content, at_decision, "D1", "A", ()).state
     assert state.values["p"] == -6
     assert state.decisions[0].correct is None
+
+
+# --- T-13: RF-028, RF-023 y determinismo hasta el desenlace ------------------------------------
+
+
+def _orden_content():
+    """p entre 0 y 10 desde 3. S: fija 8 y suma 5; T: suma 5 y fija 8."""
+    return Content(
+        nodes={
+            "intro": Node("intro", "intro", default_next_node_key="D1"),
+            "D1": Node(
+                "D1",
+                "decision",
+                options=(
+                    Option("S", (Effect("p", "set", 8), Effect("p", "add", 5))),
+                    Option("T", (Effect("p", "add", 5), Effect("p", "set", 8))),
+                ),
+                default_next_node_key="FIN",
+            ),
+            **_outcomes("FIN"),
+        },
+        variables={"p": Variable("p", 3, 0, 10)},
+        rules=(),
+    )
+
+
+def test_rf028_set_y_add_sobre_la_misma_variable_se_aplican_en_orden_con_recorte():
+    content = _orden_content()
+    start = advance(content, initial_state(content), "intro").state
+    s = decide(content, start, "D1", "S", ())
+    # fija 8 (3->8) y suma 5 sobre ese 8: 13 se recorta a 10. Invertir el orden daría (3,8),(8,8)
+    assert s.effects == (AppliedEffect("p", 3, 8), AppliedEffect("p", 8, 10))
+    assert s.state.values["p"] == 10
+    t = decide(content, start, "D1", "T", ())
+    assert t.effects == (AppliedEffect("p", 3, 8), AppliedEffect("p", 8, 8))
+    assert t.state.values["p"] == 8
+
+
+def _dos_justificadas():
+    return Content(
+        nodes={
+            "intro": Node("intro", "intro", default_next_node_key="J1"),
+            "J1": Node(
+                "J1",
+                "decision",
+                options=(Option("o1", (Effect("p", "add", 1),)),),
+                reasons=(Reason("ra", True), Reason("rb", False)),
+                requires_justification=True,
+                default_next_node_key="J2",
+            ),
+            "J2": Node(
+                "J2",
+                "decision",
+                options=(Option("o2"),),
+                reasons=(Reason("rc", True), Reason("rd", False)),
+                requires_justification=True,
+                default_next_node_key="END",
+            ),
+            "END": Node("END", "outcome"),
+        },
+        variables={"p": Variable("p", 3, 0, 10)},
+        rules=(),
+    )
+
+
+def test_rf023_una_razon_existente_de_otro_nodo_justificado_se_rechaza_sin_cambios():
+    c = _dos_justificadas()
+    st = advance(c, initial_state(c), "intro").state
+    before = copy.deepcopy(st)
+    # «rc» existe y es correcta, pero es de J2: en J1 es una razón desconocida
+    assert _code(lambda: decide(c, st, "J1", "o1", ("rc",))) == "unknown_reason"
+    assert _code(lambda: decide(c, st, "J1", "o1", ("ra", "rc"))) == "unknown_reason"
+    assert st == before and st.values["p"] == 3
+    assert decide(c, st, "J1", "o1", ("ra",)).state.decisions[0].correct is True
+
+
+def test_determinista_hasta_el_desenlace():
+    """Mismo recorrido, mismo resultado completo en cada paso hasta el desenlace."""
+
+    def run(first, second):
+        st = advance(EXAMPLE, initial_state(EXAMPLE), "intro").state
+        steps = []
+        for node, option in (("D1", first), ("D2", second)):
+            r = decide(EXAMPLE, st, node, option, ())
+            st = r.state
+            steps.append(r)
+        return steps, st
+
+    for picks in ("AC", "AD", "BC", "BD"):
+        one, two = run(*picks), run(*picks)
+        assert one == two
+        assert one[1].current_node_key in ("MALO", "BUENO") and one[0][-1].finished

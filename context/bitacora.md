@@ -130,3 +130,15 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Decisiones:** D-28 aplicada.
 - **Evidencia:** `./scripts/verify`; dos sabotajes del bloqueo hicieron fallar la carrera editar contra publicar.
 - **Escáner:** un correo ficticio en `example.invalid` detuvo el push de T-12. Se cambió a `example.test` y la rama se rehízo desde develop sin tocar el escáner; la anterior nunca se subió.
+
+## 2026-11-22: T-13, escenario de demostración
+- **Resultado:** DEMO-BECAS ficticio (8 decisiones, 3 variables, 2 eventos, 3 desenlaces, evaluaciones 6, 6, 5 y 5), sembrado por P12.
+- **Revisión:** la primera auditoría de E3 con Opus dio 8 bloqueos y la reauditoría 4: conteos del instrumento, claves falsas en algunas rutas, introducción oculta y pistas de forma que aprobaban a ciegas. La verificación final no dejó bloqueos. La dirección halló además una siembra que borraba borradores.
+- **Decisiones:** precisiones de ADR-009.
+- **Evidencia:** prueba sobre las 6 561 rutas; 15 estrategias ciegas antes, 0 después.
+
+## 2026-11-22: E3 cerrada por delegación
+- **Resultado:** Puerta B delegada (D-32). 39 de 87 RF. El release a main no se hizo: llevaría e8dbae5 a main (A-04).
+- **Revisión:** tres auditorías de la fase. Sin revisión humana.
+- **Decisiones:** A-04 abierta.
+- **Evidencia:** EV-03: `./scripts/verify` con sql=242, unit=188, integration=108, blackbox=61.

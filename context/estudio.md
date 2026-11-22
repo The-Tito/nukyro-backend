@@ -26,3 +26,17 @@ participante: el segundo espera y ya ve la sesión del primero (RN-18).
 **¿Qué impide que otra página haga peticiones a nombre del participante?**
 La cookie `__Host-` con SameSite y, en toda escritura, Origin exacto más una cabecera que otro origen no puede
 enviar sin permiso. La excepción de los GET está declarada en ADR-008.
+
+## E3 · Motor de simulación
+
+**¿Por qué un reintento se busca antes de validar el nodo actual?**
+Si la respuesta se pierde, la sesión ya avanzó. Validar primero el nodo rechazaría un reintento legítimo. Se devuelve
+la decisión confirmada, aunque el reintento traiga otra alternativa (RN-14, defecto 1).
+
+**¿Cómo sabe el sistema qué decisiones causaron un evento sin inventar causas?**
+Guarda cada efecto con su valor anterior y nuevo. Una condición verdadera solo atribuye las decisiones que cambiaron
+esa variable; una rama falsa o un efecto recortado sin cambio no cuentan (ADR-009).
+
+**¿Cómo puede un examen correcto medir mal?**
+Si la correcta es siempre la más larga o la misma clave, se aprueba sin saber. Por eso el orden cambia por sesión y
+una prueba derrota una lista cerrada de estrategias ciegas. Eso no valida la calidad pedagógica: la revisa una persona.

@@ -29,6 +29,7 @@ class ScenarioOut(BaseModel):
     key: str
     title: str
     version_number: int
+    introduction: str  # RF-013: la de la versión fijada en la sesión
 
 
 class NodeOut(BaseModel):

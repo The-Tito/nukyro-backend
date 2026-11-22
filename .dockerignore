@@ -5,6 +5,8 @@
 !migrations
 !alembic.ini
 !demo/documents.json
+!demo/scenario-becas.json
 !tests/conftest.py
+!tests/recorridos.py
 !tests/blackbox
 **/__pycache__

@@ -1,0 +1,1369 @@
+{
+  "key": "DEMO-BECAS",
+  "title": "DEMOSTRACIÓN: plataforma de becas universitarias",
+  "introduction": "DEMOSTRACIÓN. Escenario ficticio para practicar decisiones en el desarrollo de software. Eres parte del equipo que construye una plataforma para solicitar becas en un instituto que no existe. Todo lo que aparece, incluidas las referencias, fue inventado para esta demostración y no tiene validez legal ni profesional.",
+  "objectives": [
+    {
+      "key": "lo_data",
+      "description": "Reconocer cómo las decisiones de diseño afectan los datos personales y su protección."
+    },
+    {
+      "key": "lo_equity",
+      "description": "Identificar quién queda en desventaja por una decisión técnica y cómo reducirlo."
+    },
+    {
+      "key": "lo_duty",
+      "description": "Explicar la responsabilidad profesional ante la calidad, las licencias y los riesgos conocidos."
+    }
+  ],
+  "variables": [
+    {
+      "key": "privacy",
+      "label": "Protección de datos del proyecto",
+      "initial": 5,
+      "min": 0,
+      "max": 10
+    },
+    {
+      "key": "access",
+      "label": "Acceso de las personas solicitantes",
+      "initial": 5,
+      "min": 0,
+      "max": 10
+    },
+    {
+      "key": "quality",
+      "label": "Calidad del producto",
+      "initial": 5,
+      "min": 0,
+      "max": 10
+    }
+  ],
+  "references": [
+    {
+      "key": "ref_ethics",
+      "category": "ethical",
+      "title": "DEMOSTRACIÓN: Principios ficticios de cuidado de las personas usuarias",
+      "source": "Texto inventado para esta demostración. No existe fuera de ella y no es una ley ni una obligación.",
+      "section": "Principio 2 (inventado)",
+      "version_label": "DEMO-0",
+      "jurisdiction": null,
+      "consulted_on": "2026-11-22",
+      "valid_from": "2026-01-01"
+    },
+    {
+      "key": "ref_profession",
+      "category": "professional",
+      "title": "DEMOSTRACIÓN: Guía profesional ficticia de programación responsable",
+      "source": "Texto inventado para esta demostración. Es una guía profesional imaginaria y no es una ley.",
+      "section": "Apartado 4 (inventado)",
+      "version_label": "DEMO-0",
+      "jurisdiction": null,
+      "consulted_on": "2026-11-22",
+      "valid_from": "2026-01-01"
+    },
+    {
+      "key": "ref_technical",
+      "category": "normative",
+      "title": "DEMOSTRACIÓN: Pauta técnica ficticia PT-DEMO-1 de accesibilidad y pruebas",
+      "source": "Pauta inventada para esta demostración. No es una norma real ni una ley.",
+      "section": "Capítulo 3 (inventado)",
+      "version_label": "DEMO-1",
+      "jurisdiction": null,
+      "consulted_on": "2026-11-22",
+      "valid_from": "2026-01-01"
+    },
+    {
+      "key": "ref_law",
+      "category": "legal",
+      "title": "DEMOSTRACIÓN: Ley ficticia de Datos y Obras Digitales de Nukylandia",
+      "source": "Texto legal inventado para esta demostración. No es una ley real y no aplica a ningún caso real.",
+      "section": "Sección inventada 5",
+      "version_label": "DEMO-0",
+      "jurisdiction": "Nukylandia (jurisdicción ficticia)",
+      "consulted_on": "2026-11-22",
+      "valid_from": "2026-01-01"
+    }
+  ],
+  "nodes": [
+    {
+      "key": "intro",
+      "type": "intro",
+      "title": "DEMOSTRACIÓN: la plataforma de becas",
+      "body": "El Instituto Imaginario de Becas abrirá una convocatoria en pocas semanas. Tu equipo debe entregar la plataforma donde las personas solicitan una beca. Tomarás ocho decisiones, desde los requerimientos hasta la respuesta a un incidente.",
+      "next": "D1"
+    },
+    {
+      "key": "D1",
+      "type": "decision",
+      "phase": "requirements",
+      "next": "D2",
+      "title": "Qué datos pedir",
+      "body": "Al definir los requerimientos del formulario, el instituto propone pedir muchos datos de cada solicitante. Tú debes decidir qué se pide.",
+      "objective": "lo_data",
+      "affected_parties": "Personas solicitantes y equipo de evaluación del instituto",
+      "requires_justification": true,
+      "min_correct": 1,
+      "h05": true,
+      "references": [
+        "ref_ethics",
+        "ref_law"
+      ],
+      "feedback": [
+        {
+          "category": "ethical",
+          "body": "Pedir solo lo necesario reduce lo que puede filtrarse; pedirlo todo aumenta el daño posible si hay una filtración; los datos opcionales con aviso aparte dan opción a cada persona."
+        }
+      ],
+      "options": [
+        {
+          "key": "o1_5a9a",
+          "label": "Pedir los necesarios y dejar otros como opcionales, con aviso aparte",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": 1
+            },
+            {
+              "variable_key": "access",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "key": "o1_2923",
+          "label": "Pedir solo los datos necesarios para evaluar la beca",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": 2
+            }
+          ]
+        },
+        {
+          "key": "o1_1fba",
+          "label": "Pedir todos los datos disponibles, por si sirven después",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": -2
+            }
+          ]
+        }
+      ],
+      "reasons": [
+        {
+          "key": "r1_b591",
+          "label": "Guardar menos datos reduce el daño de una filtración.",
+          "correct": true
+        },
+        {
+          "key": "r1_9fd3",
+          "label": "Quien quiere una beca aceptará entregar cualquier dato, así que no hace falta limitar lo que se pide.",
+          "correct": false
+        },
+        {
+          "key": "r1_948b",
+          "label": "Mientras más datos se tengan, menos hay que revisar después.",
+          "correct": false
+        },
+        {
+          "key": "r1_d6f7",
+          "label": "Todo dato pedido requiere un fin claro.",
+          "correct": true
+        }
+      ]
+    },
+    {
+      "key": "D2",
+      "type": "decision",
+      "phase": "design",
+      "next": "D3",
+      "title": "Dónde guardar los documentos",
+      "body": "Al diseñar el sistema, las personas solicitantes subirán documentos de apoyo, como comprobantes. Debes decidir cómo se guardan.",
+      "objective": "lo_data",
+      "affected_parties": "Personas solicitantes y personal con acceso al sistema",
+      "requires_justification": false,
+      "references": [
+        "ref_profession"
+      ],
+      "feedback": [
+        {
+          "category": "professional",
+          "body": "Cifrar y limitar el acceso protege los documentos; una carpeta compartida sin cifrar los deja al alcance de cualquiera con acceso al equipo; cifrar solo la identificación protege una parte."
+        }
+      ],
+      "options": [
+        {
+          "key": "o2_808f",
+          "label": "Usar una carpeta compartida del equipo, sin cifrar",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": -3
+            }
+          ]
+        },
+        {
+          "key": "o2_2a86",
+          "label": "Cifrar solo el campo de identificación",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "key": "o2_c749",
+          "label": "Cifrar los documentos y dar acceso solo según el puesto",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": 2
+            },
+            {
+              "variable_key": "quality",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "D3",
+      "type": "decision",
+      "phase": "design",
+      "next": "D4",
+      "title": "Cómo será el formulario",
+      "body": "Muchas personas solicitantes solo tienen un teléfono y conexión lenta. Debes decidir cómo se diseña el formulario.",
+      "objective": "lo_equity",
+      "affected_parties": "Personas solicitantes con teléfono, conexión lenta o poca experiencia digital",
+      "requires_justification": true,
+      "min_correct": 1,
+      "references": [
+        "ref_technical"
+      ],
+      "feedback": [
+        {
+          "category": "normative",
+          "body": "Un formulario ligero y accesible amplía quién puede solicitar; uno solo para escritorio con archivos pesados deja fuera a quien no tiene esa conexión; la versión de escritorio accesible ayuda a una parte."
+        }
+      ],
+      "options": [
+        {
+          "key": "o3_a1b4",
+          "label": "Hacer un formulario accesible y ligero que funcione en celular",
+          "effects": [
+            {
+              "variable_key": "access",
+              "op": "add",
+              "value": 2
+            },
+            {
+              "variable_key": "quality",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "key": "o3_9a36",
+          "label": "Hacer solo una versión de escritorio que pida archivos grandes",
+          "effects": [
+            {
+              "variable_key": "access",
+              "op": "add",
+              "value": -2
+            }
+          ]
+        },
+        {
+          "key": "o3_509f",
+          "label": "Hacer una versión de escritorio accesible y dejar el celular para después",
+          "effects": [
+            {
+              "variable_key": "access",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        }
+      ],
+      "reasons": [
+        {
+          "key": "r3_7688",
+          "label": "Quien no tiene computadora puede pedir ayuda a otra persona.",
+          "correct": false
+        },
+        {
+          "key": "r3_5dd8",
+          "label": "Con una versión de escritorio basta, porque así se hacen la mayoría de los trámites.",
+          "correct": false
+        },
+        {
+          "key": "r3_629b",
+          "label": "Un formulario ligero funciona con conexiones lentas.",
+          "correct": true
+        },
+        {
+          "key": "r3_973e",
+          "label": "Quien solo tiene un celular también debe poder solicitar la beca.",
+          "correct": true
+        }
+      ]
+    },
+    {
+      "key": "D4",
+      "type": "decision",
+      "phase": "development",
+      "next": "D5",
+      "title": "Un componente de terceros",
+      "body": "Para leer los documentos subidos, el equipo necesita un componente. Encuentras uno en un foro, sin licencia visible, y hay otro con licencia clara.",
+      "objective": "lo_duty",
+      "affected_parties": "Equipo de desarrollo, titular del componente e instituto",
+      "requires_justification": false,
+      "references": [
+        "ref_law"
+      ],
+      "feedback": [
+        {
+          "category": "legal",
+          "body": "Revisar la licencia evita usar una obra sin permiso; copiar sin revisar deja un riesgo en el producto; escribirlo desde cero evita el problema pero limita los formatos que se aceptan."
+        }
+      ],
+      "options": [
+        {
+          "key": "o4_2cfa",
+          "label": "Escribir un componente propio desde cero",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": 1
+            },
+            {
+              "variable_key": "access",
+              "op": "add",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "key": "o4_65c3",
+          "label": "Revisar la licencia y usar el componente con licencia compatible",
+          "effects": [
+            {
+              "variable_key": "quality",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "key": "o4_19ff",
+          "label": "Copiar el código del foro sin revisar su licencia",
+          "effects": [
+            {
+              "variable_key": "quality",
+              "op": "add",
+              "value": -2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "D5",
+      "type": "decision",
+      "phase": "development",
+      "next": "D6",
+      "title": "Cómo ordenar las solicitudes",
+      "body": "El instituto pide un puntaje automático para ordenar las solicitudes. Debes decidir cómo se aplica.",
+      "objective": "lo_equity",
+      "affected_parties": "Personas solicitantes y comité de becas",
+      "requires_justification": true,
+      "min_correct": 2,
+      "h05": true,
+      "references": [
+        "ref_ethics",
+        "ref_technical"
+      ],
+      "feedback": [
+        {
+          "category": "ethical",
+          "body": "Con criterios publicados y revisión de casos dudosos, las personas pueden entender y cuestionar el resultado; un puntaje sin explicación ni revisión puede repetir errores sin que nadie los vea."
+        }
+      ],
+      "options": [
+        {
+          "key": "o5_b24e",
+          "label": "Publicar los criterios, sin revisión humana",
+          "effects": [
+            {
+              "variable_key": "quality",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "key": "o5_2565",
+          "label": "Usar un puntaje automático sin explicar sus criterios ni revisar casos",
+          "effects": [
+            {
+              "variable_key": "access",
+              "op": "add",
+              "value": -2
+            },
+            {
+              "variable_key": "quality",
+              "op": "add",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "key": "o5_7d70",
+          "label": "Publicar los criterios y revisar a mano los casos dudosos",
+          "effects": [
+            {
+              "variable_key": "access",
+              "op": "add",
+              "value": 1
+            },
+            {
+              "variable_key": "quality",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        }
+      ],
+      "reasons": [
+        {
+          "key": "r5_024f",
+          "label": "Explicar los criterios retrasa el proceso, así que no conviene.",
+          "correct": false
+        },
+        {
+          "key": "r5_7131",
+          "label": "Un puntaje puede equivocarse y alguien debe poder revisarlo.",
+          "correct": true
+        },
+        {
+          "key": "r5_45a0",
+          "label": "El puntaje automático acierta siempre.",
+          "correct": false
+        },
+        {
+          "key": "r5_3139",
+          "label": "Quien solicita debe poder conocer los criterios que se aplican.",
+          "correct": true
+        },
+        {
+          "key": "r5_cc31",
+          "label": "Si una decisión afecta una beca, merece explicarse.",
+          "correct": true
+        }
+      ]
+    },
+    {
+      "key": "D6",
+      "type": "decision",
+      "phase": "testing",
+      "next": "D7",
+      "title": "Con qué datos probar",
+      "body": "Faltan pocos días para el cierre de la convocatoria anterior. Debes decidir cómo se prueba la plataforma.",
+      "objective": "lo_duty",
+      "affected_parties": "Personas solicitantes de convocatorias pasadas y equipo de pruebas",
+      "requires_justification": false,
+      "references": [
+        "ref_technical"
+      ],
+      "feedback": [
+        {
+          "category": "normative",
+          "body": "Probar con datos inventados y casos de accesibilidad encuentra fallos sin exponer a nadie; usar solicitudes reales pasadas expone datos de personas; omitir pruebas deja fallos sin descubrir."
+        }
+      ],
+      "options": [
+        {
+          "key": "o6_701b",
+          "label": "Probar con datos inventados e incluir casos de accesibilidad",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": 1
+            },
+            {
+              "variable_key": "quality",
+              "op": "add",
+              "value": 2
+            },
+            {
+              "variable_key": "access",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        },
+        {
+          "key": "o6_9abb",
+          "label": "Omitir las pruebas por falta de tiempo",
+          "effects": [
+            {
+              "variable_key": "quality",
+              "op": "add",
+              "value": -3
+            }
+          ]
+        },
+        {
+          "key": "o6_ed23",
+          "label": "Probar con solicitudes reales de convocatorias pasadas",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": -2
+            },
+            {
+              "variable_key": "quality",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "key": "D7",
+      "type": "decision",
+      "phase": "delivery",
+      "next": "D8",
+      "title": "Un riesgo conocido antes de entregar",
+      "body": "Antes de la entrega notas que, al cambiar un número en la dirección, se puede ver el estado de la solicitud de otra persona. Debes decidir cómo proceder.",
+      "objective": "lo_duty",
+      "affected_parties": "Personas solicitantes, instituto y equipo de desarrollo",
+      "requires_justification": true,
+      "min_correct": 1,
+      "references": [
+        "ref_profession"
+      ],
+      "feedback": [
+        {
+          "category": "professional",
+          "body": "Informar y corregir antes de entregar evita que el riesgo llegue a las personas; entregar sin decir nada o dejarlo para después mantiene el riesgo mientras la plataforma está en uso."
+        }
+      ],
+      "options": [
+        {
+          "key": "o7_485f",
+          "label": "Entregar y corregirlo en la siguiente versión, avisando del riesgo",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": -1
+            }
+          ]
+        },
+        {
+          "key": "o7_b8f2",
+          "label": "Entregar sin mencionarlo",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": -3
+            }
+          ]
+        },
+        {
+          "key": "o7_34d2",
+          "label": "Avisar al equipo y al instituto, y corregirlo antes de entregar",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": 2
+            },
+            {
+              "variable_key": "quality",
+              "op": "add",
+              "value": 1
+            }
+          ]
+        }
+      ],
+      "reasons": [
+        {
+          "key": "r7_7967",
+          "label": "Si nadie lo ha notado, no es necesario mencionarlo.",
+          "correct": false
+        },
+        {
+          "key": "r7_fc68",
+          "label": "Corregir antes de entregar cuesta menos que reparar un daño después.",
+          "correct": true
+        },
+        {
+          "key": "r7_06fc",
+          "label": "Quien usa la plataforma necesita saber de un riesgo que le puede afectar.",
+          "correct": true
+        },
+        {
+          "key": "r7_8fb6",
+          "label": "El plazo de entrega es más importante que cualquier riesgo.",
+          "correct": false
+        }
+      ],
+      "h05": true
+    },
+    {
+      "key": "D8",
+      "type": "decision",
+      "phase": "incident_response",
+      "next": "OUT_MIXED",
+      "title": "Una alerta en los registros",
+      "body": "Con la plataforma en uso, el sistema registra accesos inusuales a las solicitudes. Debes decidir cómo responder.",
+      "objective": "lo_data",
+      "affected_parties": "Personas solicitantes posiblemente afectadas, instituto y equipo de desarrollo",
+      "requires_justification": true,
+      "min_correct": 1,
+      "references": [
+        "ref_law",
+        "ref_profession"
+      ],
+      "feedback": [
+        {
+          "category": "legal",
+          "body": "En esta jurisdicción ficticia, la ley inventada pide avisar pronto de un acceso indebido. Avisar y documentar permite a las personas protegerse; esperar o callar prolonga la exposición."
+        }
+      ],
+      "options": [
+        {
+          "key": "o8_0923",
+          "label": "Revisar en silencio y no avisar a nadie",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": -3
+            }
+          ]
+        },
+        {
+          "key": "o8_d43a",
+          "label": "Contener el acceso, avisar a las personas posiblemente afectadas y al instituto, y documentar",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": 2
+            }
+          ]
+        },
+        {
+          "key": "o8_c3fb",
+          "label": "Esperar a confirmar el problema antes de decir algo",
+          "effects": [
+            {
+              "variable_key": "privacy",
+              "op": "add",
+              "value": -1
+            }
+          ]
+        }
+      ],
+      "reasons": [
+        {
+          "key": "r8_26f4",
+          "label": "Un aviso pronto ayuda a las personas a protegerse.",
+          "correct": true
+        },
+        {
+          "key": "r8_259c",
+          "label": "Si el problema ya pasó, no hace falta revisar nada más.",
+          "correct": false
+        },
+        {
+          "key": "r8_82aa",
+          "label": "Dejar por escrito lo ocurrido ayuda a evitar que se repita.",
+          "correct": true
+        },
+        {
+          "key": "r8_f273",
+          "label": "Avisar preocupa a la gente, así que conviene esperar.",
+          "correct": false
+        }
+      ],
+      "h05": true
+    },
+    {
+      "key": "EV_ACCESS",
+      "type": "event",
+      "phase": "testing",
+      "title": "Aviso: acceso bajo",
+      "body": "Aviso: el acceso de las personas solicitantes al formulario quedó en un nivel bajo, y es posible que muchas no logren completar su solicitud."
+    },
+    {
+      "key": "EV_LEAK",
+      "type": "event",
+      "phase": "delivery",
+      "title": "Aviso: protección de datos baja",
+      "body": "Aviso: la protección de datos del proyecto quedó en un nivel bajo, y es posible que haya datos al alcance de otras personas. El instituto pide explicaciones al equipo."
+    },
+    {
+      "key": "OUT_SOLID",
+      "type": "outcome",
+      "title": "Desenlace: plataforma sólida",
+      "body": "La convocatoria cierra con la protección de datos, el acceso y la calidad del proyecto en un nivel alto a la vez."
+    },
+    {
+      "key": "OUT_MIXED",
+      "type": "outcome",
+      "title": "Desenlace: plataforma con pendientes",
+      "body": "La convocatoria sigue su curso, pero al menos uno de los tres indicadores del proyecto (protección de datos, acceso o calidad) quedó por debajo del nivel alto, sin llegar a un nivel crítico. El instituto pide un plan para resolver los pendientes antes de la siguiente convocatoria."
+    },
+    {
+      "key": "OUT_CRISIS",
+      "type": "outcome",
+      "title": "Desenlace: plataforma en crisis",
+      "body": "La protección de datos quedó en un nivel muy bajo, o el acceso y la calidad quedaron bajos a la vez. El instituto suspende la convocatoria mientras se revisa el sistema."
+    }
+  ],
+  "rules": [
+    {
+      "key": "ev_access",
+      "type": "event",
+      "from": "D6",
+      "condition": {
+        "var": "access",
+        "op": "lte",
+        "value": 4
+      },
+      "target": "EV_ACCESS",
+      "relation": "causal",
+      "priority": 10,
+      "explanation": "Las decisiones que cambiaron el acceso al formulario lo dejaron en un nivel bajo al salir de las pruebas, y esa condición activó este aviso."
+    },
+    {
+      "key": "ev_leak",
+      "type": "event",
+      "from": "D7",
+      "condition": {
+        "var": "privacy",
+        "op": "lte",
+        "value": 4
+      },
+      "target": "EV_LEAK",
+      "relation": "risk",
+      "priority": 10,
+      "explanation": "Las decisiones que cambiaron la protección de datos la dejaron en un nivel bajo al salir de la entrega, y esa condición activó este aviso de riesgo."
+    },
+    {
+      "key": "tr_crisis",
+      "type": "transition",
+      "from": "D8",
+      "condition": {
+        "any": [
+          {
+            "var": "privacy",
+            "op": "lte",
+            "value": 3
+          },
+          {
+            "all": [
+              {
+                "var": "access",
+                "op": "lte",
+                "value": 3
+              },
+              {
+                "var": "quality",
+                "op": "lte",
+                "value": 4
+              }
+            ]
+          }
+        ]
+      },
+      "target": "OUT_CRISIS",
+      "relation": "causal",
+      "priority": 10,
+      "explanation": "Se cumplió alguna de estas condiciones: protección de datos muy baja, o acceso y calidad bajos a la vez."
+    },
+    {
+      "key": "tr_solid",
+      "type": "transition",
+      "from": "D8",
+      "condition": {
+        "all": [
+          {
+            "var": "privacy",
+            "op": "gte",
+            "value": 7
+          },
+          {
+            "var": "access",
+            "op": "gte",
+            "value": 6
+          },
+          {
+            "var": "quality",
+            "op": "gte",
+            "value": 6
+          }
+        ]
+      },
+      "target": "OUT_SOLID",
+      "relation": "causal",
+      "priority": 20,
+      "explanation": "Se cumplieron a la vez estas condiciones: protección de datos, acceso y calidad en un nivel alto."
+    }
+  ],
+  "question_sets": {
+    "pretest": [
+      {
+        "key": "pre1",
+        "topic": "datos personales",
+        "objective": "lo_data",
+        "assesses": "D1",
+        "prompt": "Una aplicación de transporte quiere pedir domicilio, huella y estado de salud al registrarse, pero solo necesita un correo. ¿Qué conviene hacer?",
+        "options": [
+          {
+            "key": "a",
+            "label": "Pedir todo y borrar lo que no se use después de un año.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Pedir solo el correo y explicar para qué se usa.",
+            "correct": true
+          },
+          {
+            "key": "c",
+            "label": "Pedir todo, pero guardarlo con otro nombre.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "key": "pre2",
+        "topic": "seguridad",
+        "objective": "lo_data",
+        "assesses": "D2",
+        "prompt": "Un equipo guarda en una carpeta abierta las copias de documentos de sus usuarios. ¿Qué medida reduce más el riesgo?",
+        "options": [
+          {
+            "key": "a",
+            "label": "Cifrar los documentos y limitar el acceso.",
+            "correct": true
+          },
+          {
+            "key": "b",
+            "label": "Cambiar el nombre de la carpeta y moverla a otro lugar.",
+            "correct": false
+          },
+          {
+            "key": "c",
+            "label": "Avisar al equipo que no la abra sin necesidad.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "key": "pre3",
+        "topic": "inclusión digital",
+        "objective": "lo_equity",
+        "assesses": "D3",
+        "prompt": "Un trámite en línea exige subir archivos de 50 MB y muchas personas tienen conexión lenta. ¿Qué conviene hacer?",
+        "options": [
+          {
+            "key": "a",
+            "label": "Mantener el trámite igual, ya funciona en la oficina.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Pedir que busquen una mejor conexión.",
+            "correct": false
+          },
+          {
+            "key": "c",
+            "label": "Ofrecer una versión ligera que funcione en celular.",
+            "correct": true
+          }
+        ]
+      },
+      {
+        "key": "pre4",
+        "topic": "propiedad intelectual",
+        "objective": "lo_duty",
+        "assesses": "D4",
+        "prompt": "Encuentras código útil en un foro, sin licencia visible. ¿Qué haces?",
+        "options": [
+          {
+            "key": "a",
+            "label": "Lo uso, porque lo publicado en un foro es libre.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Lo uso solo en la versión de prueba, sin revisarlo.",
+            "correct": false
+          },
+          {
+            "key": "c",
+            "label": "Busco la licencia o pido permiso al autor antes de usarlo.",
+            "correct": true
+          }
+        ]
+      },
+      {
+        "key": "pre5",
+        "topic": "equidad",
+        "objective": "lo_equity",
+        "assesses": "D5",
+        "prompt": "Un sistema ordena solicitudes con un puntaje automático. ¿Qué mejora la equidad del proceso?",
+        "options": [
+          {
+            "key": "a",
+            "label": "Mantener los criterios en reserva para evitar abusos.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Publicar los criterios y permitir una revisión humana de la decisión.",
+            "correct": true
+          },
+          {
+            "key": "c",
+            "label": "Aplicar el puntaje sin permitir excepciones ni revisión.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "key": "pre6",
+        "topic": "responsabilidad profesional",
+        "objective": "lo_duty",
+        "assesses": "D7",
+        "prompt": "Descubres un fallo que expone datos justo antes del lanzamiento. ¿Qué haces?",
+        "options": [
+          {
+            "key": "a",
+            "label": "Aviso al equipo y propongo corregirlo antes de lanzar.",
+            "correct": true
+          },
+          {
+            "key": "b",
+            "label": "Lanzo como está y lo reviso cuando llegue la primera queja.",
+            "correct": false
+          },
+          {
+            "key": "c",
+            "label": "Lo corrijo yo solo después de lanzar, sin avisar a nadie.",
+            "correct": false
+          }
+        ]
+      }
+    ],
+    "posttest": [
+      {
+        "key": "post1",
+        "topic": "datos personales",
+        "objective": "lo_data",
+        "assesses": "D1",
+        "prompt": "Una biblioteca en línea quiere pedir teléfono, fecha de nacimiento y dirección para prestar un libro digital, pero solo necesita un nombre de usuario. ¿Qué conviene hacer?",
+        "options": [
+          {
+            "key": "a",
+            "label": "Guardar todo, pero dejarlo visible solo para el personal.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Pedir todo y quitar lo que no se use cuando alguien lo reclame.",
+            "correct": false
+          },
+          {
+            "key": "c",
+            "label": "Limitarse al nombre de usuario y explicar para qué se usa.",
+            "correct": true
+          }
+        ]
+      },
+      {
+        "key": "post2",
+        "topic": "seguridad",
+        "objective": "lo_data",
+        "assesses": "D2",
+        "prompt": "Un equipo envía por mensajería común las copias de documentos de sus usuarios. ¿Qué medida reduce más el riesgo?",
+        "options": [
+          {
+            "key": "c",
+            "label": "Pedir que borren el mensaje después de verlo.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Enviar los documentos solo en horas de poco tráfico.",
+            "correct": false
+          },
+          {
+            "key": "a",
+            "label": "Usar un canal cifrado y limitar bien quién puede recibirlo.",
+            "correct": true
+          }
+        ]
+      },
+      {
+        "key": "post3",
+        "topic": "inclusión digital",
+        "objective": "lo_equity",
+        "assesses": "D3",
+        "prompt": "Un servicio público solo funciona con la última versión del teléfono y muchas personas tienen modelos antiguos. ¿Qué conviene hacer?",
+        "options": [
+          {
+            "key": "a",
+            "label": "Dejarlo igual, pues la mayoría ya tiene un teléfono nuevo.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Hacerlo compatible con modelos antiguos.",
+            "correct": true
+          },
+          {
+            "key": "c",
+            "label": "Sugerir a las personas que compren un teléfono nuevo.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "key": "post4",
+        "topic": "propiedad intelectual",
+        "objective": "lo_duty",
+        "assesses": "D4",
+        "prompt": "Una biblioteca de código tiene una licencia que no permite uso comercial y tu producto es comercial. ¿Qué haces?",
+        "options": [
+          {
+            "key": "a",
+            "label": "Busco otra biblioteca cuya licencia sea compatible con la mía.",
+            "correct": true
+          },
+          {
+            "key": "c",
+            "label": "La uso y cambio el nombre de las funciones.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Aun así la uso, porque es difícil que alguien lo revise.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "key": "post5",
+        "topic": "equidad",
+        "objective": "lo_equity",
+        "assesses": "D5",
+        "prompt": "Un programa de apoyos descarta solicitudes con una regla automática. ¿Qué mejora la equidad del proceso?",
+        "options": [
+          {
+            "key": "b",
+            "label": "Explicar la regla y permitir revisión humana.",
+            "correct": true
+          },
+          {
+            "key": "a",
+            "label": "Aplicarla sin explicarla, para evitar discusiones.",
+            "correct": false
+          },
+          {
+            "key": "c",
+            "label": "Cambiar la regla cada semana sin avisar a nadie.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "key": "post6",
+        "topic": "responsabilidad profesional",
+        "objective": "lo_duty",
+        "assesses": "D7",
+        "prompt": "Una semana antes de entregar, notas que un reporte muestra datos de otras personas. ¿Qué haces?",
+        "options": [
+          {
+            "key": "b",
+            "label": "Lo corrijo yo después de entregar, sin avisar a nadie.",
+            "correct": false
+          },
+          {
+            "key": "a",
+            "label": "Aviso al equipo y propongo corregirlo antes de entregar.",
+            "correct": true
+          },
+          {
+            "key": "c",
+            "label": "Entrego así y lo menciono solo si alguien pregunta.",
+            "correct": false
+          }
+        ]
+      }
+    ],
+    "transfer": [
+      {
+        "key": "tra1",
+        "topic": "datos personales",
+        "objective": "lo_data",
+        "prompt": "Una tienda en línea ficticia quiere seguir guardando los datos de las personas que cerraron su cuenta, por si algún día vuelven. ¿Qué conviene hacer?",
+        "options": [
+          {
+            "key": "c",
+            "label": "Guardarlos y no mencionarlo en el aviso de privacidad, para no preocupar a nadie.",
+            "correct": false
+          },
+          {
+            "key": "a",
+            "label": "Eliminar o anonimizar lo innecesario y fijar un plazo para lo demás.",
+            "correct": true
+          },
+          {
+            "key": "b",
+            "label": "Conservarlos sin límite de tiempo, pues almacenar sale barato.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "key": "tra2",
+        "topic": "inclusión digital",
+        "objective": "lo_equity",
+        "prompt": "Un banco ficticio ofrece su trámite de crédito solo en una aplicación que no funciona con lectores de pantalla. ¿Qué conviene hacer?",
+        "options": [
+          {
+            "key": "a",
+            "label": "Hacer la aplicación accesible para lectores de pantalla.",
+            "correct": true
+          },
+          {
+            "key": "b",
+            "label": "Cambiar solo el color de los botones y dar el tema por resuelto.",
+            "correct": false
+          },
+          {
+            "key": "c",
+            "label": "Mantenerla igual, pues casi nadie usa lector de pantalla.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "key": "tra3",
+        "topic": "responsabilidad profesional",
+        "objective": "lo_duty",
+        "prompt": "Un equipo ficticio entrega un sistema de inventario y notas que puede borrar registros si dos personas editan a la vez. El cliente pide entregar hoy. ¿Qué haces?",
+        "options": [
+          {
+            "key": "b",
+            "label": "Aviso del riesgo al equipo y al cliente, y propongo corregirlo antes de entregar.",
+            "correct": true
+          },
+          {
+            "key": "a",
+            "label": "Lo arreglo yo después de entregar, sin decir nada a nadie.",
+            "correct": false
+          },
+          {
+            "key": "c",
+            "label": "Entrego hoy y, si alguien reporta pérdida de registros, lo corrijo luego.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "key": "tra4",
+        "topic": "propiedad intelectual",
+        "objective": "lo_duty",
+        "prompt": "Una agencia ficticia quiere usar en un anuncio una fotografía que encontró en un buscador de imágenes, sin autoría ni licencia visibles. ¿Qué conviene hacer?",
+        "options": [
+          {
+            "key": "c",
+            "label": "Usarla, porque aparece en un buscador de imágenes público.",
+            "correct": false
+          },
+          {
+            "key": "a",
+            "label": "Ponerle una marca de agua con el nombre de la agencia y usarla.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Averiguar la autoría y la licencia, o elegir una con licencia clara.",
+            "correct": true
+          }
+        ]
+      },
+      {
+        "key": "tra5",
+        "topic": "equidad",
+        "objective": "lo_equity",
+        "prompt": "Un hospital ficticio usa un sistema que ordena los turnos de cirugía y nadie sabe cómo se calcula el orden. ¿Qué mejora la equidad del proceso?",
+        "options": [
+          {
+            "key": "b",
+            "label": "Mantener los criterios en reserva y confiar en el sistema.",
+            "correct": false
+          },
+          {
+            "key": "c",
+            "label": "Explicar los criterios y ofrecer una revisión por una persona.",
+            "correct": true
+          },
+          {
+            "key": "a",
+            "label": "Poner los criterios en un anexo técnico, sin vía de revisión.",
+            "correct": false
+          }
+        ]
+      }
+    ],
+    "causal": [
+      {
+        "key": "cau1",
+        "topic": "inclusión digital",
+        "objective": "lo_equity",
+        "requires": "EV_ACCESS",
+        "prompt": "En tu partida apareció el aviso sobre el acceso de las personas solicitantes. ¿Qué relación del escenario lo explica?",
+        "options": [
+          {
+            "key": "b",
+            "label": "El acceso ya estaba bajo antes de la primera decisión y eso activó el aviso.",
+            "correct": false
+          },
+          {
+            "key": "a",
+            "label": "El acceso subió a un nivel alto al salir de las pruebas y eso activó el aviso.",
+            "correct": false
+          },
+          {
+            "key": "c",
+            "label": "Tras las pruebas el acceso quedó en un nivel bajo, y eso activó el aviso.",
+            "correct": true
+          }
+        ]
+      },
+      {
+        "key": "cau2",
+        "topic": "datos personales",
+        "objective": "lo_data",
+        "requires": "EV_LEAK",
+        "prompt": "En tu partida apareció el aviso sobre la protección de datos. ¿Qué relación del escenario lo explica?",
+        "options": [
+          {
+            "key": "b",
+            "label": "La protección de datos subió a un nivel alto tras la entrega y activó el aviso.",
+            "correct": false
+          },
+          {
+            "key": "a",
+            "label": "Tras la entrega la protección de datos quedó en un nivel bajo, y eso activó el aviso.",
+            "correct": true
+          },
+          {
+            "key": "c",
+            "label": "La protección de datos empezó la partida en un nivel bajo y eso activó el aviso.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "key": "cau3",
+        "topic": "responsabilidad profesional",
+        "objective": "lo_duty",
+        "requires": "OUT_SOLID",
+        "prompt": "Tu partida terminó en el desenlace de plataforma sólida. ¿Qué relación del escenario lo explica?",
+        "options": [
+          {
+            "key": "c",
+            "label": "Al terminar, datos, acceso y calidad quedaron en nivel alto a la vez.",
+            "correct": true
+          },
+          {
+            "key": "a",
+            "label": "Al terminar, el acceso quedó bajo y eso decidió el desenlace.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Al terminar, la protección de datos quedó muy baja y eso decidió el desenlace.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "key": "cau4",
+        "topic": "responsabilidad profesional",
+        "objective": "lo_duty",
+        "requires": "OUT_MIXED",
+        "prompt": "Tu partida terminó en el desenlace de plataforma con pendientes. ¿Qué relación del escenario lo explica?",
+        "options": [
+          {
+            "key": "a",
+            "label": "Al terminar, el acceso y la calidad quedaron bajos a la vez, y eso decidió el desenlace.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Al terminar, algún indicador estaba bajo el nivel alto, sin llegar al crítico.",
+            "correct": true
+          },
+          {
+            "key": "c",
+            "label": "Al terminar, datos, acceso y calidad quedaron en nivel alto a la vez.",
+            "correct": false
+          }
+        ]
+      },
+      {
+        "key": "cau5",
+        "topic": "datos personales",
+        "objective": "lo_data",
+        "requires": "OUT_CRISIS",
+        "prompt": "Tu partida terminó en el desenlace de plataforma en crisis. ¿Qué relación del escenario lo explica?",
+        "options": [
+          {
+            "key": "c",
+            "label": "Al terminar, datos, acceso y calidad quedaron en nivel alto a la vez.",
+            "correct": false
+          },
+          {
+            "key": "b",
+            "label": "Al terminar, ningún indicador llegó al nivel crítico, aunque alguno quedó bajo el alto.",
+            "correct": false
+          },
+          {
+            "key": "a",
+            "label": "Al terminar, la protección de datos estaba muy baja, o bien el acceso y la calidad estaban bajos.",
+            "correct": true
+          }
+        ]
+      }
+    ]
+  }
+}

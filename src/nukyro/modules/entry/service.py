@@ -58,6 +58,7 @@ def _view(row) -> dict:
             "key": row["scenario_key"],
             "title": row["scenario_title"],
             "version_number": row["version_number"],
+            "introduction": row["scenario_introduction"],
         },
         "started_at": row["started_at"].astimezone(UTC),
         "is_first_session": row["is_first_session"],

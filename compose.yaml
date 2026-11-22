@@ -43,19 +43,15 @@ services:
       db:
         condition: service_healthy
 
-  # Escenario y documentos ficticios de la entrada (T-10); como owner, tras migrar. No es migración.
+  # Escenario de demostración (T-13, D-17): importa y publica con el rol admin mediante P12. No es migración.
   seed:
-    image: postgres:16
+    build: .
+    command: ["python", "-m", "nukyro.cli", "seed-demo"]
     restart: "no"
-    entrypoint: ["sh", "-c"]
-    command:
-      - psql -v ON_ERROR_STOP=1 -h db -U "$$NUKYRO_DB_OWNER_USER" -d "$$NUKYRO_DB_NAME" -f /seed/entry-seed.sql
     environment:
-      NUKYRO_DB_NAME: ${NUKYRO_DB_NAME:-nukyro}
-      NUKYRO_DB_OWNER_USER: ${NUKYRO_DB_OWNER_USER:-nukyro_owner}
-      PGPASSWORD: ${NUKYRO_DB_OWNER_PASSWORD:?falta}
-    volumes:
-      - ./demo/entry-seed.sql:/seed/entry-seed.sql:ro
+      <<: *db-env
+      NUKYRO_DB_ADMIN_USER: ${NUKYRO_DB_ADMIN_USER:-nukyro_admin_app}
+      NUKYRO_DB_ADMIN_PASSWORD: ${NUKYRO_DB_ADMIN_PASSWORD:?falta}
     depends_on:
       migrate:
         condition: service_completed_successfully
