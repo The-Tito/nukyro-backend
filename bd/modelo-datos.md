@@ -1,7 +1,7 @@
 ---
-version: 0.2
-estado: Aprobado por el usuario (2026-11-01)
-fecha: 2026-11-01
+version: 0.3
+estado: v0.2 aprobada por el usuario (2026-11-01); cambios de la v0.3 delegados (D-24), sin revisión humana
+fecha: 2026-11-22
 motor: PostgreSQL 16 (Amazon RDS) · FastAPI · SQLAlchemy 2.x + Alembic
 plan: context/planes/plan-modelo-datos.md
 ---
@@ -12,8 +12,8 @@ Modelo lógico y físico de la base de datos de Nukyro, el simulador de decision
 
 **Fuente de verdad:** `context/proyecto/kg.json`. Este documento cita sus identificadores: RF, RN, RNF, OR, ADR y CONF.
 
-> **Revisión del 2026-11-22:** la v0.2 tiene 13 defectos pendientes (`MODELO-DATOS.pendientes` del KG, `context/plan.md`)
-> y P5 y P9 cambian por D-19 a D-21. No migrar ni implementar §7 tal cual hasta T-09.
+> **v0.3 (2026-11-22):** corrige los defectos 2 a 9 con ADR-007 y ADR-008. El detalle de columnas está en `bd/schema.sql`.
+> Los defectos 10 a 13 siguen pendientes en sus fases (`context/plan.md`).
 
 ## 0. Convenciones
 
@@ -38,7 +38,7 @@ Modelo lógico y físico de la base de datos de Nukyro, el simulador de decision
 | Contenido | Tablas por elemento + `jsonb` para reglas; versiones `draft → published → retired`; claves estables | ADR-001 |
 | Identidad | `participants` como raíz (navegador o cuenta); secreto por participante guardado como hash; administradores aparte | ADR-002 |
 | Motor de simulación | Decisión idempotente con `UNIQUE(session_id, node_id)`; efectos, variables, eventos y causas en una transacción; fase calculada | ADR-003 |
-| Estadísticas | Tablas de hechos anónimas (semana, sin identificadores) escritas al confirmar o al cerrar | ADR-004 |
+| Estadísticas | Tablas de hechos anónimas (semana, sin identificadores), escritas solo antes de borrar o bloquear | ADR-007 |
 | Integridad entre versiones | Llaves foráneas compuestas `(version_id, id)`: una sesión no puede apuntar a contenido de otra versión | Plan H-09 |
 | Referencias internas del contenido | `DEFERRABLE INITIALLY DEFERRED`: se verifican al `COMMIT` (siguiente nodo, objetivo, reglas, preguntas) | Plan H-11 |
 
@@ -90,6 +90,7 @@ erDiagram
 
     scenario_versions ||--o{ session_facts : "agrega"
     scenario_versions ||--o{ decision_facts : "agrega"
+    scenario_versions ||--o{ topic_facts : "agrega"
     scenario_versions ||--o{ survey_responses : "agrega"
 
     scenario_versions {
@@ -127,11 +128,11 @@ erDiagram
         uuid id PK
         date week_start "sin identificadores"
         bool is_first_session
-        text closure_reason
+        text stopped_at_key
     }
 ```
 
-Las tablas de hechos (`session_facts`, `decision_facts`, `survey_responses`) **no tienen relación con sesiones, participantes ni cuentas**; solo con la versión del escenario, que es contenido. `admin_audit_log` no tiene llaves foráneas (ADR-004 §6).
+Las tablas de hechos (`session_facts`, `decision_facts`, `topic_facts`, `survey_responses`) **no tienen relación con sesiones, participantes ni cuentas**; solo con la versión del escenario, que es contenido. `admin_audit_log` no tiene llaves foráneas (RF-087).
 
 ## 3. Entidades
 
@@ -231,7 +232,7 @@ Solo columnas no obvias. Todas las tablas de contenido tienen `version_id` y `UN
 | `started_at`, `pretest_completed_at`, `outcome_reached_at`, `completed_at` | Hitos; la fase se calcula a partir de ellos | RF-005, RF-061 |
 | `self_reported_first`, `has_prior_session`, `is_first_session` (generada) | Criterio de primera sesión | RF-077, RN-18 |
 | `survey_answered` | Único rastro de la encuesta en la sesión | RF-060 |
-| `facts_written_at` | Evita escribir `session_facts` dos veces | ADR-004 |
+| `facts_written_at` | Evita archivar una sesión dos veces | ADR-007 |
 | `last_activity_at` | Inactividad | RF-080 |
 
 **`session_steps`** — cada cambio de nodo con `seq`, para la reanudación y el análisis de tiempos (RF-006).
@@ -252,11 +253,13 @@ Solo columnas no obvias. Todas las tablas de contenido tienen `version_id` y `UN
 
 **`assessment_answers`** — una respuesta por pregunta; la pregunta pertenece al conjunto y la opción a la pregunta (llaves compuestas).
 
-### Estadísticas y bitácora (ADR-004)
+### Estadísticas y bitácora (ADR-007)
 
-**`session_facts`** — `week_start date` (lunes ISO), `closure_reason`, `is_first_session`, puntuaciones de pre-test y post-test, aciertos y totales de transferencia, causales y de justificación, `outcome_reached`, `outcome_key`, `evaluations_completed` y `duration_bucket_min` (múltiplo de 5). Alimenta H02 a H06.
+**`session_facts`** — `week_start date` (lunes ISO), `stopped_at_key` (punto de abandono, D-21), `is_first_session`, puntuaciones de pre-test y post-test, aciertos y totales de transferencia, causales y de justificación, `outcome_reached`, `outcome_key`, `evaluations_completed` y `duration_bucket_min` (múltiplo de 5). Alimenta H02 a H06.
 
 **`decision_facts`** — `decision_key`, `option_key`, `is_first_session`, `week_start` (Aviso proceso 10).
+
+**`topic_facts`** — `set_type`, `topic`, `is_first_session`, `week_start`, `correct` y `total` (D-21). No se liga a `session_facts`.
 
 **`survey_responses`** — escalas de 1 a 5: `usefulness` (H07), `clarity`, `decision_impact`, `causal_understanding`, `summary_usefulness`, `would_repeat` (EVAL-DISENO).
 
@@ -296,7 +299,7 @@ Consulta: `CASE WHEN completed_at IS NOT NULL THEN 'completed' WHEN outcome_reac
 stateDiagram-v2
     [*] --> active : registro con Cognito (RF-074)
     active --> blocked : solicitud de cancelación, 12 meses sin iniciar sesión, minoría de edad o incumplimiento
-    blocked --> [*] : deletion_due_at vencido; tarea de purga escribe hechos y borra en cascada
+    blocked --> [*] : deletion_due_at vencido; la purga solo borra en cascada
 ```
 
 No hay reactivación desde `blocked`; durante el bloqueo los datos no se usan (Aviso §10).
@@ -356,23 +359,34 @@ stateDiagram-v2
 | Rol de base de datos | Proceso | Puede | No puede |
 | --- | --- | --- | --- |
 | `nukyro_owner` | Alembic (migraciones) | DDL; dueño del esquema | La aplicación nunca se conecta con él |
-| `nukyro_api` | API FastAPI de participantes | `SELECT` del contenido; DML en identidad propia (cuentas, participantes, aceptaciones) y simulación; `INSERT` en `consent_events`, hechos y encuesta | Modificar contenido; leer o tocar `arco_requests`, `admin_users` y la bitácora; leer hechos |
-| `nukyro_admin` | Panel de administración | DML en contenido y `admin_users`; `SELECT/INSERT/UPDATE` en `arco_requests`; `SELECT/UPDATE` en `accounts` y `participants` (rectificar, oponerse, bloquear); `SELECT` de la simulación (ARCO de acceso); `INSERT` en `consent_events` y en la bitácora | Borrar o modificar sesiones; leer hechos; borrar la bitácora |
-| `nukyro_jobs` | Tareas programadas: caducidad, purga de cuentas, purga de bitácora | `SELECT` general; `UPDATE` de `accounts`; `DELETE` de `participants`, `accounts`, `admin_audit_log` y `arco_requests` (12 meses tras el cierre); `INSERT` en `session_facts` | Modificar contenido |
-| `nukyro_analytics` | Reportes del piloto | `SELECT` solo de las tablas de hechos y del catálogo de versiones | Leer cualquier dato personal |
+| `nukyro_api` | API FastAPI de participantes | `SELECT` del contenido; escritura por columna en identidad y simulación; `INSERT` en `consent_events` y encuesta; funciones de borrado propio y bloqueo | Modificar contenido, decisiones, versión, bloqueo o identidad; tocar `arco_requests`, `admin_users` y la bitácora; leer o escribir hechos |
+| `nukyro_admin` | Panel de administración | DML en contenido; alta y desactivación de `admin_users`; ARCO; rectificar y oponer por columna; función de bloqueo; `SELECT` de la simulación; `INSERT` en la bitácora | Borrar administradores; modificar sesiones; leer o escribir hechos; borrar la bitácora |
+| `nukyro_jobs` | Tareas programadas | Funciones de caducidad, bloqueo y purga; purgar la bitácora y ARCO cerrados | Borrar personas directamente; modificar contenido; leer o escribir hechos |
+| `nukyro_analytics` | Reportes del piloto | Funciones agregadas con umbral de 10 y catálogo de versiones | Leer filas de hechos o datos personales |
 
 El aislamiento entre participantes lo hace la API (ADR-002 §6, D7): toda consulta filtra por el `participant_id` resuelto del secreto o del token de Cognito. No se usa seguridad por fila.
 
 ## 7. Procesos que cambian datos
 
+### P1 · Entrar (RF-062, RF-073)
+En una transacción: comprobar las tres confirmaciones y que las versiones sean las vigentes, `INSERT` del participante con el SHA-256 del secreto e `INSERT` de las tres aceptaciones. Si la cookie ya es válida, no se crea otro. El secreto solo viaja en la cookie.
+
+### P2 · Iniciar sesión (RF-001 a RF-004, RN-18)
+1. Resolver al participante por el hash y bloquearlo.
+2. Comprobar sus tres aceptaciones vigentes y tomar la versión publicada.
+3. `INSERT` de la sesión (la base calcula `has_prior_session`), de sus variables iniciales y del primer paso.
+
+Consultar una sesión filtra siempre por `participant_id`: lo ajeno y lo inexistente responden igual.
+
 ### P5 · Confirmar decisión (una transacción, ADR-003)
-1. `SELECT ... FROM sessions WHERE id = :s AND participant_id = :p FOR UPDATE`: serializa las peticiones de la misma sesión y valida `current_node_id = :node`.
-2. `INSERT INTO session_decisions ... ON CONFLICT (session_id, node_id) DO NOTHING RETURNING id`. Si no devuelve nada, es un reintento: se responde con la decisión ya confirmada y se hace `COMMIT` sin más cambios (RN-14).
-3. Insertar `session_decision_reasons` y calcular `justification_correct`.
-4. Por cada efecto de `options.effects`: actualizar `session_variables` (con los límites) e insertar `session_effects`.
-5. Evaluar las `rules` cuyo `from_node_id` es el nodo actual; insertar `session_events` y `session_event_causes`.
-6. Resolver el siguiente nodo (regla de transición, luego `options.next_node_id`, luego `default_next_node_id`); insertar `session_steps`; actualizar `current_node_id` y `last_activity_at`; si es un desenlace, `outcome_node_id` y `outcome_reached_at`.
-7. Si el participante no tiene `exclude_from_stats`, insertar `decision_facts`.
+1. Bloquear al participante y después `SELECT ... FROM sessions WHERE id = :s AND participant_id = :p FOR UPDATE`. El orden es siempre cuenta, participante, sesión: el de las funciones de archivo.
+2. Buscar la decisión de ese nodo. Si existe, es un reintento: se responde con la confirmada, aunque la sesión haya avanzado (RN-14, defecto 1).
+3. Si no existe, validar que el nodo sea el actual y la alternativa suya; insertar la decisión y sus razones.
+4. Aplicar los efectos con sus límites e insertar `session_effects`.
+5. Evaluar las reglas al salir del nodo; insertar `session_events` y sus causas.
+6. Resolver el siguiente nodo, insertar el paso y actualizar la sesión; si es un desenlace, sus campos.
+
+No escribe hechos (ADR-007).
 
 ### P12 · Publicar versión
 `SELECT ... FROM scenarios WHERE id = :sc FOR UPDATE` → la aplicación valida RF-066 → `UPDATE` de la versión publicada a `retired` → `UPDATE` del borrador a `published`. Si dos administradores publican a la vez, el índice parcial lo impide.
@@ -389,12 +403,13 @@ Con `B` = participante del navegador (por `secret_hash`) y `A` = participante de
 
 Todo en una transacción. Repetirla no hace nada, porque `B` ya no existe.
 
-### P9 · Caducidad, cancelación y borrado
-En una transacción por participante o cuenta:
-1. por cada sesión con `facts_written_at IS NULL`, si no hay `exclude_from_stats`, insertar `session_facts` con el `closure_reason` que corresponda;
-2. `DELETE FROM participants` (sin cuenta, `last_activity_at` de más de 30 días) o `DELETE FROM accounts` (`blocked` con `deletion_due_at` vencido). La cascada borra sesiones, decisiones, efectos, eventos, intentos y aceptaciones.
+### P9 · Caducidad, cancelación y borrado (ADR-007)
+Solo mediante funciones del owner, con bloqueo en orden cuenta, participante, sesiones:
+1. **Sin cuenta** (borrado propio o 30 días): archivar, reescribir los hechos y borrar.
+2. **Con cuenta, al bloquear:** archivar y reescribir. El bloqueo es terminal.
+3. **Con cuenta, al purgar:** solo borrar (D-20).
 
-El mismo flujo sirve para RF-078 (borrado propio sin cuenta) y para ARCO de cancelación.
+Archivar omite a quien se opuso y a la cuenta bloqueada por minoría de edad. La cascada borra sesiones, decisiones, efectos, eventos, intentos y aceptaciones.
 
 ## 8. Borrado y retención
 
@@ -404,7 +419,7 @@ El mismo flujo sirve para RF-078 (borrado propio sin cuenta) y para ARCO de canc
 | `participants` sin cuenta | Físico | Cascada a sesiones y aceptaciones | 30 días desde `last_activity_at` (RET-06) |
 | `accounts` | Lógico (`blocked`) y después físico | Cascada a participante, sesiones y aceptaciones; `arco_requests.account_id` queda nulo | 12 meses de inactividad + 30 días de bloqueo (RET-01, DEC-BLOQUEO) |
 | `sessions` y sus hijas | Físico por cascada | — | La del participante |
-| `session_facts`, `decision_facts`, `survey_responses` | Ninguno | — | Sin plazo, porque son anónimos (RET-04) |
+| `session_facts`, `decision_facts`, `topic_facts`, `survey_responses` | Ninguno | — | Sin plazo, porque son anónimos (RET-04) |
 | `arco_requests` | Físico por tarea (`nukyro_jobs`) | — | 12 meses después de `closed_at` (H-07, aprobado por el usuario) |
 | `consent_events` | Físico por cascada desde `accounts` | — | La de la cuenta |
 | Documento de identidad en S3 | Físico al cerrar la solicitud | — | Mientras la solicitud está abierta (RF-086) |
@@ -431,15 +446,15 @@ El mismo flujo sirve para RF-078 (borrado propio sin cuenta) y para ARCO de canc
 | F6 | **Texto libre con datos personales:** `nickname`, `arco_requests.description` y `admin_audit_log.detail`. | Regla de código: `detail` nunca incluye valores de participantes. El nickname lo cubren los Términos §4.2. La descripción ARCO se borra con la solicitud (H-07). |
 | F7 | **Errores diferidos:** las llaves `DEFERRABLE` fallan al `COMMIT`, no en la sentencia. | El panel debe capturar `IntegrityError` en el commit y mostrar el error (prueba técnica S5). |
 | F8 | **Reglas en JSON apuntan a claves de texto** (`variable_key`, nodos), sin llave foránea. | El validador de publicación (RF-066) comprueba que cada clave exista en la versión. |
-| F9 | **Celdas pequeñas:** con 50 participantes, una fila de `session_facts` por semana y versión puede ser única. | Umbral de 10 en los reportes (RN-20); no publicar cruces de `closure_reason` × semana. |
+| F9 | **Celdas pequeñas:** con 50 participantes, una fila de `session_facts` por semana y versión puede ser única. | Umbral de 10 en los reportes (RN-20); sin motivo de cierre (ADR-007). |
 
 ### 9.3 Casos que no cubre bien
 
 | # | Caso | Estado |
 | --- | --- | --- |
-| N1 | **Conservar el progreso cuando la cuenta ya tenía una sesión del mismo escenario:** las sesiones trasladadas conservan `has_prior_session = false` y pueden aparecer dos "primeras sesiones". | Ajuste en P10: recalcular `has_prior_session` de las sesiones trasladadas. Los `decision_facts` ya escritos no se pueden corregir (sesgo menor, mitigado por la pregunta de RF-077). |
+| N1 | **Conservar el progreso cuando la cuenta ya tenía una sesión del mismo escenario:** las sesiones trasladadas conservan `has_prior_session = false` y pueden aparecer dos "primeras sesiones". | Ajuste en P10: recalcular `has_prior_session` de las sesiones trasladadas. Los hechos se escriben al cerrar, así que reciben el valor corregido (ADR-007). |
 | N2 | **Pruebas del equipo contaminan las estadísticas:** integrantes que juegan con cuentas propias. | Marcar sus cuentas con `exclude_from_stats` antes del piloto. |
-| N3 | **Abuso de "primera sesión":** borrar los datos propios (RF-078) y volver a empezar. | La sesión borrada deja `session_facts` con `closure_reason = 'self_deleted'`; la nueva depende de la respuesta declarada. Riesgo aceptado. |
+| N3 | **Abuso de "primera sesión":** borrar los datos propios (RF-078) y volver a empezar. | La sesión borrada deja su hecho anónimo, salvo oposición; la nueva depende de la respuesta declarada. Riesgo aceptado. |
 | N4 | ~~Consentimientos opcionales sin fecha.~~ **Resuelto en v0.2:** tabla `consent_events` con el historial de otorgamientos y revocaciones. | La API y el panel insertan el evento en la misma transacción que cambia `accounts.*_opt_in`; lo garantiza el código, con prueba. |
 | N5 | **Semana ISO y zona horaria:** una sesión el domingo a las 23:00 en México ya es lunes en UTC. | Detalle decidido: `week_start` se calcula en `America/Mexico_City`. |
 | N6 | **Matriz de requerimientos → modelo:** RF-001 a RF-087 y RN-01 a RN-21 tienen tabla, columna o regla. Quedan fuera de la base, por diseño: los registros operativos de errores (RNF-15, en los logs del servicio), la preferencia de cookies (en el navegador) y el cálculo de días hábiles (en la aplicación). | Sin huecos de entidad. |

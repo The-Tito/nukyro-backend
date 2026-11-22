@@ -1,7 +1,7 @@
 ---
 id: ADR-004
 titulo: Estadísticas anónimas desde el diseño
-estado: Aceptada
+estado: Reemplazada por ADR-007
 fecha: 2026-11-01
 decisores: PER-DEV-01, PER-DEV-02, PER-DEV-03
 kg: [ADR-004, D6, C5, C8, C7, C9, ENCUESTA-APP, PROC-10, RET-06]
