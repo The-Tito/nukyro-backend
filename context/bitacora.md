@@ -62,3 +62,9 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** 12 casos de `context/pruebas/probar_validador.py` y rechazos repetidos sobre una copia del KG real. Sin revisión humana.
 - **Decisiones:** D-24, D-25.
 - **Evidencia:** línea base SQL 52/52 en PostgreSQL 16.15, antes de tocar el esquema.
+
+## 2026-11-22: T-08, auditada y cerrada por delegación; Puerta A de E2
+- **Resultado:** T-08 cerrada con EV-01. E2 planeada en `context/etapas/etapa-2.md` y en curso.
+- **Revisión:** auditor con Sonnet sin bloqueos; se completó la cita de D-24. Revisión humana pendiente.
+- **Decisiones:** Puerta A de E2 delegada (D-24).
+- **Evidencia:** EV-01, KG v1.23.0.
