@@ -1,0 +1,715 @@
+// =====================================================================
+// Nukyro · Modelo de datos v0.2 (aprobado) · PostgreSQL 16
+// Para visualizar: pegar este archivo en https://dbdiagram.io/d
+// Fuente: bd/schema.sql (MODELO-DATOS en context/proyecto/kg.json).
+// Si este archivo y bd/schema.sql difieren, manda bd/schema.sql.
+//
+// DBML no expresa índices parciales, triggers ni roles: se anotan en
+// las notas de cada tabla. Los catálogos son text + CHECK (no ENUM).
+// =====================================================================
+
+Project nukyro {
+  database_type: 'PostgreSQL'
+  Note: '''
+  **Nukyro** · Simulador Educativo para la Toma de Decisiones Éticas en el Desarrollo de Software.
+  Esquema `nukyro`, 35 tablas en 5 dominios:
+  contenido y administración (16), identidad (5), simulación (10), estadísticas (3), bitácora (1).
+  Decisiones: ADR-001 (contenido versionado), ADR-002 (participante como raíz),
+  ADR-003 (decisiones idempotentes), ADR-004 (estadísticas anónimas), ADR-005 (PostgreSQL 16 + FastAPI).
+  Llaves `uuid` con gen_random_uuid(); fechas `timestamptz` en UTC.
+  '''
+}
+
+// ---------------------------------------------------------------------
+// Administración
+// ---------------------------------------------------------------------
+Table admin_users [headercolor: #202030] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  cognito_sub text [not null, unique, note: 'Grupo admins de Cognito']
+  email text [not null]
+  display_name text [not null]
+  is_active boolean [not null, default: true]
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Administradores del panel (U02, FUN-11). Separados de los participantes (ADR-002).'
+}
+
+// ---------------------------------------------------------------------
+// Contenido versionado (ADR-001)
+// ---------------------------------------------------------------------
+Table scenarios [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  key text [not null, unique]
+  title text [not null]
+  created_at timestamptz [not null, default: `now()`]
+  Note: 'Escenario con clave estable. Su contenido vive en scenario_versions.'
+}
+
+Table scenario_versions [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  scenario_id uuid [not null]
+  version_number integer [not null, note: 'CHECK > 0']
+  status text [not null, default: 'draft', note: "draft | published | retired"]
+  based_on_version_id uuid
+  title text [not null]
+  introduction text [not null, default: '']
+  rubric_version text [not null, default: '1']
+  created_by uuid
+  created_at timestamptz [not null, default: `now()`]
+  published_at timestamptz [note: 'Nulo solo en draft']
+  published_by uuid
+  retired_at timestamptz [note: 'No nulo solo en retired']
+
+  indexes {
+    (scenario_id, version_number) [unique]
+    scenario_id [unique, name: 'ux_scenario_versions_one_published', note: 'Parcial: WHERE status = published (RN-16)']
+    scenario_id [unique, name: 'ux_scenario_versions_one_draft', note: 'Parcial: WHERE status = draft (RN-16)']
+  }
+  Note: '''
+  Ciclo draft → published → retired (trigger guard_version_status).
+  Solo se edita y se borra contenido en draft (trigger guard_content_version, RN-15, RN-17).
+  '''
+}
+
+Table learning_objectives [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  version_id uuid [not null]
+  key text [not null]
+  description text [not null]
+  position integer [not null, default: 0]
+
+  indexes {
+    (version_id, key) [unique]
+    (version_id, id) [unique]
+  }
+}
+
+Table state_variables [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  version_id uuid [not null]
+  key text [not null]
+  label text [not null]
+  indicator_label text [note: 'Indicador narrativo visible (RF-035); nulo = interno']
+  initial_value integer [not null]
+  min_value integer
+  max_value integer
+
+  indexes {
+    (version_id, key) [unique]
+    (version_id, id) [unique]
+  }
+  Note: 'CHECK: min_value <= initial_value <= max_value'
+}
+
+Table nodes [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  version_id uuid [not null]
+  key text [not null]
+  node_type text [not null, note: 'intro | info | decision | event | outcome']
+  title text [not null]
+  body text [not null]
+  project_phase text [note: 'requirements | design | development | testing | delivery | incident_response']
+  default_next_node_id uuid [note: 'Nulo en outcome']
+  position integer [not null, default: 0]
+
+  indexes {
+    (version_id, key) [unique]
+    (version_id, id) [unique]
+  }
+}
+
+Table decision_points [headercolor: #4737FF] {
+  node_id uuid [pk]
+  version_id uuid [not null]
+  requires_justification boolean [not null, default: false]
+  evaluated_for_h05 boolean [not null, default: false, note: 'Implica requires_justification']
+  min_correct_reasons smallint [not null, default: 1]
+  learning_objective_id uuid [not null]
+  affected_parties text [not null, note: 'OR-05']
+
+  indexes {
+    (version_id, node_id) [unique]
+  }
+  Note: 'Extensión 1:1 de un nodo de tipo decisión.'
+}
+
+Table options [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  version_id uuid [not null]
+  node_id uuid [not null]
+  key text [not null]
+  label text [not null]
+  description text [not null, default: '']
+  effects jsonb [not null, default: '[]', note: 'Arreglo de efectos sobre variables']
+  next_node_id uuid
+  position integer [not null, default: 0]
+
+  indexes {
+    (version_id, key) [unique]
+    (version_id, id) [unique]
+    (node_id, id) [unique]
+  }
+  Note: 'Alternativas de un punto de decisión.'
+}
+
+Table justification_reasons [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  version_id uuid [not null]
+  node_id uuid [not null]
+  key text [not null]
+  label text [not null]
+  is_correct boolean [not null]
+  position integer [not null, default: 0]
+
+  indexes {
+    (version_id, key) [unique]
+    (node_id, id) [unique]
+  }
+  Note: 'Razones predefinidas; justificación sin texto libre.'
+}
+
+Table rules [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  version_id uuid [not null]
+  key text [not null]
+  rule_type text [not null, note: 'transition | event']
+  from_node_id uuid [not null]
+  condition jsonb [not null, note: 'Objeto JSON']
+  target_node_id uuid [not null]
+  relation_type text [not null, note: 'causal | risk']
+  priority integer [not null, default: 100]
+  explanation text [not null, default: '']
+
+  indexes {
+    (version_id, key) [unique]
+    (version_id, id) [unique]
+  }
+}
+
+Table educational_references [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  version_id uuid [not null]
+  key text [not null]
+  ref_category text [not null, note: 'ethical | professional | normative | legal']
+  title text [not null]
+  source text [not null]
+  url text
+  section text
+  version_label text
+  jurisdiction text [note: 'Obligatoria si ref_category = legal (RN-08)']
+  consulted_on date
+  valid_from date
+
+  indexes {
+    (version_id, key) [unique]
+    (version_id, id) [unique]
+  }
+}
+
+Table decision_references [headercolor: #4737FF] {
+  version_id uuid [not null]
+  node_id uuid [not null]
+  reference_id uuid [not null]
+
+  indexes {
+    (node_id, reference_id) [pk]
+  }
+}
+
+Table feedback_items [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  version_id uuid [not null]
+  node_id uuid [not null]
+  option_id uuid
+  category text [not null, note: 'ethical | professional | normative | legal']
+  body text [not null]
+  position integer [not null, default: 0]
+}
+
+Table question_sets [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  version_id uuid [not null]
+  set_type text [not null, note: 'pretest | posttest | transfer | causal']
+  requires_all_answers boolean [not null, default: true]
+
+  indexes {
+    (version_id, set_type) [unique]
+    (version_id, id) [unique]
+  }
+}
+
+Table questions [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  version_id uuid [not null]
+  question_set_id uuid [not null]
+  key text [not null]
+  prompt text [not null]
+  topic text [not null]
+  learning_objective_id uuid [not null, note: 'RN-11']
+  assesses_decision_node_id uuid [note: 'OR-05']
+  requires_node_id uuid [note: 'RF-058: pregunta causal condicionada']
+  position integer [not null, default: 0]
+
+  indexes {
+    (version_id, key) [unique]
+    (version_id, id) [unique]
+    (question_set_id, id) [unique]
+  }
+}
+
+Table question_options [headercolor: #4737FF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  version_id uuid [not null]
+  question_id uuid [not null]
+  key text [not null]
+  label text [not null]
+  is_correct boolean [not null, default: false]
+  position integer [not null, default: 0]
+
+  indexes {
+    (question_id, key) [unique]
+    (question_id, id) [unique]
+    question_id [unique, name: 'ux_question_options_one_correct', note: 'Parcial: WHERE is_correct (RF-009)']
+  }
+}
+
+// ---------------------------------------------------------------------
+// Identidad (ADR-002)
+// ---------------------------------------------------------------------
+Table accounts [headercolor: #F75C03] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  cognito_sub text [not null, unique]
+  email text [not null]
+  nickname text [not null, note: '1 a 40 caracteres; no único']
+  newsletter_opt_in boolean [not null, default: false]
+  surveys_opt_in boolean [not null, default: false]
+  status text [not null, default: 'active', note: 'active | blocked']
+  blocked_at timestamptz
+  block_reason text [note: 'user_request | inactivity | underage | terms_breach']
+  deletion_due_at timestamptz
+  last_login_at timestamptz [not null, default: `now()`]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    last_login_at [name: 'ix_accounts_inactivity', note: 'Parcial: WHERE status = active']
+    deletion_due_at [name: 'ix_accounts_deletion_due', note: 'Parcial: WHERE status = blocked']
+  }
+  Note: 'Cuenta opcional con Cognito. Bloqueo de 30 días antes de eliminar (RF-080).'
+}
+
+Table participants [headercolor: #F75C03] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  account_id uuid [unique, note: 'Nulo = participante sin cuenta']
+  secret_hash bytea [unique, note: 'SHA-256 del secreto de reanudación (RF-062)']
+  exclude_from_stats boolean [not null, default: false, note: 'Oposición a estadísticas (RF-079)']
+  created_at timestamptz [not null, default: `now()`]
+  last_activity_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    last_activity_at [name: 'ix_participants_anonymous_activity', note: 'Parcial: WHERE account_id IS NULL (caducidad 30 días)']
+  }
+  Note: 'Raíz de la propiedad de los datos. CHECK: account_id o secret_hash no nulo.'
+}
+
+Table document_acceptances [headercolor: #F75C03] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  participant_id uuid [not null]
+  document_type text [not null, note: 'age_18_plus | privacy_notice | terms']
+  document_version text
+  accepted_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (participant_id, document_type, document_version) [unique, note: 'NULLS NOT DISTINCT (RF-073)']
+  }
+}
+
+Table consent_events [headercolor: #F75C03] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  account_id uuid [not null]
+  consent_type text [not null, note: 'newsletter | surveys']
+  granted boolean [not null]
+  source text [not null, note: 'registration | settings | unsubscribe_link | arco_request']
+  occurred_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (account_id, consent_type, occurred_at)
+  }
+  Note: 'Historial de consentimientos opcionales; solo inserción.'
+}
+
+Table arco_requests [headercolor: #F75C03] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  account_id uuid [note: 'SET NULL: la solicitud sobrevive a la cuenta']
+  requester_email text [not null]
+  right_type text [not null, note: 'access | rectification | cancellation | opposition | revocation | limitation']
+  description text [not null]
+  status text [not null, default: 'received', note: 'received | awaiting_info | in_review | accepted | denied | executed | withdrawn']
+  received_at timestamptz [not null, default: `now()`]
+  info_requested_at timestamptz
+  info_due_on date
+  response_due_on date [not null]
+  extended boolean [not null, default: false]
+  extension_reason text
+  responded_at timestamptz
+  execution_due_on date
+  executed_at timestamptz
+  denial_reason text
+  identity_doc_key text [note: 'Objeto en S3; nulo al cerrar (RF-086)']
+  identity_doc_deleted_at timestamptz
+  assigned_admin_id uuid
+  closed_at timestamptz
+
+  indexes {
+    (status, response_due_on) [name: 'ix_arco_requests_open', note: 'Parcial: WHERE closed_at IS NULL']
+    closed_at [name: 'ix_arco_requests_closed', note: 'Parcial: purga a 12 meses']
+  }
+  Note: 'Solicitudes de derechos ARCO (RF-085, RF-086).'
+}
+
+// ---------------------------------------------------------------------
+// Simulación (ADR-003)
+// ---------------------------------------------------------------------
+Table sessions [headercolor: #3529BF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  participant_id uuid [not null]
+  scenario_version_id uuid [not null, note: 'Solo versión publicada (trigger, RN-15)']
+  current_node_id uuid [not null]
+  outcome_node_id uuid
+  started_at timestamptz [not null, default: `now()`]
+  pretest_completed_at timestamptz
+  outcome_reached_at timestamptz
+  completed_at timestamptz
+  last_activity_at timestamptz [not null, default: `now()`]
+  self_reported_first boolean [not null]
+  has_prior_session boolean [not null]
+  is_first_session boolean [note: 'GENERATED: self_reported_first AND NOT has_prior_session (RN-18)']
+  survey_answered boolean [not null, default: false]
+  facts_written_at timestamptz [note: 'Evita escribir session_facts dos veces']
+
+  indexes {
+    (id, scenario_version_id) [unique]
+    (participant_id, scenario_version_id, started_at) [name: 'ix_sessions_participant']
+  }
+  Note: 'Fase calculada: started → in_scenario → outcome_reached → completed.'
+}
+
+Table session_steps [headercolor: #3529BF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  session_id uuid [not null]
+  scenario_version_id uuid [not null]
+  node_id uuid [not null]
+  seq integer [not null]
+  entered_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (session_id, seq) [unique]
+  }
+  Note: 'Recorrido de nodos para reanudar (RF-006).'
+}
+
+Table session_decisions [headercolor: #3529BF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  session_id uuid [not null]
+  scenario_version_id uuid [not null]
+  node_id uuid [not null]
+  option_id uuid [not null]
+  decided_at timestamptz [not null, default: `now()`]
+  justification_correct boolean [note: 'RF-059']
+
+  indexes {
+    (session_id, node_id) [unique, note: 'Idempotencia (RN-14)']
+    (id, node_id) [unique]
+    (id, session_id) [unique]
+  }
+}
+
+Table session_decision_reasons [headercolor: #3529BF] {
+  session_decision_id uuid [not null]
+  node_id uuid [not null]
+  reason_id uuid [not null]
+
+  indexes {
+    (session_decision_id, reason_id) [pk]
+  }
+}
+
+Table session_variables [headercolor: #3529BF] {
+  session_id uuid [not null]
+  scenario_version_id uuid [not null]
+  variable_id uuid [not null]
+  value integer [not null]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (session_id, variable_id) [pk]
+  }
+  Note: 'Valor actual de cada variable (RF-026).'
+}
+
+Table session_effects [headercolor: #3529BF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  session_decision_id uuid [not null]
+  session_id uuid [not null]
+  variable_id uuid [not null]
+  old_value integer [not null]
+  new_value integer [not null]
+  Note: 'Efecto aplicado por una decisión (RF-040).'
+}
+
+Table session_events [headercolor: #3529BF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  session_id uuid [not null]
+  scenario_version_id uuid [not null]
+  rule_id uuid [not null]
+  triggered_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (session_id, rule_id) [unique]
+    (id, session_id) [unique]
+  }
+  Note: 'Regla activada (RF-031, RF-041).'
+}
+
+Table session_event_causes [headercolor: #3529BF] {
+  session_event_id uuid [not null]
+  session_id uuid [not null]
+  session_decision_id uuid [not null]
+
+  indexes {
+    (session_event_id, session_decision_id) [pk]
+  }
+  Note: 'Decisiones que causaron el evento (RF-034, RF-065).'
+}
+
+Table assessment_attempts [headercolor: #3529BF] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  session_id uuid [not null]
+  scenario_version_id uuid [not null]
+  question_set_id uuid [not null]
+  started_at timestamptz [not null, default: `now()`]
+  submitted_at timestamptz
+  answered_count smallint [not null, default: 0]
+  correct_count smallint [not null, default: 0]
+  score numeric(5,2) [note: '0 a 100; nulo si está incompleto (RF-011)']
+
+  indexes {
+    (session_id, question_set_id) [unique, note: 'RN-19']
+    (id, question_set_id) [unique]
+  }
+}
+
+Table assessment_answers [headercolor: #3529BF] {
+  attempt_id uuid [not null]
+  question_set_id uuid [not null]
+  question_id uuid [not null]
+  option_id uuid [not null]
+  answered_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (attempt_id, question_id) [pk]
+  }
+}
+
+// ---------------------------------------------------------------------
+// Estadísticas anónimas (ADR-004): sin sesión, participante ni cuenta
+// ---------------------------------------------------------------------
+Table session_facts [headercolor: #5E5E6A] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  scenario_version_id uuid [not null]
+  week_start date [not null, note: 'Lunes ISO']
+  closure_reason text [not null, note: 'completed | expired | account_deleted | self_deleted | arco']
+  is_first_session boolean [not null]
+  pretest_score numeric(5,2)
+  posttest_score numeric(5,2)
+  transfer_correct smallint
+  transfer_total smallint
+  causal_correct smallint
+  causal_total smallint
+  justification_correct smallint
+  justification_total smallint
+  outcome_reached boolean [not null]
+  outcome_key text
+  evaluations_completed boolean [not null]
+  duration_bucket_min smallint [note: 'Múltiplo de 5']
+  Note: 'Hecho anónimo por sesión cerrada. Alimenta H02 a H06.'
+}
+
+Table decision_facts [headercolor: #5E5E6A] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  scenario_version_id uuid [not null]
+  week_start date [not null]
+  decision_key text [not null]
+  option_key text [not null]
+  is_first_session boolean [not null]
+  Note: 'Hecho anónimo por decisión confirmada.'
+}
+
+Table survey_responses [headercolor: #5E5E6A] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  scenario_version_id uuid [not null]
+  week_start date [not null]
+  is_first_session boolean [not null]
+  usefulness smallint [not null, note: '1 a 5 (H07)']
+  clarity smallint
+  decision_impact smallint
+  causal_understanding smallint
+  summary_usefulness smallint
+  would_repeat smallint
+  Note: 'Encuesta dentro de la app, anónima (escalas 1 a 5).'
+}
+
+// ---------------------------------------------------------------------
+// Bitácora del panel (RF-087): sin llaves foráneas, solo inserción
+// ---------------------------------------------------------------------
+Table admin_audit_log [headercolor: #202030] {
+  id bigint [pk, increment, note: 'GENERATED ALWAYS AS IDENTITY']
+  occurred_at timestamptz [not null, default: `now()`]
+  admin_user_id uuid [not null, note: 'Opaco: sin llave foránea']
+  action text [not null]
+  entity_type text [not null]
+  entity_id uuid
+  detail jsonb [not null, default: '{}']
+
+  indexes {
+    occurred_at
+  }
+  Note: 'Bitácora del panel; sin respuestas de participantes (RF-087, RNF-15).'
+}
+
+// =====================================================================
+// Grupos por dominio
+// =====================================================================
+TableGroup administracion [color: #202030] {
+  admin_users
+  admin_audit_log
+}
+
+TableGroup contenido [color: #4737FF] {
+  scenarios
+  scenario_versions
+  learning_objectives
+  state_variables
+  nodes
+  decision_points
+  options
+  justification_reasons
+  rules
+  educational_references
+  decision_references
+  feedback_items
+  question_sets
+  questions
+  question_options
+}
+
+TableGroup identidad [color: #F75C03] {
+  accounts
+  participants
+  document_acceptances
+  consent_events
+  arco_requests
+}
+
+TableGroup simulacion [color: #3529BF] {
+  sessions
+  session_steps
+  session_decisions
+  session_decision_reasons
+  session_variables
+  session_effects
+  session_events
+  session_event_causes
+  assessment_attempts
+  assessment_answers
+}
+
+TableGroup estadisticas [color: #5E5E6A] {
+  session_facts
+  decision_facts
+  survey_responses
+}
+
+// =====================================================================
+// Relaciones · contenido
+// =====================================================================
+Ref: scenario_versions.scenario_id > scenarios.id [delete: restrict]
+Ref: scenario_versions.based_on_version_id > scenario_versions.id [delete: set null]
+Ref: scenario_versions.created_by > admin_users.id [delete: set null]
+Ref: scenario_versions.published_by > admin_users.id [delete: set null]
+
+Ref: learning_objectives.version_id > scenario_versions.id [delete: cascade]
+Ref: state_variables.version_id > scenario_versions.id [delete: cascade]
+Ref: nodes.version_id > scenario_versions.id [delete: cascade]
+Ref: rules.version_id > scenario_versions.id [delete: cascade]
+Ref: educational_references.version_id > scenario_versions.id [delete: cascade]
+Ref: question_sets.version_id > scenario_versions.id [delete: cascade]
+
+Ref: nodes.(version_id, default_next_node_id) > nodes.(version_id, id)
+Ref: decision_points.(version_id, node_id) - nodes.(version_id, id) [delete: cascade]
+Ref: decision_points.(version_id, learning_objective_id) > learning_objectives.(version_id, id)
+Ref: options.(version_id, node_id) > decision_points.(version_id, node_id) [delete: cascade]
+Ref: options.(version_id, next_node_id) > nodes.(version_id, id)
+Ref: justification_reasons.(version_id, node_id) > decision_points.(version_id, node_id) [delete: cascade]
+Ref: rules.(version_id, from_node_id) > nodes.(version_id, id)
+Ref: rules.(version_id, target_node_id) > nodes.(version_id, id)
+Ref: decision_references.(version_id, node_id) > decision_points.(version_id, node_id) [delete: cascade]
+Ref: decision_references.(version_id, reference_id) > educational_references.(version_id, id) [delete: cascade]
+Ref: feedback_items.(version_id, node_id) > nodes.(version_id, id) [delete: cascade]
+Ref: feedback_items.(version_id, option_id) > options.(version_id, id) [delete: cascade]
+Ref: questions.(version_id, question_set_id) > question_sets.(version_id, id) [delete: cascade]
+Ref: questions.(version_id, learning_objective_id) > learning_objectives.(version_id, id)
+Ref: questions.(version_id, assesses_decision_node_id) > decision_points.(version_id, node_id)
+Ref: questions.(version_id, requires_node_id) > nodes.(version_id, id)
+Ref: question_options.(version_id, question_id) > questions.(version_id, id) [delete: cascade]
+
+// =====================================================================
+// Relaciones · identidad
+// =====================================================================
+Ref: participants.account_id - accounts.id [delete: cascade]
+Ref: document_acceptances.participant_id > participants.id [delete: cascade]
+Ref: consent_events.account_id > accounts.id [delete: cascade]
+Ref: arco_requests.account_id > accounts.id [delete: set null]
+Ref: arco_requests.assigned_admin_id > admin_users.id [delete: set null]
+
+// =====================================================================
+// Relaciones · simulación
+// =====================================================================
+Ref: sessions.participant_id > participants.id [delete: cascade]
+Ref: sessions.scenario_version_id > scenario_versions.id [delete: restrict]
+Ref: sessions.(scenario_version_id, current_node_id) > nodes.(version_id, id)
+Ref: sessions.(scenario_version_id, outcome_node_id) > nodes.(version_id, id)
+
+Ref: session_steps.(session_id, scenario_version_id) > sessions.(id, scenario_version_id) [delete: cascade]
+Ref: session_steps.(scenario_version_id, node_id) > nodes.(version_id, id)
+
+Ref: session_decisions.(session_id, scenario_version_id) > sessions.(id, scenario_version_id) [delete: cascade]
+Ref: session_decisions.(scenario_version_id, node_id) > decision_points.(version_id, node_id)
+Ref: session_decisions.(node_id, option_id) > options.(node_id, id)
+
+Ref: session_decision_reasons.(session_decision_id, node_id) > session_decisions.(id, node_id) [delete: cascade]
+Ref: session_decision_reasons.(node_id, reason_id) > justification_reasons.(node_id, id)
+
+Ref: session_variables.(session_id, scenario_version_id) > sessions.(id, scenario_version_id) [delete: cascade]
+Ref: session_variables.(scenario_version_id, variable_id) > state_variables.(version_id, id)
+
+Ref: session_effects.(session_decision_id, session_id) > session_decisions.(id, session_id) [delete: cascade]
+Ref: session_effects.(session_id, variable_id) > session_variables.(session_id, variable_id) [delete: cascade]
+
+Ref: session_events.(session_id, scenario_version_id) > sessions.(id, scenario_version_id) [delete: cascade]
+Ref: session_events.(scenario_version_id, rule_id) > rules.(version_id, id)
+
+Ref: session_event_causes.(session_event_id, session_id) > session_events.(id, session_id) [delete: cascade]
+Ref: session_event_causes.(session_decision_id, session_id) > session_decisions.(id, session_id) [delete: cascade]
+
+Ref: assessment_attempts.(session_id, scenario_version_id) > sessions.(id, scenario_version_id) [delete: cascade]
+Ref: assessment_attempts.(scenario_version_id, question_set_id) > question_sets.(version_id, id)
+
+Ref: assessment_answers.(attempt_id, question_set_id) > assessment_attempts.(id, question_set_id) [delete: cascade]
+Ref: assessment_answers.(question_set_id, question_id) > questions.(question_set_id, id)
+Ref: assessment_answers.(question_id, option_id) > question_options.(question_id, id)
+
+// =====================================================================
+// Relaciones · estadísticas (solo hacia la versión; nunca hacia personas)
+// =====================================================================
+Ref: session_facts.scenario_version_id > scenario_versions.id [delete: restrict]
+Ref: decision_facts.scenario_version_id > scenario_versions.id [delete: restrict]
+Ref: survey_responses.scenario_version_id > scenario_versions.id [delete: restrict]

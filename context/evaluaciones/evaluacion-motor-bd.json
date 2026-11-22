@@ -1,0 +1,75 @@
+{
+  "proyecto": "Nukyro · Simulador educativo de decisiones éticas",
+  "_nota": "Insumos: context/proyecto/kg.json v1.5.0, context/adr/ADR-001..004, docs/*_NombreCompleto_RequerimientosSoftware_v1.1.docx. Pesos de criterios por omisión de la rúbrica. Frecuencias del día pico del piloto (50 participantes, 1 sesión cada uno) [SUPUESTO]; ver informe §3-§5.",
+  "dominios": [
+    {"id": "simulacion", "nombre": "Sesión y simulación (decisiones, efectos, variables, eventos, evaluaciones)", "peso": 0.610, "criticidad": "alta",
+     "por_que": "P2 50 + P3 1500 + P5 600 + P6 200 + P7 100 + P8 50 = 2500/día × 3 = 7500 / 12289. Criticidad alta [INFERIDO]: RF-064/RNF-09 exigen todo-o-nada; un estado a medias invalida los datos del piloto"},
+    {"id": "contenido", "nombre": "Contenido versionado del escenario", "peso": 0.257, "criticidad": "alta",
+     "por_que": "P4 1000 + P11 50 + P12 1 = 1051/día × 3 = 3153 / 12289. Alta [INFERIDO]: una versión publicada rota o mutable rompe RN-15 y RF-066 para todas las sesiones"},
+    {"id": "identidad", "nombre": "Participantes, cuentas, aceptaciones y ARCO", "peso": 0.016, "criticidad": "alta",
+     "por_que": "P1 50 + P10 10 + P13 1 + P14 2 + P9 1 = 64/día × 3 = 192 / 12289. Alta [DATO]: legal (LFPDPPP, aceptaciones RF-073, ARCO RF-085, cancelación RF-080)"},
+    {"id": "estadisticas", "nombre": "Resultados anónimos y encuesta", "peso": 0.113, "criticidad": "media",
+     "por_que": "P15 (50 session_facts + 600 decision_facts + 40 encuestas) + P16 2 reportes = 692/día × 2 = 1384 / 12289. Media: errores sesgan el análisis pero no son legales ni dinero"},
+    {"id": "bitacora", "nombre": "Bitácora del panel", "peso": 0.005, "criticidad": "baja",
+     "por_que": "P17 ~60/día × 1 = 60 / 12289. Solo inserción, purga a 90 días"}
+  ],
+  "puntajes": {
+    "simulacion": {
+      "postgresql": {"forma": 5, "lectura": 5, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 4,
+        "por_que": "forma 5: columnas fijas por tabla (ADR-003). lectura 5: P3 resuelve participante por hash (índice único) + sesión + nodo en 2 lecturas; P7 une 5 tablas sobre ≤150 filas por sesión. integridad 5: P5 escribe 8 tablas en una transacción ACID; UNIQUE(session_id,node_id) da RN-14; FK a la versión de contenido da RN-03. operacion 4: RDS gestionado con PITR [DATO AWS]; dominio del equipo sin confirmar [SUPUESTO]"},
+      "mysql": {"forma": 5, "lectura": 5, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 4,
+        "por_que": "InnoDB: transacción ACID multi-tabla, FK, UNIQUE y CHECK (aplicado desde 8.0.16). Mismo análisis que PostgreSQL para P3/P5/P7"},
+      "mongodb": {"forma": 5, "lectura": 5, "integridad": 3, "imprevistas": 3, "escala": 5, "especial": 3, "operacion": 3,
+        "por_que": "forma/lectura 5: la sesión es un agregado acotado (≤12 decisiones) que cabe en un documento y P3 es 1 lectura. integridad 3: P5 es atómico dentro del documento, pero decision_facts va en otra colección en la misma transacción (ADR-004) y RN-03 (alternativa de la versión) no tiene FK → transacción multi-documento + validación en la app. imprevistas 3: reportes sobre arreglos embebidos requieren $unwind. operacion 3: DocumentDB en AWS o Atlas; equipo sin experiencia confirmada"},
+      "dynamodb": {"forma": 3, "lectura": 4, "integridad": 3, "imprevistas": 1, "escala": 5, "especial": 3, "operacion": 3,
+        "por_que": "forma 3: diseño de tabla única con PK/SK por sesión. lectura 4: P3 Query por PK. integridad 3: TransactWriteItems (hasta 100 ítems) y escrituras condicionadas dan RN-14, sin FK. imprevistas 1: P7 y reportes fuera de los accesos diseñados exigen exportar. operacion 3: serverless gestionado pero curva de modelado"}
+    },
+    "contenido": {
+      "postgresql": {"forma": 5, "lectura": 5, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 4,
+        "por_que": "ADR-001 híbrido: tablas + JSONB para condiciones/efectos (nativo). integridad 5: FK entre nodos/decisiones/alternativas; índice único parcial (scenario_id) WHERE status='published' para RN-16; trigger o permisos para inmutabilidad de lo publicado. especial 3: la validación de alcanzabilidad (RF-066) se hace en el motor de simulación; CTE recursivas disponibles"},
+      "mysql": {"forma": 4, "lectura": 5, "integridad": 4, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 4,
+        "por_que": "forma 4: tipo JSON sin índice GIN; índices solo vía columnas generadas. integridad 4: sin índice único parcial; RN-16 exige columna generada (NULL si no está publicada) + UNIQUE. FK y triggers disponibles"},
+      "mongodb": {"forma": 5, "lectura": 5, "integridad": 3, "imprevistas": 3, "escala": 5, "especial": 3, "operacion": 3,
+        "por_que": "forma/lectura 5: una versión de escenario como documento es natural y P4 la lee entera. integridad 3: sin FK; las sesiones referenciarían nodos por clave de texto (lo que ADR-001 descartó); RN-16 con índice único parcial sí existe. imprevistas 3"},
+      "dynamodb": {"forma": 3, "lectura": 4, "integridad": 3, "imprevistas": 1, "escala": 5, "especial": 3, "operacion": 3,
+        "por_que": "Versión como ítems por PK; RN-16 con escritura condicionada; sin FK; formularios del panel (P11) y listados ad hoc requieren índices secundarios por cada consulta"}
+    },
+    "identidad": {
+      "postgresql": {"forma": 5, "lectura": 5, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 4,
+        "por_que": "P10 (migración) y P9/P14 (borrado + session_facts) son escrituras multi-tabla atómicas; ON DELETE CASCADE desde participants; UNIQUE(cognito_sub), UNIQUE(secret_hash)"},
+      "mysql": {"forma": 5, "lectura": 5, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 4,
+        "por_que": "Igual que PostgreSQL: transacciones, CASCADE, UNIQUE"},
+      "mongodb": {"forma": 4, "lectura": 5, "integridad": 3, "imprevistas": 3, "escala": 5, "especial": 3, "operacion": 3,
+        "por_que": "Borrado en cascada y migración tocan varias colecciones: transacción multi-documento obligatoria; sin CASCADE declarativo"},
+      "dynamodb": {"forma": 3, "lectura": 4, "integridad": 2, "imprevistas": 1, "escala": 5, "especial": 3, "operacion": 3,
+        "por_que": "integridad 2: borrar un participante con 2 sesiones (~300 ítems) excede el límite de 100 ítems por transacción → borrado no atómico con session_facts; sin CASCADE"}
+    },
+    "estadisticas": {
+      "postgresql": {"forma": 5, "lectura": 5, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 4,
+        "por_que": "Tablas de hechos de forma fija; H02 filtra pre<80 y promedia diferencias con SQL simple; agrupaciones por semana"},
+      "mysql": {"forma": 5, "lectura": 5, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 4,
+        "por_que": "Igual; funciones de ventana desde 8.0"},
+      "mongodb": {"forma": 4, "lectura": 4, "integridad": 4, "imprevistas": 4, "escala": 5, "especial": 3, "operacion": 3,
+        "por_que": "Inserciones de un solo documento; pipeline de agregación cubre H02-H07"},
+      "dynamodb": {"forma": 3, "lectura": 2, "integridad": 4, "imprevistas": 1, "escala": 5, "especial": 3, "operacion": 3,
+        "por_que": "Los reportes (P16) son escaneos completos o exportación a otro servicio"}
+    },
+    "bitacora": {
+      "postgresql": {"forma": 4, "lectura": 4, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 2, "operacion": 4,
+        "por_que": "JSONB para el detalle; purga de 90 días con tarea programada fuera del motor (pg_cron depende del servicio) → especial 2"},
+      "mysql": {"forma": 4, "lectura": 4, "integridad": 5, "imprevistas": 5, "escala": 5, "especial": 3, "operacion": 4,
+        "por_que": "Event Scheduler nativo para la purga → 3"},
+      "mongodb": {"forma": 5, "lectura": 4, "integridad": 4, "imprevistas": 3, "escala": 5, "especial": 3, "operacion": 3,
+        "por_que": "Índice TTL (ancla 3 de la rúbrica)"},
+      "dynamodb": {"forma": 4, "lectura": 3, "integridad": 4, "imprevistas": 1, "escala": 5, "especial": 5, "operacion": 3,
+        "por_que": "TTL nativo de clave-valor (ancla 5)"}
+    }
+  },
+  "cruces": [
+    {"de": "simulacion", "a": "estadisticas", "mitigado": false, "descripcion": "P5 escribe decision_facts y P8 escribe session_facts en la misma transacción que la decisión o el cierre (ADR-004)"},
+    {"de": "identidad", "a": "simulacion", "mitigado": false, "descripcion": "P10 traslada sesiones al participante de la cuenta; P9/P14 borran en cascada participante y sesiones"},
+    {"de": "identidad", "a": "estadisticas", "mitigado": false, "descripcion": "Borrar una sesión (caducidad, cancelación, ARCO) escribe antes su session_facts en la misma transacción"},
+    {"de": "simulacion", "a": "contenido", "mitigado": true, "descripcion": "P5 valida que la alternativa pertenezca al nodo de la versión fijada (RN-03); la versión publicada es inmutable, por lo que puede leerse como fuente de verdad"},
+    {"de": "contenido", "a": "bitacora", "mitigado": true, "descripcion": "Cada acción del panel registra bitácora; tolerable por outbox"}
+  ]
+}

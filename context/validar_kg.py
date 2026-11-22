@@ -12,7 +12,9 @@ import hashlib
 import json
 import re
 import sys
+import unicodedata
 from collections import Counter
+from fnmatch import fnmatchcase
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
@@ -49,12 +51,21 @@ def revisar_seguimiento(nodo: dict) -> list[str]:
     return []
 
 
+def es_local(ruta: str) -> bool:
+    return ".." not in ruta and bool(SOLO_LOCAL.fullmatch(ruta))
+
+
 def omitir(ruta: str) -> bool:
-    return bool(SOLO_LOCAL.fullmatch(ruta)) and not (RAIZ / "docs").is_dir()
+    return es_local(ruta) and not (RAIZ / "docs").is_dir()
 
 
 def resolver(ruta: str) -> Path | None:
-    hallados = list(RAIZ.glob(ruta)) if "*" in ruta else [RAIZ / ruta]
+    hallados = [RAIZ / ruta]
+    if es_local(ruta):  # solo estas rutas admiten «*»
+        carpeta, _, patron = ruta.rpartition("/")
+        # macOS puede guardar las tildes descompuestas: se comparan en NFC
+        nfc = lambda texto: unicodedata.normalize("NFC", texto)
+        hallados = [a for a in (RAIZ / carpeta).glob("*") if fnmatchcase(nfc(a.name), nfc(patron))]
     return hallados[0] if len(hallados) == 1 and hallados[0].is_file() else None
 
 
@@ -138,7 +149,7 @@ def validar(kg: dict) -> list[str]:
         (resumen["nodos"], resumen["aristas"], resumen["conflictos"])
         != (len(lista), len(aristas), len(conflictos))
         or Counter(resumen["por_tipo"]) != Counter(n.get("tipo") for n in lista)
-        or Counter(resumen["conflictos_por_estado"]) != estados
+        or {e: n for e, n in resumen["conflictos_por_estado"].items() if n} != dict(estados)
     ):
         errores.append("«estadisticas» no coincide con el contenido")
     if kg["meta"]["historial"][-1]["version"] != kg["meta"]["version"]:
