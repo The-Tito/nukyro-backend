@@ -207,11 +207,14 @@ def session_view(conn, participant, session):
     )
 
 
+# El orden en que se muestran alternativas y razones no revela cuál es la correcta (ni por la
+# posición del contenido ni por la clave): es fijo para cada sesión y distinto entre sesiones.
 def node_options(conn, session):
     return _all(
         conn,
         "SELECT o.key, o.label FROM nukyro.options o JOIN nukyro.sessions s "
-        "ON s.current_node_id = o.node_id WHERE s.id = :s ORDER BY o.position, o.key",
+        "ON s.current_node_id = o.node_id WHERE s.id = :s "
+        "ORDER BY md5(s.id::text || o.id::text)",
         s=session,
     )
 
@@ -221,7 +224,7 @@ def node_reasons(conn, session):
         conn,
         "SELECT r.key, r.label FROM nukyro.justification_reasons r JOIN nukyro.sessions s "
         "ON s.current_node_id = r.node_id JOIN nukyro.decision_points d ON d.node_id = r.node_id "
-        "WHERE s.id = :s AND d.requires_justification ORDER BY r.position, r.key",
+        "WHERE s.id = :s AND d.requires_justification ORDER BY md5(s.id::text || r.id::text)",
         s=session,
     )
 

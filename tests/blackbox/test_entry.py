@@ -226,6 +226,7 @@ def test_rf003_la_sesion_devuelve_escenario_y_version_publicada(person):
     assert data["scenario"]["key"] == "DEMO-BECAS"
     assert data["scenario"]["version_number"] == 1
     assert "DEMOSTRACIÓN" in data["scenario"]["title"]
+    assert data["scenario"]["introduction"].startswith("DEMOSTRACIÓN")
 
 
 def test_rf003_un_version_id_enviado_se_rechaza_422(person):

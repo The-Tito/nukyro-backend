@@ -19,7 +19,7 @@ from nukyro.db import make_engine
 from nukyro.modules.simulation import queries, service
 from nukyro.modules.simulation.schemas import AdvanceIn, DecisionIn
 
-from .conftest import ACCEPT, WRITE
+from .conftest import ACCEPT, WRITE, participant_id, secret_of
 
 SESSION_TABLES = (
     "session_steps",
@@ -341,8 +341,8 @@ def test_las_respuestas_no_traen_nada_interno(person, superuser, content):
     sid = new_session(person, content, superuser)
     responses = [person.get(f"/api/v1/sessions/{sid}"), advance(person, sid, "intro")]
     got = person.get(f"/api/v1/sessions/{sid}").json()
-    assert [o["key"] for o in got["options"]] == ["A", "B"]
-    assert [r["key"] for r in got["reasons"]] == ["R1", "R2"]
+    assert sorted(o["key"] for o in got["options"]) == ["A", "B"]
+    assert sorted(r["key"] for r in got["reasons"]) == ["R1", "R2"]
     responses += [decide(person, sid, "D1", "A", ["R1"]), decide(person, sid, "D2", "D")]
     responses.append(person.get(f"/api/v1/sessions/{sid}"))
     allowed = {
@@ -351,6 +351,7 @@ def test_las_respuestas_no_traen_nada_interno(person, superuser, content):
         "key",
         "title",
         "version_number",
+        "introduction",
         "started_at",
         "is_first_session",
         "state",
@@ -763,3 +764,204 @@ def test_dos_alternativas_a_la_vez_dejan_una_sola_decision(api_engine, superuser
             first["confirmed"]["option_key"],
             {"A": 1, "B": 5}[first["confirmed"]["option_key"]],
         )
+
+
+# --- T-13: orden por sesión, efectos set+add, razones de otro nodo, determinismo, secreto falso ---
+
+
+@pytest.fixture(scope="module")
+def effects_content(superuser):
+    """p entre 0 y 10 desde 3. D1 y D2 piden justificación. D1: S (set 8 y add 5) y T (add 1)."""
+    key = f"T13-{uuid.uuid4().hex[:8]}"
+    ex = superuser.execute
+    sid = ex(
+        "INSERT INTO nukyro.scenarios (key, title) VALUES (%s, %s) RETURNING id", (key, key)
+    ).fetchone()[0]
+    v = ex(
+        "INSERT INTO nukyro.scenario_versions (scenario_id, version_number, title) "
+        "VALUES (%s, 1, %s) RETURNING id",
+        (sid, f"{key} DEMOSTRACIÓN"),
+    ).fetchone()[0]
+    ex(
+        "INSERT INTO nukyro.learning_objectives (version_id, key, description) VALUES (%s,'LO','x')",
+        (v,),
+    )
+    ex(
+        "INSERT INTO nukyro.state_variables (version_id, key, label, initial_value, min_value, max_value) "
+        "VALUES (%s,'p','P',3,0,10)",
+        (v,),
+    )
+    ids = {}
+    for k, t in (("intro", "intro"), ("D1", "decision"), ("D2", "decision"), ("FIN", "outcome")):
+        ids[k] = ex(
+            "INSERT INTO nukyro.nodes (version_id, key, node_type, title, body) "
+            "VALUES (%s,%s,%s,%s,%s) RETURNING id",
+            (v, k, t, f"Título {k}", f"Texto {k}"),
+        ).fetchone()[0]
+    for k, nxt in (("intro", "D1"), ("D1", "D2"), ("D2", "FIN")):
+        ex("UPDATE nukyro.nodes SET default_next_node_id=%s WHERE id=%s", (ids[nxt], ids[k]))
+    for k in ("D1", "D2"):
+        ex(
+            "INSERT INTO nukyro.decision_points (node_id, version_id, requires_justification, "
+            "learning_objective_id, affected_parties) SELECT %s, %s, true, id, 'x' "
+            "FROM nukyro.learning_objectives WHERE version_id=%s",
+            (ids[k], v, v),
+        )
+    options = (
+        ("D1", "S", [{"op": "set", "value": 8}, {"op": "add", "value": 5}]),
+        ("D1", "T", [{"op": "add", "value": 1}]),
+        ("D2", "X", [{"op": "add", "value": 1}]),
+    )
+    for node, k, effects in options:
+        ex(
+            "INSERT INTO nukyro.options (version_id, node_id, key, label, effects) "
+            "VALUES (%s,%s,%s,%s,%s)",
+            (
+                v,
+                ids[node],
+                k,
+                f"Alternativa {k}",
+                json.dumps([{"variable_key": "p", **e} for e in effects]),
+            ),
+        )
+    for node, k, ok in (
+        ("D1", "Ra", True),
+        ("D1", "Rb", False),
+        ("D2", "Rc", True),
+        ("D2", "Rd", False),
+    ):
+        ex(
+            "INSERT INTO nukyro.justification_reasons (version_id, node_id, key, label, is_correct) "
+            "VALUES (%s,%s,%s,%s,%s)",
+            (v, ids[node], k, f"Razón {k}", ok),
+        )
+    ex("INSERT INTO nukyro.question_sets (version_id, set_type) VALUES (%s,'pretest')", (v,))
+    ex(
+        "UPDATE nukyro.scenario_versions SET status='published', published_at=now() WHERE id=%s",
+        (v,),
+    )
+    return {"key": key, "version": v}
+
+
+def test_rf028_set_y_add_sobre_la_misma_variable_en_orden_y_con_recorte(
+    person, superuser, effects_content
+):
+    sid = new_session(person, effects_content, superuser)
+    advance(person, sid, "intro")
+    assert decide(person, sid, "D1", "S", ["Ra"]).status_code == 200
+    rows = superuser.execute(
+        "SELECT e.old_value, e.new_value FROM nukyro.session_effects e WHERE e.session_id=%s",
+        (sid,),
+    ).fetchall()
+    # fija 8 (3 a 8) y suma 5 sobre ese 8: 13 se recorta a 10. En el orden inverso sería (3,8),(8,8)
+    assert sorted(rows) == [(3, 8), (8, 10)]
+    assert values_of(superuser, sid) == {"p": 10}
+
+
+def test_rf023_una_razon_existente_de_otro_nodo_justificado_es_422_y_cero_cambios(
+    person, superuser, effects_content
+):
+    sid = new_session(person, effects_content, superuser)
+    advance(person, sid, "intro")
+    base = snapshot(superuser, sid)
+    # «Rc» existe en la versión, es correcta y es de D2 (que también pide razones); D1 no la ofrece
+    assert decide(person, sid, "D1", "T", ["Rc"]).status_code == 422
+    assert decide(person, sid, "D1", "T", ["Ra", "Rc"]).status_code == 422
+    assert snapshot(superuser, sid) == base
+    assert values_of(superuser, sid) == {"p": 3}
+    assert decide(person, sid, "D1", "T", ["Ra"]).status_code == 200
+
+
+def options_and_reasons(client, sid):
+    data = client.get(f"/api/v1/sessions/{sid}").json()
+    return [o["key"] for o in data["options"]], [r["key"] for r in data["reasons"]]
+
+
+def test_las_alternativas_y_razones_salen_en_un_orden_propio_de_cada_sesion(
+    person, superuser, content
+):
+    sids = []
+    for _ in range(40):
+        sid = new_session(person, content, superuser)
+        assert advance(person, sid, "intro").status_code == 200
+        sids.append(sid)
+    first = [options_and_reasons(person, s) for s in sids]
+    # una misma sesión siempre recibe el mismo orden
+    assert [options_and_reasons(person, s) for s in sids] == first
+    # dos sesiones pueden recibir un orden distinto, y la correcta (R1) no va siempre primero
+    assert {tuple(o) for o, _ in first} == {("A", "B"), ("B", "A")}
+    assert {tuple(r) for _, r in first} == {("R1", "R2"), ("R2", "R1")}
+    assert {r[0] for _, r in first} == {"R1", "R2"}
+    # el orden es md5(id de la sesión || id de la alternativa o razón)
+    ids = dict(
+        superuser.execute(
+            "SELECT key, id::text FROM nukyro.options WHERE version_id=%s AND node_id IN "
+            "(SELECT id FROM nukyro.nodes WHERE version_id=%s AND key='D1')",
+            (content["version"], content["version"]),
+        ).fetchall()
+    )
+    expected = sorted(ids, key=lambda k: hashlib.md5((sids[0] + ids[k]).encode()).hexdigest())
+    assert first[0][0] == expected
+
+
+def run_path(client, superuser, content, path):
+    sid = new_session(client, content, superuser)
+    advance(client, sid, "intro")
+    decide(client, sid, "D1", path[0], ["R1"])
+    view = decide(client, sid, "D2", path[1]).json()["session"]
+    causes = sorted(
+        superuser.execute(
+            "SELECT r.key, n.key FROM nukyro.session_events ev JOIN nukyro.rules r ON r.id=ev.rule_id "
+            "JOIN nukyro.session_event_causes c ON c.session_event_id=ev.id "
+            "JOIN nukyro.session_decisions d ON d.id=c.session_decision_id "
+            "JOIN nukyro.nodes n ON n.id=d.node_id WHERE ev.session_id=%s",
+            (sid,),
+        ).fetchall()
+    )
+    steps = superuser.execute(
+        "SELECT n.key FROM nukyro.session_steps s JOIN nukyro.nodes n ON n.id=s.node_id "
+        "WHERE s.session_id=%s ORDER BY s.seq",
+        (sid,),
+    ).fetchall()
+    shown = {
+        k: v
+        for k, v in view.items()
+        if k not in ("id", "started_at", "is_first_session", "options", "reasons")
+    }
+    return shown, values_of(superuser, sid), causes, steps
+
+
+@pytest.mark.parametrize("path", [("A", "C"), ("A", "D"), ("B", "C"), ("B", "D")])
+def test_determinismo_hasta_el_desenlace_misma_ruta_mismo_resultado(
+    person, new_client, superuser, content, path
+):
+    other = new_client()
+    assert other.post("/api/v1/participants", json=ACCEPT, headers=WRITE).status_code == 201
+    one = run_path(person, superuser, content, path)
+    two = run_path(person, superuser, content, path)
+    three = run_path(other, superuser, content, path)  # otra persona, la misma ruta
+    assert one == two == three
+    assert one[0]["state"] == "outcome_reached" and one[0]["current_node"]["type"] == "outcome"
+
+
+def test_rf063_un_secreto_falso_en_decisions_es_401_y_cero_cambios(
+    person, new_client, superuser, content
+):
+    sid = new_session(person, content, superuser)
+    advance(person, sid, "intro")
+    base = snapshot(superuser, sid)
+    participant = participant_id(superuser, person)
+    row = lambda: superuser.execute(  # noqa: E731
+        "SELECT md5(p::text) FROM nukyro.participants p WHERE id=%s", (participant,)
+    ).fetchone()
+    before = row()
+    forged = new_client()
+    for secret in (pysecrets.token_urlsafe(32), "x" * 43, secret_of(person)[:-1] + "!"):
+        r = forged.post(
+            f"/api/v1/sessions/{sid}/decisions",
+            headers={**WRITE, "Cookie": f"__Host-nukyro_participant={secret}"},
+            json={"node_key": "D1", "option_key": "A", "reason_keys": ["R1"]},
+        )
+        assert r.status_code == 401, r.text
+    assert snapshot(superuser, sid) == base and row() == before
+    assert decide(person, sid, "D1", "A", ["R1"]).status_code == 200  # el dueño sí puede

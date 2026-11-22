@@ -113,7 +113,7 @@ def test_rf006_otra_peticion_con_la_cookie_retoma_el_ultimo_nodo_confirmado(pers
         resumed = get(another_tab, sid)
     assert resumed.status_code == 200
     assert resumed.json()["current_node"]["key"] == "D2"
-    assert [o["key"] for o in resumed.json()["options"]] == ["C", "D"]
+    assert sorted(o["key"] for o in resumed.json()["options"]) == ["C", "D"]
 
 
 def test_rf006_otra_cookie_es_404_y_una_decision_revertida_no_avanza(person):
@@ -136,6 +136,10 @@ def test_rf006_otra_cookie_es_404_y_una_decision_revertida_no_avanza(person):
 def test_rf013_la_intro_muestra_titulo_y_contexto_del_escenario(person):
     data = get(person, start(person)).json()
     assert data["scenario"]["title"] == f"{READY} DEMOSTRACIÓN"
+    # RF-013: la introducción es la de la versión fijada, y se conserva al volver a leer la sesión
+    assert data["scenario"]["introduction"] == "DEMOSTRACIÓN, sin validez legal"
+    assert data["scenario"]["version_number"] == 1
+    assert person.get("/api/v1/sessions").json()["sessions"][0]["scenario"] == data["scenario"]
     assert data["current_node"] == {
         "key": "intro",
         "type": "intro",
@@ -156,18 +160,30 @@ def test_rf013_la_intro_no_expone_reglas_ni_variables(person):
 
 
 def test_rf014_rf015_la_ruta_recorre_narrativo_decision_evento_y_desenlace(person):
-    sid = at_d1(person)
-    types = {"INFO": "info", "D1": "decision", "D2": "decision", "EVR": "event", "BUENO": "outcome"}
-    seen = ["INFO"]  # at_d1 ya pasó por el nodo narrativo
-    assert decide(person, sid, "D1", "B", ["R1"]).status_code == 200
-    assert decide(person, sid, "D2", "D").status_code == 200
-    assert node_of(person, sid) == "EVR"
-    assert advance(person, sid, "EVR").status_code == 200
-    data = get(person, sid).json()
-    assert data["current_node"]["key"] == "BUENO"
-    seen += ["D1", "D2", "EVR", "BUENO"]
-    assert {types[k] for k in seen} == {"info", "decision", "event", "outcome"}
-    assert data["current_node"]["type"] == "outcome" and data["state"] == "outcome_reached"
+    sid = start(person)
+    seen = []  # (nodo, tipo) leído de la API en CADA paso, no de una tabla de la prueba
+
+    def look():
+        node = get(person, sid).json()["current_node"]
+        seen.append((node["key"], node["type"]))
+        return node["key"]
+
+    assert look() == "intro" and advance(person, sid, "intro").status_code == 200
+    assert look() == "INFO" and advance(person, sid, "INFO").status_code == 200
+    assert look() == "D1" and decide(person, sid, "D1", "B", ["R1"]).status_code == 200
+    assert look() == "D2" and decide(person, sid, "D2", "D").status_code == 200
+    assert look() == "EVR" and advance(person, sid, "EVR").status_code == 200
+    assert look() == "BUENO"
+    assert seen == [
+        ("intro", "intro"),
+        ("INFO", "info"),
+        ("D1", "decision"),
+        ("D2", "decision"),
+        ("EVR", "event"),
+        ("BUENO", "outcome"),
+    ]
+    assert {t for _, t in seen} >= {"info", "decision", "event", "outcome"}
+    assert get(person, sid).json()["state"] == "outcome_reached"
 
 
 def test_rf014_rf015_un_destino_enviado_por_el_cliente_es_422_y_no_mueve_nada(person):
@@ -261,16 +277,17 @@ def test_rf018_rf038_avanzar_desde_el_desenlace_es_409(person):
 def test_rf019_se_listan_las_alternativas_y_razones_del_nodo_actual(person):
     sid = at_d1(person)
     data = get(person, sid).json()
-    assert data["options"] == [
+    by_key = lambda items: sorted(items, key=lambda i: i["key"])  # noqa: E731  (el orden es por sesión)
+    assert by_key(data["options"]) == [
         {"key": "A", "label": "Alternativa A"},
         {"key": "B", "label": "Alternativa B"},
     ]
-    assert data["reasons"] == [
+    assert by_key(data["reasons"]) == [
         {"key": "R1", "label": "Razón R1"},
         {"key": "R2", "label": "Razón R2"},
     ]
     assert decide(person, sid, "D1", "A", ["R1"]).status_code == 200
-    assert [o["key"] for o in get(person, sid).json()["options"]] == ["C", "D"]
+    assert sorted(o["key"] for o in get(person, sid).json()["options"]) == ["C", "D"]
 
 
 def test_rf019_las_alternativas_no_llevan_efectos_destinos_ni_razones_correctas(person):

@@ -45,9 +45,9 @@ def make_scenario(db, status: str) -> str:
         "INSERT INTO nukyro.scenarios (key, title) VALUES (%s, %s) RETURNING id", (key, key)
     ).fetchone()[0]
     vid = db.execute(
-        "INSERT INTO nukyro.scenario_versions (scenario_id, version_number, title) "
-        "VALUES (%s, 1, %s) RETURNING id",
-        (sid, f"{key} DEMOSTRACIÓN"),
+        "INSERT INTO nukyro.scenario_versions (scenario_id, version_number, title, introduction) "
+        "VALUES (%s, 1, %s, %s) RETURNING id",
+        (sid, f"{key} DEMOSTRACIÓN", f"DEMOSTRACIÓN: introducción de la versión 1 de {key}"),
     ).fetchone()[0]
     db.execute(
         "INSERT INTO nukyro.nodes (version_id, key, node_type, title, body) "
@@ -201,18 +201,45 @@ def test_rf003_la_sesion_conserva_su_version_al_retirarla(person, superuser):
         "UPDATE nukyro.scenario_versions SET status='retired', retired_at=now() WHERE id=%s",
         (version,),
     )
+    assert superuser.execute(
+        "SELECT scenario_version_id FROM nukyro.sessions WHERE id=%s", (sid,)
+    ).fetchone() == (version,)
+    retry = person.post("/api/v1/sessions", json={**SCENARIO, "scenario_key": key}, headers=WRITE)
+    assert retry.status_code == 404
+    # RF-013: la introducción es la de la versión fijada, aunque salga una versión nueva
+    scenario = superuser.execute(
+        "SELECT scenario_id FROM nukyro.scenario_versions WHERE id=%s", (version,)
+    ).fetchone()[0]
+    v2 = superuser.execute(
+        "INSERT INTO nukyro.scenario_versions (scenario_id, version_number, title, introduction) "
+        "VALUES (%s, 2, %s, 'DEMOSTRACIÓN: introducción NUEVA de la versión 2') RETURNING id",
+        (scenario, f"{key} DEMOSTRACIÓN 2"),
+    ).fetchone()[0]
+    superuser.execute(
+        "INSERT INTO nukyro.nodes (version_id, key, node_type, title, body) "
+        "VALUES (%s, 'intro', 'intro', 'Inicio', 'Texto de demostración')",
+        (v2,),
+    )
+    superuser.execute(
+        "UPDATE nukyro.scenario_versions SET status='published', published_at=now() WHERE id=%s",
+        (v2,),
+    )
     again = person.get(f"/api/v1/sessions/{sid}")
     assert again.status_code == 200
     assert again.json()["scenario"] == {
         "key": key,
         "title": f"{key} DEMOSTRACIÓN",
         "version_number": 1,
+        "introduction": f"DEMOSTRACIÓN: introducción de la versión 1 de {key}",
     }
-    assert superuser.execute(
-        "SELECT scenario_version_id FROM nukyro.sessions WHERE id=%s", (sid,)
-    ).fetchone() == (version,)
-    retry = person.post("/api/v1/sessions", json={**SCENARIO, "scenario_key": key}, headers=WRITE)
-    assert retry.status_code == 404
+    assert created.json()["scenario"]["introduction"] == again.json()["scenario"]["introduction"]
+    listed = person.get("/api/v1/sessions").json()["sessions"]
+    assert [x["scenario"]["introduction"] for x in listed] == [
+        f"DEMOSTRACIÓN: introducción de la versión 1 de {key}"
+    ]
+    fresh = person.post("/api/v1/sessions", json={**SCENARIO, "scenario_key": key}, headers=WRITE)
+    assert fresh.status_code == 201 and fresh.json()["scenario"]["version_number"] == 2
+    assert "NUEVA" in fresh.json()["scenario"]["introduction"]
 
 
 def test_rf001_la_sesion_nace_con_variables_y_primer_paso(person, superuser):

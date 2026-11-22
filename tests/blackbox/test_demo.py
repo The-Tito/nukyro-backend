@@ -44,6 +44,16 @@ def test_con_el_pretest_pendiente_no_se_sale_de_la_intro(person):
     assert person.get(f"/api/v1/sessions/{sid}").json()["current_node"]["key"] == "intro"
 
 
+def test_la_sesion_muestra_la_introduccion_demostracion_de_su_version(person):
+    sid = start(person, True)
+    data = person.get(f"/api/v1/sessions/{sid}").json()
+    assert data["scenario"]["version_number"] == 1
+    assert data["scenario"]["introduction"].startswith("DEMOSTRACIÓN. Escenario ficticio")
+    assert "no tiene validez legal" in data["scenario"]["introduction"]
+    assert person.get(f"/api/v1/sessions/{sid}").json()["scenario"] == data["scenario"]
+    assert person.get("/api/v1/sessions").json()["sessions"][0]["scenario"] == data["scenario"]
+
+
 @pytest.mark.parametrize("outcome", RECORRIDOS)
 def test_recorrido_por_https_llega_al_desenlace_y_muestra_los_eventos(person, outcome):
     expected = RECORRIDOS[outcome]
