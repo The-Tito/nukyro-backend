@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.29.0",
+    "version": "1.30.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -205,6 +205,11 @@
         "version": "1.29.0",
         "fecha": "2026-11-22",
         "cambio": "Respuestas del usuario: D-26 a D-31; CONF-21 resuelto; criterios de E3 ampliados con el pre-test obligatorio."
+      },
+      {
+        "version": "1.30.0",
+        "fecha": "2026-11-22",
+        "cambio": "D-32: la ejecución delegada sigue hasta finalizar el backend, sin parada al cerrar E3."
       }
     ]
   },
@@ -355,8 +360,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 491,
-    "aristas": 823,
+    "nodos": 492,
+    "aristas": 826,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 17,
@@ -376,7 +381,7 @@
       "ConjuntoPrincipios": 1,
       "Contacto": 1,
       "Cookie": 2,
-      "Decision": 49,
+      "Decision": 50,
       "Degradado": 2,
       "Descargo": 4,
       "DisenoEvaluacion": 1,
@@ -8021,6 +8026,24 @@
           "seccion": "2026-11-22"
         }
       ]
+    },
+    {
+      "id": "D-32",
+      "tipo": "Decision",
+      "nombre": "Continuar hasta finalizar el backend",
+      "texto": "D-24 rige hasta finalizar el backend (E8): el asistente ya no se detiene al cerrar E3 para esperar la revisión. El release a main al cerrar E3 se mantiene. Lo que D-24 no delega sigue reservado al usuario.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-32 |",
+      "cita": "continuaras solo hasta finalizar el backend",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
     }
   ],
   "aristas": [
@@ -12157,6 +12180,21 @@
       "origen": "D-31",
       "relacion": "afecta",
       "destino": "MODELO-DATOS"
+    },
+    {
+      "origen": "D-32",
+      "relacion": "modifica",
+      "destino": "D-27"
+    },
+    {
+      "origen": "D-32",
+      "relacion": "afecta",
+      "destino": "E8"
+    },
+    {
+      "origen": "D-32",
+      "relacion": "afecta",
+      "destino": "D-24"
     }
   ],
   "conflictos": [

@@ -79,7 +79,7 @@ No se prevén cambios al esquema.
 **Delegada el 2026-11-22 (D-24).** Nadie revisó este documento ni ADR-009 antes de construir. Cubre los criterios
 de arriba, commits y PR de la fase y Docker local. No agrega dependencias.
 
-**Ampliada por el usuario el 2026-11-22 (D-28):** publicar exige pre-test. El usuario revisa la fase al cerrarla (D-27).
+**Ampliada por el usuario el 2026-11-22 (D-28):** publicar exige pre-test. La fase se cierra sin esperar su revisión (D-32, que modifica D-27).
 
 ## Puerta B
 
