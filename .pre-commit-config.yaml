@@ -1,0 +1,38 @@
+# Instalar una vez por clon: pre-commit install
+# Agregar aquí los hooks del lenguaje del proyecto, con versión fija.
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: detect-private-key
+      - id: check-added-large-files
+      - id: check-json
+        exclude: (^|/)([tj]sconfig[^/]*\.json|\.vscode/.*\.json)$  # admiten comentarios
+      - id: check-yaml
+        args: [--allow-multiple-documents]
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+        exclude: ^docs/  # Regla 2: no se reescriben
+      - id: trailing-whitespace
+        exclude: ^docs/
+        args: [--markdown-linebreak-ext=md]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks  # solo revisa lo preparado para el commit, también con --all-files
+      - id: gitleaks
+        alias: gitleaks-historial
+        name: buscar secretos en el historial
+        entry: gitleaks git --redact --verbose
+        always_run: true  # sin esto se salta cuando no hay nada preparado
+        stages: [manual]
+
+  - repo: local
+    hooks:
+      - id: validar-kg
+        name: validar grafo de conocimiento
+        entry: python3 context/validar_kg.py
+        language: system
+        always_run: true  # mover un documento también puede romper el grafo
+        pass_filenames: false

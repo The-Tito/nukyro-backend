@@ -1,0 +1,36 @@
+# Secretos
+.env
+.env.*
+!.env.example
+*.pem
+id_rsa
+id_ecdsa
+id_ed25519
+
+# Cachés
+__pycache__/
+
+# Sistema y editores
+.DS_Store
+.idea/
+
+# Configuración personal de Claude Code
+.claude/settings.local.json
+
+# Solo locales: contienen datos personales y el repositorio es público (D-09).
+# Cuidado: `git clean -x` o `-X` los borraría sin copia en el remoto.
+/docs/
+/versiones/
+/bd/presentacion/*.docx
+
+# Python
+.venv/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# LaTeX
+*.aux
+*.out
+*.toc
+*.synctex.gz
