@@ -359,7 +359,7 @@ stateDiagram-v2
 | Rol de base de datos | Proceso | Puede | No puede |
 | --- | --- | --- | --- |
 | `nukyro_owner` | Alembic (migraciones) | DDL; dueño del esquema | La aplicación nunca se conecta con él |
-| `nukyro_api` | API FastAPI de participantes | `SELECT` del contenido; escritura por columna en identidad y simulación; `INSERT` en `consent_events` y encuesta; funciones de borrado propio y bloqueo | Modificar contenido, decisiones, versión, bloqueo o identidad; tocar `arco_requests`, `admin_users` y la bitácora; leer o escribir hechos |
+| `nukyro_api` | API FastAPI de participantes | `SELECT` del contenido; escritura por columna en identidad y simulación; `INSERT` en `consent_events`; funciones de encuesta, borrado propio y bloqueo | Modificar contenido, decisiones, versión, bloqueo o identidad; tocar `arco_requests`, `admin_users` y la bitácora; leer o escribir hechos |
 | `nukyro_admin` | Panel de administración | DML en contenido; alta y desactivación de `admin_users`; ARCO; rectificar y oponer por columna; función de bloqueo; `SELECT` de la simulación; `INSERT` en la bitácora | Borrar administradores; modificar sesiones; leer o escribir hechos; borrar la bitácora |
 | `nukyro_jobs` | Tareas programadas | Funciones de caducidad, bloqueo y purga; purgar la bitácora y ARCO cerrados | Borrar personas directamente; modificar contenido; leer o escribir hechos |
 | `nukyro_analytics` | Reportes del piloto | Funciones agregadas con umbral de 10 y catálogo de versiones | Leer filas de hechos o datos personales |

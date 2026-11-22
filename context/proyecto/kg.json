@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.35.0",
+    "version": "1.36.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -235,6 +235,11 @@
         "version": "1.35.0",
         "fecha": "2026-11-22",
         "cambio": "T-14 construida: evaluaciones e hitos de una sola escritura; defecto 10 reproducido y corregido."
+      },
+      {
+        "version": "1.36.0",
+        "fecha": "2026-11-22",
+        "cambio": "E4 cerrada por delegación (D-32) con EV-04: 70 de 87 RF. Defectos 2 y 11 corregidos."
       }
     ]
   },
@@ -385,8 +390,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 495,
-    "aristas": 835,
+    "nodos": 496,
+    "aristas": 839,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 17,
@@ -454,7 +459,7 @@
       "Tarea": 28,
       "Tipografia": 1,
       "TonoVoz": 1,
-      "Evidencia": 3
+      "Evidencia": 4
     }
   },
   "nodos": [
@@ -6187,7 +6192,7 @@
       "plan": "context/planes/plan-modelo-datos.md",
       "fecha": "2026-11-22",
       "resumen": "36 tablas en 5 dominios (contenido y administración 16, identidad 5 con consent_events, simulación 10, estadísticas 4, bitácora 1), esquema nukyro, PostgreSQL 16. Llaves compuestas (version_id, id); referencias internas del contenido DEFERRABLE; triggers de inmutabilidad; roles nukyro_api, nukyro_admin, nukyro_jobs y nukyro_analytics.",
-      "validacion": "v0.3 ejecutada en PostgreSQL 16 (Docker) como owner sin superusuario: 256 comprobaciones (57 de reglas, 184 de defectos e hitos, 15 de concurrencia). S1 y S2 sin probar (S-04).",
+      "validacion": "v0.3 ejecutada en PostgreSQL 16 (Docker) como owner sin superusuario: 269 comprobaciones (57 de reglas, 197 de defectos, hitos y encuesta, 15 de concurrencia). S1 y S2 sin probar (S-04).",
       "pendientes": [
         {
           "n": 1,
@@ -6207,7 +6212,7 @@
             "T-10",
             "T-20"
           ],
-          "estado": "reproducido y corregido en la base (T-09); la encuesta sigue pendiente (T-16, CONF-21)"
+          "estado": "reproducido y corregido en hechos y encuesta (T-09, T-16); residual declarado en ADR-007"
         },
         {
           "n": 3,
@@ -6291,7 +6296,7 @@
           "tareas": [
             "T-15"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido (T-15)"
         },
         {
           "n": 12,
@@ -7262,7 +7267,7 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "en_curso",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "| E4 |",
@@ -7271,6 +7276,44 @@
         "fecha": "2026-11-22",
         "decision": "D-32",
         "plan": "context/etapas/etapa-4.md"
+      },
+      "puerta_b": {
+        "estado": "delegada",
+        "fecha": "2026-11-22",
+        "decision": "D-32"
+      },
+      "rf_estado": {
+        "RF-005": "demostrado",
+        "RF-007": "backend demostrado, interfaz pendiente",
+        "RF-008": "backend demostrado, interfaz pendiente",
+        "RF-009": "backend demostrado, interfaz pendiente",
+        "RF-010": "demostrado",
+        "RF-011": "demostrado",
+        "RF-012": "demostrado",
+        "RF-039": "backend demostrado, interfaz pendiente",
+        "RF-040": "demostrado",
+        "RF-041": "backend demostrado, interfaz pendiente",
+        "RF-042": "backend demostrado, interfaz pendiente",
+        "RF-043": "demostrado",
+        "RF-044": "demostrado",
+        "RF-045": "demostrado",
+        "RF-046": "demostrado",
+        "RF-047": "demostrado",
+        "RF-048": "backend demostrado, interfaz pendiente",
+        "RF-049": "demostrado",
+        "RF-050": "backend demostrado, interfaz pendiente",
+        "RF-051": "demostrado",
+        "RF-052": "backend demostrado, interfaz pendiente",
+        "RF-053": "demostrado",
+        "RF-054": "demostrado",
+        "RF-055": "demostrado",
+        "RF-056": "demostrado",
+        "RF-057": "backend demostrado, interfaz pendiente",
+        "RF-058": "demostrado",
+        "RF-059": "demostrado",
+        "RF-060": "backend demostrado, interfaz pendiente",
+        "RF-061": "demostrado",
+        "RF-067": "backend demostrado, interfaz pendiente"
       }
     },
     {
@@ -7504,11 +7547,11 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "en_curso",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-14 ·",
-      "nota": "Construida y verificada. Se cierra con la auditoría de E4."
+      "nota": "Cerrada el 2026-11-22 por delegación (D-24, D-32) con EV-04. Sin revisión humana."
     },
     {
       "id": "T-15",
@@ -7526,10 +7569,11 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
-      "buscar": "### T-15 ·"
+      "buscar": "### T-15 ·",
+      "nota": "Cerrada el 2026-11-22 por delegación (D-24, D-32) con EV-04. Sin revisión humana."
     },
     {
       "id": "T-16",
@@ -7546,10 +7590,11 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
-      "buscar": "### T-16 ·"
+      "buscar": "### T-16 ·",
+      "nota": "Cerrada el 2026-11-22 por delegación (D-24, D-32) con EV-04. Sin revisión humana."
     },
     {
       "id": "T-17",
@@ -8165,6 +8210,25 @@
         {
           "doc": "EVAL-DISENO",
           "seccion": "encuesta frente a survey_responses"
+        }
+      ]
+    },
+    {
+      "id": "EV-04",
+      "tipo": "Evidencia",
+      "nombre": "E4 comprobada",
+      "estado": "vigente",
+      "fecha": "2026-11-22",
+      "commit": "90822ec",
+      "comando": "./scripts/verify",
+      "texto": "Verificación acumulada, tres recorridos de punta a punta y auditoría de la fase.",
+      "resultado": "sql=269, unit=217, integration=140, blackbox=77; auditoría con Opus sin bloqueos abiertos",
+      "ruta": "context/bitacora.md",
+      "buscar": "EV-04",
+      "fuente": [
+        {
+          "doc": "D-32",
+          "seccion": "verificación delegada"
         }
       ]
     }
@@ -12363,6 +12427,26 @@
       "origen": "A-05",
       "relacion": "afecta",
       "destino": "EVAL-DISENO"
+    },
+    {
+      "origen": "EV-04",
+      "relacion": "respalda",
+      "destino": "E4"
+    },
+    {
+      "origen": "EV-04",
+      "relacion": "respalda",
+      "destino": "T-14"
+    },
+    {
+      "origen": "EV-04",
+      "relacion": "respalda",
+      "destino": "T-15"
+    },
+    {
+      "origen": "EV-04",
+      "relacion": "respalda",
+      "destino": "T-16"
     }
   ],
   "conflictos": [

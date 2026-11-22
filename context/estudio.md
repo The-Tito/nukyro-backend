@@ -40,3 +40,13 @@ esa variable; una rama falsa o un efecto recortado sin cambio no cuentan (ADR-00
 **¿Cómo puede un examen correcto medir mal?**
 Si la correcta es siempre la más larga o la misma clave, se aprueba sin saber. Por eso el orden cambia por sesión y
 una prueba derrota una lista cerrada de estrategias ciegas. Eso no valida la calidad pedagógica: la revisa una persona.
+
+## E4 · Experiencia educativa
+
+**¿Por qué el resumen espera a que terminen las evaluaciones?**
+Muestra causas y retroalimentación, o sea las respuestas de la causal. Antes daría 409 (defecto 11). Por lo mismo la
+puntuación no sale al enviar cada evaluación.
+
+**¿Cómo se sabe que alguien respondió la encuesta sin saber qué respondió?**
+La sesión solo guarda un indicador. La respuesta entra por una función que reescribe la tabla completa en orden
+aleatorio. El límite: si una sola persona respondió, su fila es evidente (ADR-007).

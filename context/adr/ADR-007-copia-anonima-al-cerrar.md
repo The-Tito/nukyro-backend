@@ -38,7 +38,9 @@ exige SELECT, que la API no tiene.
 - **Riesgo residual:** el anonimato no es absoluto. Quien compare respaldos de antes y después de un borrado, lea
   páginas físicas o WAL como superusuario, o conozca al único que cerró esa semana puede inferir una fila. El
   umbral limita los reportes, no a quien tenga ese acceso.
-- La encuesta no cambia aquí: CONF-21 sigue pendiente.
+- **Encuesta (T-16, D-29):** entra solo por `submit_survey`, con la semana de inicio, y se reescribe entera al enviar.
+  La última sesión que respondió comparte `xmin` con todas las respuestas: se sabe que respondió, no cuál es la suya,
+  salvo que sea la única.
 - Si el Aviso o el reporte quedan desfasados se registra; el texto lo decide el usuario.
 
 ## Trazabilidad
