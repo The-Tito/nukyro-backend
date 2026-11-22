@@ -204,8 +204,8 @@ encontrar nada es sospechosa; dilo si pasa y por qué crees que la decisión es 
 ## Fase 8 · Informe
 
 Escribe el informe con la estructura de `references/plantilla-reporte.md` en
-`docs/evaluacion-motor-bd.md` (o en la raíz si no existe `docs/`). Guarda junto a él el JSON de
-puntuación (`docs/evaluacion-motor-bd.json`) para que otro pueda reejecutar el cálculo.
+`context/evaluaciones/evaluacion-motor-bd.md`. Guarda junto a él el JSON de
+puntuación (`context/evaluaciones/evaluacion-motor-bd.json`) para que otro pueda reejecutar el cálculo.
 
 El veredicto se escribe con la **plantilla de cinco partes**:
 

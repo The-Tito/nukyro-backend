@@ -39,7 +39,7 @@ Comando `/fase`; lo comprueba `context/validar_kg.py`. Mientras rija D-24 las pu
 |---|---|---|
 | E2 | las 52 pruebas reales antes de tocar el esquema, S3 (Alembic) y las versiones de las dependencias | una base vacía migra igual a `bd/schema.sql` con owner sin superusuario, cada defecto de E2 pasa de rojo a verde y la entrada funciona por HTTPS |
 | E3 | la especificación con ejemplos a mano antes de programar y que el cliente no decide nada | los recorridos esperados coinciden, 1 000 pares concurrentes dan 0 duplicados, un fallo en cada escritura no deja cambios y cada contenido inválido se rechaza |
-| E4 | criterios de H04 y H05, orden causal y CONF-21 | tres recorridos dan los resultados calculados a mano, nada filtra respuestas, efectos o reglas antes de tiempo y nada califica a la persona |
+| E4 | criterios de H04 y H05, orden causal y D-29 (CONF-21) | tres recorridos dan los resultados calculados a mano, nada filtra respuestas, efectos o reglas antes de tiempo y nada califica a la persona |
 | E5 | el contrato de tokens de Cognito y qué queda simulado | los tokens inválidos se rechazan, la vinculación concurrente deja una primera sesión y una ruta sin caso de acceso ajeno hace fallar la suite |
 | E6 | el texto del Aviso contra lo implementado, el riesgo residual de reidentificación y RN-20 | el agregado es igual antes y después de borrar, opuesto y menor no dejan copia, 9 se suprime y 10 se muestra, y los cruces por xmin u orden no identifican |
 | E7 | calendario de inhábiles, efecto de «limitación» y verificación manual sin correo, que decide el usuario | un escenario creado solo por API se juega completo, los seis derechos funcionan en sus plazos límite, al cerrar no queda documento y la bitácora no guarda respuestas |
@@ -62,7 +62,7 @@ Al final el usuario hace el recorrido manual y el auditor revisa el total.
 
 ## Defectos por corregir
 
-Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`); el 2 sigue abierto para la encuesta (T-16) y el 9 para la vinculación (T-18). El 1 y del 10 al 13: detectados por lectura, sin reproducir (S-03).
+Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`); el 2 sigue abierto para la encuesta (T-16) y el 9 para la vinculación (T-18). El 1: corregido en P5 (T-07). Del 10 al 13: detectados por lectura, sin reproducir (S-03).
 
 | # | Defecto | Arreglo propuesto | Tareas |
 |---|---|---|---|
@@ -195,8 +195,8 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-07 · Motor de simulación
 - Etapa: E3
-- Estado: en_curso
-- Nota: A medias al cierre del 2026-11-22: motor y P5 en feature/T-07-motor, sin fusionar, verify en verde. Falta: pruebas de caja negra de E3, regla de las versiones sin pre-test, auditoría y fusión.
+- Estado: cerrada
+- Nota: Cerrada el 2026-11-22 por delegación (D-24, D-32): PR #10, caja negra y auditoría sin bloqueos. Sin revisión humana.
 - Entregable: motor puro, proceso P5, avance y reanudación
 - Criterios de cierre:
   - cada proceso tiene pruebas

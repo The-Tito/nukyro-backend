@@ -98,6 +98,25 @@ services:
       api:
         condition: service_healthy
 
+  # Preparación de la caja negra (T-07): escenarios ficticios con el pre-test marcado por SQL, porque
+  # E4 lo califica. Solo existe en el perfil test; no publica puertos ni forma parte de la API.
+  blackbox-seed:
+    profiles: [test]
+    image: postgres:16
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command:
+      - psql -v ON_ERROR_STOP=1 -h db -U "$$NUKYRO_DB_OWNER_USER" -d "$$NUKYRO_DB_NAME" -f /seed/seed-simulation.sql
+    environment:
+      NUKYRO_DB_NAME: ${NUKYRO_DB_NAME:-nukyro}
+      NUKYRO_DB_OWNER_USER: ${NUKYRO_DB_OWNER_USER:-nukyro_owner}
+      PGPASSWORD: ${NUKYRO_DB_OWNER_PASSWORD:?falta}
+    volumes:
+      - ./tests/blackbox/seed-simulation.sql:/seed/seed-simulation.sql:ro
+    depends_on:
+      seed:
+        condition: service_completed_successfully
+
   # Pruebas de caja negra: imagen aparte, sin src/. Se lanza con --profile test.
   blackbox:
     profiles: [test]
@@ -113,6 +132,8 @@ services:
     depends_on:
       proxy:
         condition: service_started
+      blackbox-seed:
+        condition: service_completed_successfully
 
 volumes:
   pgdata:

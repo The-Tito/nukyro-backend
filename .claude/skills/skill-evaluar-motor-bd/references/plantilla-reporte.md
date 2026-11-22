@@ -1,4 +1,4 @@
-# Plantilla del informe `docs/evaluacion-motor-bd.md`
+# Plantilla del informe `context/evaluaciones/evaluacion-motor-bd.md`
 
 Respeta el orden. Las secciones pueden ser cortas, pero ninguna se omite; si no hay información,
 escribe qué falta y a quién pedírsela.
