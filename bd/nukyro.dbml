@@ -12,10 +12,11 @@ Project nukyro {
   database_type: 'PostgreSQL'
   Note: '''
   **Nukyro** · Simulador Educativo para la Toma de Decisiones Éticas en el Desarrollo de Software.
-  Esquema `nukyro`, 35 tablas en 5 dominios:
-  contenido y administración (16), identidad (5), simulación (10), estadísticas (3), bitácora (1).
+  Esquema `nukyro`, 36 tablas en 5 dominios:
+  contenido y administración (16), identidad (5), simulación (10), estadísticas (4), bitácora (1).
   Decisiones: ADR-001 (contenido versionado), ADR-002 (participante como raíz),
-  ADR-003 (decisiones idempotentes), ADR-004 (estadísticas anónimas), ADR-005 (PostgreSQL 16 + FastAPI).
+  ADR-003 (decisiones idempotentes), ADR-004 (estadísticas anónimas), ADR-005 (PostgreSQL 16 + FastAPI),
+  ADR-007 (archivo de hechos por funciones del owner, sin vínculo por xmin u orden; etapa 2).
   Llaves `uuid` con gen_random_uuid(); fechas `timestamptz` en UTC.
   '''
 }
@@ -65,8 +66,11 @@ Table scenario_versions [headercolor: #4737FF] {
     scenario_id [unique, name: 'ux_scenario_versions_one_draft', note: 'Parcial: WHERE status = draft (RN-16)']
   }
   Note: '''
-  Ciclo draft → published → retired (trigger guard_version_status).
-  Solo se edita y se borra contenido en draft (trigger guard_content_version, RN-15, RN-17).
+  Ciclo draft → published → retired (trigger guard_version_status): se inserta solo en draft sin fechas;
+  draft pasa a draft o published y no cambia de escenario; published pasa a retired solo si la fila es igual
+  salvo status y retired_at; retired no cambia. Los administradores (created_by, published_by) no se borran (RESTRICT).
+  Solo se edita y se borra contenido en draft (trigger guard_content_version, que lee la versión con FOR SHARE:
+  editar y publicar se ordenan; RN-15, RN-17).
   '''
 }
 
@@ -293,7 +297,7 @@ Table accounts [headercolor: #F75C03] {
     last_login_at [name: 'ix_accounts_inactivity', note: 'Parcial: WHERE status = active']
     deletion_due_at [name: 'ix_accounts_deletion_due', note: 'Parcial: WHERE status = blocked']
   }
-  Note: 'Cuenta opcional con Cognito. Bloqueo de 30 días antes de eliminar (RF-080).'
+  Note: 'Cuenta opcional con Cognito. Bloqueo de 30 días antes de eliminar (RF-080). Bloquear es terminal: la cuenta bloqueada no se modifica ni se reactiva y cognito_sub es inmutable (trigger guard_account_update); bloquea la función block_account.'
 }
 
 Table participants [headercolor: #F75C03] {
@@ -307,7 +311,7 @@ Table participants [headercolor: #F75C03] {
   indexes {
     last_activity_at [name: 'ix_participants_anonymous_activity', note: 'Parcial: WHERE account_id IS NULL (caducidad 30 días)']
   }
-  Note: 'Raíz de la propiedad de los datos. CHECK: account_id o secret_hash no nulo.'
+  Note: 'Raíz de la propiedad de los datos. CHECK: account_id o secret_hash no nulo. Trigger guard_participant_update: account_id inmutable una vez asignado; secret_hash solo se queda igual o pasa a NULL.'
 }
 
 Table document_acceptances [headercolor: #F75C03] {
@@ -380,7 +384,7 @@ Table sessions [headercolor: #3529BF] {
   completed_at timestamptz
   last_activity_at timestamptz [not null, default: `now()`]
   self_reported_first boolean [not null]
-  has_prior_session boolean [not null]
+  has_prior_session boolean [not null, default: false, note: 'Lo calcula el trigger trg_session_prior (bloquea al participante; mismo escenario, cualquier versión); el valor enviado se ignora']
   is_first_session boolean [note: 'GENERATED: self_reported_first AND NOT has_prior_session (RN-18)']
   survey_answered boolean [not null, default: false]
   facts_written_at timestamptz [note: 'Evita escribir session_facts dos veces']
@@ -510,13 +514,14 @@ Table assessment_answers [headercolor: #3529BF] {
 }
 
 // ---------------------------------------------------------------------
-// Estadísticas anónimas (ADR-004): sin sesión, participante ni cuenta
+// Estadísticas anónimas (ADR-004, ADR-007): sin sesión, participante ni cuenta.
+// Ningún rol de conexión lee ni escribe estas tablas: las llenan y reescriben
+// solo las funciones SECURITY DEFINER del owner (archive_participant, rewrite_facts).
 // ---------------------------------------------------------------------
 Table session_facts [headercolor: #5E5E6A] {
   id uuid [pk, default: `gen_random_uuid()`]
   scenario_version_id uuid [not null]
   week_start date [not null, note: 'Lunes ISO']
-  closure_reason text [not null, note: 'completed | expired | account_deleted | self_deleted | arco']
   is_first_session boolean [not null]
   pretest_score numeric(5,2)
   posttest_score numeric(5,2)
@@ -528,9 +533,10 @@ Table session_facts [headercolor: #5E5E6A] {
   justification_total smallint
   outcome_reached boolean [not null]
   outcome_key text
+  stopped_at_key text [note: 'Clave del nodo actual si no llegó al desenlace']
   evaluations_completed boolean [not null]
   duration_bucket_min smallint [note: 'Múltiplo de 5']
-  Note: 'Hecho anónimo por sesión cerrada. Alimenta H02 a H06.'
+  Note: 'Hecho anónimo por sesión, copiado al cerrar (borrado anónimo, caducidad o bloqueo). Alimenta H02 a H06. Semana de inicio en UTC.'
 }
 
 Table decision_facts [headercolor: #5E5E6A] {
@@ -541,6 +547,18 @@ Table decision_facts [headercolor: #5E5E6A] {
   option_key text [not null]
   is_first_session boolean [not null]
   Note: 'Hecho anónimo por decisión confirmada.'
+}
+
+Table topic_facts [headercolor: #5E5E6A] {
+  id uuid [pk, default: `gen_random_uuid()`]
+  scenario_version_id uuid [not null]
+  week_start date [not null, note: 'Lunes ISO']
+  set_type text [not null, note: 'pretest | posttest | transfer | causal']
+  topic text [not null]
+  is_first_session boolean [not null]
+  correct smallint [not null]
+  total smallint [not null]
+  Note: 'Aciertos por tema; sin vínculo con session_facts (ADR-007).'
 }
 
 Table survey_responses [headercolor: #5E5E6A] {
@@ -625,6 +643,7 @@ TableGroup simulacion [color: #3529BF] {
 TableGroup estadisticas [color: #5E5E6A] {
   session_facts
   decision_facts
+  topic_facts
   survey_responses
 }
 
@@ -633,8 +652,8 @@ TableGroup estadisticas [color: #5E5E6A] {
 // =====================================================================
 Ref: scenario_versions.scenario_id > scenarios.id [delete: restrict]
 Ref: scenario_versions.based_on_version_id > scenario_versions.id [delete: set null]
-Ref: scenario_versions.created_by > admin_users.id [delete: set null]
-Ref: scenario_versions.published_by > admin_users.id [delete: set null]
+Ref: scenario_versions.created_by > admin_users.id [delete: restrict]
+Ref: scenario_versions.published_by > admin_users.id [delete: restrict]
 
 Ref: learning_objectives.version_id > scenario_versions.id [delete: cascade]
 Ref: state_variables.version_id > scenario_versions.id [delete: cascade]
@@ -712,4 +731,5 @@ Ref: assessment_answers.(question_id, option_id) > question_options.(question_id
 // =====================================================================
 Ref: session_facts.scenario_version_id > scenario_versions.id [delete: restrict]
 Ref: decision_facts.scenario_version_id > scenario_versions.id [delete: restrict]
+Ref: topic_facts.scenario_version_id > scenario_versions.id [delete: restrict]
 Ref: survey_responses.scenario_version_id > scenario_versions.id [delete: restrict]

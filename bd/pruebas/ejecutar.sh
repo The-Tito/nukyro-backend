@@ -19,9 +19,9 @@ RAIZ="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$RAIZ"
 
 # Conteos mínimos de líneas PASS (si cambia una prueba, se actualiza aquí)
-ESPERADO_REGLAS=54
-ESPERADO_DEFECTOS=0   # se fija al correr en verde
-ESPERADO_CONCURRENCIA=0
+ESPERADO_REGLAS=57
+ESPERADO_DEFECTOS=164
+ESPERADO_CONCURRENCIA=15
 
 C="nukyro-t09-$$"
 LOGS="$(mktemp -d "${TMPDIR:-/tmp}/nukyro-pruebas.XXXXXX")"
