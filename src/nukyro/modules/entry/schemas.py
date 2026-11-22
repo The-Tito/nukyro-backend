@@ -39,12 +39,18 @@ class NodeOut(BaseModel):
     body: str
 
 
+class PhaseOut(BaseModel):
+    phase: str
+    at: datetime
+
+
 class SessionOut(BaseModel):
     id: UUID
     scenario: ScenarioOut
     started_at: datetime
     is_first_session: bool
     state: str  # calculado, modelo de datos §4
+    phases: list[PhaseOut]  # fases alcanzadas con la hora de su hito (RF-005)
     current_node: NodeOut
 
 

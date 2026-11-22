@@ -216,9 +216,13 @@ SELECT pg_temp.expect('T29 pregunta que no es del conjunto del intento',
  $q$INSERT INTO assessment_answers (attempt_id, question_set_id, question_id, option_id)
     VALUES ('00000000-0000-0000-0000-0000000a0001', '00000000-0000-0000-0000-000000000091', '00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000b3')$q$, '23503');
 
+-- Sesión sin pre-test (el trigger de hitos impediría borrarlo en 5e01: aquí se prueba el CHECK de orden)
+INSERT INTO sessions (id, participant_id, scenario_version_id, current_node_id, self_reported_first)
+VALUES ('00000000-0000-0000-0000-000000005e05', '00000000-0000-0000-0000-00000000aa01', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000042', true);
 SELECT pg_temp.expect('T30 hitos fuera de orden (desenlace sin pre-test)',
- $q$UPDATE sessions SET pretest_completed_at = NULL, outcome_reached_at = now(), outcome_node_id = '00000000-0000-0000-0000-000000000044'
-    WHERE id = '00000000-0000-0000-0000-000000005e01'$q$, '23514');
+ $q$UPDATE sessions SET outcome_reached_at = now(), outcome_node_id = '00000000-0000-0000-0000-000000000044'
+    WHERE id = '00000000-0000-0000-0000-000000005e05'$q$, '23514');
+DELETE FROM sessions WHERE id = '00000000-0000-0000-0000-000000005e05';
 
 SELECT pg_temp.expect('T31 hechos con fecha que no es lunes',
  $q$INSERT INTO session_facts (scenario_version_id, week_start, is_first_session, outcome_reached, evaluations_completed)

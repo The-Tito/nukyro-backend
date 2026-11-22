@@ -1,8 +1,8 @@
 """Caja negra de la simulación (T-07): solo HTTPS, sin importar la aplicación.
 
 Cada prueba se llama como el RF que cubre (etapa-3, «Criterios por RF»). Los escenarios T07-NEGRO y
-T07-NEGRO-PRETEST los siembra la preparación (tests/blackbox/seed-simulation.sql): en el primero el
-pre-test nace completado porque E4 lo califica; en el segundo queda pendiente.
+T07-NEGRO-PRETEST los siembra la preparación (tests/blackbox/seed-simulation.sql), con el mismo
+contenido: en el primero la prueba envía el pre-test (vacío) por la API; en el segundo no.
 Recorrido: intro, INFO, D1 (A: p-2, B: p+1; razones R1 correcta y R2 incorrecta), D2 (C: p-2,
 D: p+1), EVR (evento en la ruta) y BUENO. A y luego C dan el evento EV y el final MALO.
 """
@@ -66,7 +66,11 @@ def start(client, scenario=READY) -> str:
         headers=WRITE,
     )
     assert r.status_code == 201, r.text
-    return r.json()["id"]
+    sid = r.json()["id"]
+    if scenario == READY:  # el pre-test se completa por la API (T-14)
+        done = client.post(f"/api/v1/sessions/{sid}/assessments/pretest/submit", headers=WRITE)
+        assert done.status_code == 200, done.text
+    return sid
 
 
 def get(client, sid):
@@ -183,7 +187,7 @@ def test_rf014_rf015_la_ruta_recorre_narrativo_decision_evento_y_desenlace(perso
         ("BUENO", "outcome"),
     ]
     assert {t for _, t in seen} >= {"info", "decision", "event", "outcome"}
-    assert get(person, sid).json()["state"] == "outcome_reached"
+    assert get(person, sid).json()["state"] == "completed"
 
 
 def test_rf014_rf015_un_destino_enviado_por_el_cliente_es_422_y_no_mueve_nada(person):
@@ -259,8 +263,8 @@ def test_rf018_rf038_el_desenlace_se_muestra_y_marca_el_fin(person):
         "title": "Título MALO",
         "body": "Texto narrativo MALO",
     }
-    assert data["state"] == "outcome_reached"
-    assert get(person, sid).json()["state"] == "outcome_reached"
+    assert data["state"] == "completed"
+    assert get(person, sid).json()["state"] == "completed"
 
 
 def test_rf018_rf038_avanzar_desde_el_desenlace_es_409(person):
@@ -268,7 +272,7 @@ def test_rf018_rf038_avanzar_desde_el_desenlace_es_409(person):
     assert decide(person, sid, "D2", "C").status_code == 200
     assert advance(person, sid, "MALO").status_code == 409
     data = get(person, sid).json()
-    assert data["current_node"]["key"] == "MALO" and data["state"] == "outcome_reached"
+    assert data["current_node"]["key"] == "MALO" and data["state"] == "completed"
 
 
 # --- RF-019: alternativas del nodo actual ---

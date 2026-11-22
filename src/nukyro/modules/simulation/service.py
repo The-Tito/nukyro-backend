@@ -22,6 +22,7 @@ from nukyro.engine.model import (
     State,
     Variable,
 )
+from nukyro.modules.assessment import service as assessment
 from nukyro.modules.entry import queries as entry_queries
 from nukyro.modules.entry import service as entry_service
 from nukyro.modules.simulation import queries
@@ -207,6 +208,8 @@ def _run(engine: Engine, secret: str, session_id: str, act):
                 raise DomainError("pretest_pending")
             old = {d["node_key"]: d["id"] for d in state_rows["decisions"]}
             _persist(conn, session, version, ids, old, result)
+            if result.finished and not result.replayed:
+                assessment.settle(conn, session)  # sin conjuntos finales, la sesión termina aquí
             return _view(conn, participant, session), result
     except DomainError as exc:
         raise HTTPException(422 if exc.code in INVALID_INPUT else 409) from None

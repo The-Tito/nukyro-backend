@@ -331,6 +331,16 @@ def test_justification_minimum():
     assert _justify(jx(2), ("r1", "r2")) is True
 
 
+@pytest.mark.parametrize("min_correct", [1, 2])
+def test_defecto_10_marcar_todas_las_razones_no_aprueba(min_correct):
+    """Defecto 10 (RF-059, H05): con la regla vieja (solo el mínimo de correctas), marcarlas todas,
+    incorrectas incluidas, aprobaba. Se aprueba con el mínimo correcto y ninguna incorrecta."""
+    content = jx(min_correct)
+    todas = tuple(r.key for r in content.nodes["J"].reasons)
+    assert _justify(content, todas) is False
+    assert _justify(content, ("r1", "r2")) is True
+
+
 def _code(fn):
     with pytest.raises(DomainError) as e:
         fn()

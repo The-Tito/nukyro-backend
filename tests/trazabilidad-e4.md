@@ -1,0 +1,22 @@
+# Trazabilidad de la etapa 4 (T-14): RF, prueba positiva y prueba negativa
+
+Fuente: etapa-4, «Criterios por RF». Cubre los RF de T-14; los de T-15 y T-16 quedan para sus tareas.
+Prefijos: `B` caja negra (`tests/blackbox/test_assessment.py`, `test_demo.py`), `I` integración
+(`tests/integration/test_assessment.py`), `U` unitarias (`tests/unit/test_assessment.py`, `test_engine.py`,
+`test_demo_scenario.py`), `S` SQL (`bd/pruebas/pruebas-defectos.sql`, pruebas H-01 a H-14).
+
+| RF | Prueba positiva | Prueba negativa |
+|---|---|---|
+| RF-005 | U `test_rf005_cuatro_fases_derivadas_de_los_hitos_con_su_hora`, I `test_rf050_rf051_rf052_rf058_el_orden_es_posttest_transferencia_causal`, B `test_recorrido_completo_con_puntuaciones_calculadas_a_mano` | S H-02 a H-10 (un hito no se reescribe ni se borra), S H-13 (la cascada de borrado sigue), U `test_rf061_con_desenlace_no_hay_abandono` |
+| RF-007, RF-008 | B `test_rf007_rf008_el_pretest_se_ve_con_la_sesion_iniciada_sin_correctas_ni_temas`, I `test_rf007_rf008_con_la_sesion_iniciada_se_ven_las_preguntas_del_pretest_sin_correctas` | B `test_rf007_una_sesion_ajena_es_404`, I `test_rf007_una_sesion_ajena_es_404_en_las_tres_rutas`, I `test_rf008_sin_enviar_el_pretest_no_se_sale_del_primer_nodo` |
+| RF-009, RF-010 | I `test_rf009_rf010_una_respuesta_por_pregunta_modificable_antes_de_enviar` | I `test_rf009_rf010_rechazos_no_cambian_nada` (opción de otra pregunta o pregunta ajena: 422; tras enviar: 409; cero cambios), I `test_la_escritura_sin_csrf_es_403` |
+| RF-011 | U `test_rf011_el_porcentaje_es_sobre_las_respondidas_con_dos_decimales`, I `test_rf011_el_porcentaje_es_el_calculado_a_mano`, I `test_rf011_si_no_exige_todas_el_porcentaje_es_sobre_las_respondidas` | I `test_rf011_incompleto_que_exige_todas_es_409_sin_puntuacion`, B `test_rf011_incompleto_es_409_y_no_se_sale_del_primer_nodo_sin_enviarlo`, I `test_rf011_enviar_dos_veces_devuelve_lo_mismo_y_no_recalifica`, U `test_rf011_cero_respondidas_no_puntua`, I `test_rf011_cero_respondidas_no_puntua` |
+| RF-012, RF-055 | I `test_rf012_rf055_cada_intento_queda_en_su_sesion` | I `test_rf012_rf055_cada_intento_queda_en_su_sesion` (la otra sesión ni lo ve ni lo cambia), B `test_rf007_una_sesion_ajena_es_404` |
+| RF-050, RF-051 | B `test_recorrido_completo_con_puntuaciones_calculadas_a_mano`, I `test_rf050_rf051_rf052_rf058_el_orden_es_posttest_transferencia_causal` | B `test_rf050_antes_del_desenlace_el_posttest_la_transferencia_y_la_causal_son_409`, I `test_rf050_antes_del_desenlace_ningun_conjunto_final_es_409`, U `test_rf050_antes_del_desenlace_ningun_conjunto_final_es_su_turno` |
+| RF-052, RF-053, RF-054 | U `test_pre_y_post_con_situaciones_distintas_y_transferencia_fuera_del_escenario`, B `test_recorrido_completo_con_puntuaciones_calculadas_a_mano` (transferencia calificada), I `test_rf050_rf051_rf052_rf058_el_orden_es_posttest_transferencia_causal` | U `test_el_orden_es_posttest_transferencia_causal`, I `test_rf050_rf051_rf052_rf058_el_orden_es_posttest_transferencia_causal` (antes de su turno: 409), U `test_pre_y_post_con_situaciones_distintas_y_transferencia_fuera_del_escenario` (ningún enunciado repite el escenario) |
+| RF-058 | B `test_recorrido_completo_con_puntuaciones_calculadas_a_mano` (solo las causales ocurridas en los tres recorridos), I `test_rf058_el_recorrido_b_ofrece_su_desenlace_y_no_el_evento_que_no_ocurrio`, U `test_rf058_causal_solo_si_el_nodo_esta_en_el_recorrido_o_es_destino_de_un_evento` | B y I: una causal no ocurrida se rechaza con 422 y no deja respuesta |
+| RF-059 | U `test_conteos_exactos` (cuatro decisiones con justificación), U `test_recorrido_calculado_a_mano_con_el_motor`, I `test_defecto_10_marcar_todas_las_razones_no_aprueba_la_justificacion` | U `test_defecto_10_marcar_todas_las_razones_no_aprueba` (visto en rojo con la regla vieja), U `test_justification` |
+| RF-061 | U `test_rf061_la_fecha_de_corte_es_un_dato_de_entrada`, I `test_una_version_sin_conjuntos_finales_se_completa_al_llegar_al_desenlace` | U `test_rf061_con_desenlace_no_hay_abandono`, U `test_rf061_una_sesion_posterior_al_corte_no_cuenta`, S H-12 (la actividad y el archivo de la sesión se siguen actualizando) |
+
+Notas. Las puntuaciones de los tres recorridos de DEMO-BECAS salen de `tests/evaluaciones.py` (calculadas a mano).
+No hay prueba de caja negra de «abandonar no impide reanudar» con el paso del tiempo: solo la función pura con corte inyectado.

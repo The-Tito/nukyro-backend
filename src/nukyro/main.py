@@ -12,6 +12,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 from nukyro import security
 from nukyro.config import load_settings, load_web_settings
 from nukyro.db import build_engines, verify_engines
+from nukyro.modules.assessment.routes import router as assessment_router
 from nukyro.modules.entry import service as entry_service
 from nukyro.modules.entry.routes import router as entry_router
 from nukyro.modules.simulation.routes import router as simulation_router
@@ -84,6 +85,7 @@ def create_app() -> FastAPI:
 
     app.include_router(entry_router)
     app.include_router(simulation_router)
+    app.include_router(assessment_router)
     return app
 
 

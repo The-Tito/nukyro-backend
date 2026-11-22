@@ -142,3 +142,15 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** tres auditorías de la fase. Sin revisión humana.
 - **Decisiones:** A-04 abierta.
 - **Evidencia:** EV-03: `./scripts/verify` con sql=242, unit=188, integration=108, blackbox=61.
+
+## 2026-11-22: E4 planeada
+- **Resultado:** Puerta A delegada y criterios en `context/etapas/etapa-4.md`.
+- **Revisión:** `./scripts/verify` en verde sobre develop (b44b08b). Sin revisión humana.
+- **Decisiones:** A-05 abierta, sin bloquear RF-060.
+- **Evidencia:** plan de la fase.
+
+## 2026-11-22: T-14, evaluaciones
+- **Resultado:** pre-test, post-test, transferencia y causal por API; hitos de una sola escritura en la base.
+- **Revisión:** la dirección cerró de rojo a verde una fuga: la puntuación salía al enviar cada evaluación y revelaba respuestas. T30 se adaptó al trigger sin cambiar su regla.
+- **Decisiones:** la puntuación se ve al terminar todas las evaluaciones.
+- **Evidencia:** `./scripts/verify` con sql=256, unit=217, integration=129, blackbox=69; defecto 10 visto en rojo.

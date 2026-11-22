@@ -393,7 +393,7 @@ Table sessions [headercolor: #3529BF] {
     (id, scenario_version_id) [unique]
     (participant_id, scenario_version_id, started_at) [name: 'ix_sessions_participant']
   }
-  Note: 'Fase calculada: started → in_scenario → outcome_reached → completed.'
+  Note: 'Fase calculada: started → in_scenario → outcome_reached → completed. Los hitos (pretest_completed_at, outcome_reached_at, outcome_node_id, completed_at) se escriben una sola vez: el trigger trg_guard_session_milestones impide reescribirlos o borrarlos.'
 }
 
 Table session_steps [headercolor: #3529BF] {

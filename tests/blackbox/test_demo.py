@@ -1,7 +1,7 @@
 """Caja negra de DEMO-BECAS (T-13): los tres recorridos calculados a mano, solo por HTTPS.
 
-Con self_reported_first = false la sesión nace con el pre-test completado
-(tests/blackbox/seed-simulation.sql); con true queda pendiente (D-28).
+El pre-test se completa por la API (T-14); las evaluaciones finales y sus puntuaciones calculadas
+a mano están en tests/evaluaciones.py y se recorren en test_assessment.py.
 """
 
 import os
@@ -9,6 +9,7 @@ import ssl
 
 import httpx
 import pytest
+from evaluaciones import EVALUACIONES
 from recorridos import RECORRIDOS
 
 BASE = os.environ["NUKYRO_BASE_URL"]
@@ -30,6 +31,15 @@ def start(client, first) -> str:
     r = client.post("/api/v1/sessions", json=body, headers=WRITE)
     assert r.status_code == 201, r.text
     return r.json()["id"]
+
+
+def pretest(client, sid, outcome="OUT_SOLID"):
+    answers, _ = EVALUACIONES[outcome]["pretest"]
+    for question, option in answers.items():
+        url = f"/api/v1/sessions/{sid}/assessments/pretest/answers/{question}"
+        assert client.put(url, json={"option_key": option}, headers=WRITE).status_code == 200
+    done = client.post(f"/api/v1/sessions/{sid}/assessments/pretest/submit", headers=WRITE)
+    assert done.status_code == 200, done.text
 
 
 def advance(client, sid, node):
@@ -58,6 +68,7 @@ def test_la_sesion_muestra_la_introduccion_demostracion_de_su_version(person):
 def test_recorrido_por_https_llega_al_desenlace_y_muestra_los_eventos(person, outcome):
     expected = RECORRIDOS[outcome]
     sid = start(person, False)
+    pretest(person, sid, outcome)
     assert advance(person, sid, "intro").status_code == 200
     for node, option, reasons, _, _ in expected["steps"]:
         current = person.get(f"/api/v1/sessions/{sid}").json()
