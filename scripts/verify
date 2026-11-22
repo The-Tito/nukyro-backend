@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+# Verificación completa del backend con un solo comando (D-15). Falla ante cualquier paso
+# fallido, y ante pruebas omitidas, xfail o cero recolectadas (tests/conftest.py).
+#
+# Usa un proyecto Compose único por ejecución y al terminar borra SOLO lo suyo (contenedores,
+# red, volúmenes e imágenes de ese proyecto). Requiere docker, uv y python3.
+#
+# NUKYRO_SQL_RUNNER cambia el ejecutor de las pruebas SQL (por omisión bd/pruebas/ejecutar.sh).
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+PROJECT="nukyro-verify-$(date +%s)-$$"
+TMP="$(mktemp -d)"
+ENV_FILE="$TMP/env"
+STEP="preparación"
+COUNTS=""
+SQL_RUNNER="${NUKYRO_SQL_RUNNER:-bd/pruebas/ejecutar.sh}"
+
+# Puerto aleatorio en 127.0.0.1 para el proxy; la base se publica así solo con compose.test.yaml
+export NUKYRO_PROJECT="$PROJECT" NUKYRO_HTTPS_BIND="127.0.0.1:"
+ARGS=(-p "$PROJECT" --env-file "$ENV_FILE" -f compose.yaml -f compose.test.yaml)
+COMPOSE=(docker compose "${ARGS[@]}")
+export NUKYRO_ENV_FILE="$ENV_FILE"
+NUKYRO_COMPOSE_ARGS="$(printf '%q ' "${ARGS[@]}")"
+export NUKYRO_COMPOSE_ARGS
+
+finish() {
+  local status=$?
+  if [[ $status -ne 0 ]]; then
+    echo "verify FALLÓ en el paso: $STEP" >&2
+  fi
+  # Limpieza: solo el proyecto de esta ejecución (-v borra sus volúmenes)
+  "${COMPOSE[@]}" --profile test down -v --rmi local --remove-orphans >/dev/null 2>&1 || true
+  if [[ -n "$TMP" && -d "$TMP" ]]; then
+    rm -rf -- "$TMP"
+  fi
+  exit $status
+}
+trap finish EXIT
+
+step() {
+  STEP="$1"
+  echo
+  echo "== $1"
+}
+
+# Corre una prueba de pytest y exige el conteo de la política compartida (más de cero aprobadas)
+run_pytest() {
+  local name="$1"
+  shift
+  step "$name"
+  "$@" 2>&1 | tr -d '\r' | tee "$TMP/$name.out"
+  local passed
+  passed="$(sed -n 's/^NUKYRO-CONTEO passed=\([0-9]*\)$/\1/p' "$TMP/$name.out" | tail -1)"
+  if [[ -z "$passed" || "$passed" -eq 0 ]]; then
+    echo "$name: no se pudo confirmar ninguna prueba aprobada" >&2
+    return 1
+  fi
+  COUNTS="$COUNTS$name=$passed "
+}
+
+scripts/gen-env "$ENV_FILE" >/dev/null
+
+step "validador del KG"
+python3 context/validar_kg.py
+python3 context/pruebas/probar_validador.py
+
+step "SQL congelado al día"
+python3 scripts/freeze_schema.py --check
+
+step "ruff (lint y formato)"
+uv run --frozen ruff check src tests migrations scripts
+uv run --frozen ruff format --check src tests migrations scripts
+
+step "migración desde una base vacía"
+"${COMPOSE[@]}" run --rm --build migrate
+
+step "pruebas SQL"
+if [[ ! -f "$SQL_RUNNER" ]]; then
+  echo "No existe $SQL_RUNNER: las pruebas SQL no se pueden omitir" >&2
+  exit 1
+fi
+bash "$SQL_RUNNER" 2>&1 | tee "$TMP/sql.out"
+sql_pass="$(grep -c 'PASS' "$TMP/sql.out" || true)"
+if grep -q 'FAIL' "$TMP/sql.out" || [[ "$sql_pass" -eq 0 ]]; then
+  echo "Pruebas SQL: hubo FAIL o ninguna PASS" >&2
+  exit 1
+fi
+COUNTS="${COUNTS}sql=$sql_pass "
+
+run_pytest unit uv run --frozen pytest tests/unit
+run_pytest integration uv run --frozen pytest tests/integration
+run_pytest blackbox "${COMPOSE[@]}" --profile test run --rm -T --build blackbox
+
+echo
+echo "== verify OK"
+dirty=""
+if [[ -n "$(git status --porcelain)" ]]; then
+  dirty=" (con cambios sin confirmar)"
+fi
+echo "commit: $(git rev-parse --short HEAD)$dirty"
+echo "pruebas aprobadas: $COUNTS"
+echo "no probado: AWS RDS, Cognito"
