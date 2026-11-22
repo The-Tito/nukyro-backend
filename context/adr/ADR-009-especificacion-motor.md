@@ -80,6 +80,9 @@ El resumen solo atribuye estas relaciones, con el `relation_type` y la explicaci
 - Una variable repetida en los efectos de una alternativa es válida: es causa si algún efecto la cambió.
 - Una petición rechazada no cambia nada, tampoco la actividad del participante: solo renueva la que se acepta.
 - Publicar rechaza todo nodo inaccesible: el contenido no tiene cómo justificar uno (RF-066).
+- Alternativas y razones se muestran en un orden propio de cada sesión, estable dentro de ella, con claves neutras:
+  ni la posición ni la clave revelan la correcta.
+- La sesión muestra la introducción de su versión fijada (RF-013).
 - `visited` sobre un evento solo mostrado es válido y siempre falso.
 - El pre-test lo exige P12 y la puerta del primer nodo la aplica P5; el motor puro no lo conoce.
 - Un `not` sin variables puede no tener decisiones causantes: solo se atribuye la regla, no se inventa una causa.

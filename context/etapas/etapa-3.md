@@ -54,7 +54,7 @@ antes de programar. El motor es puro: se prueba sin base. P5 solo carga, llama a
 
 | Método y ruta | Entrada | Salida |
 |---|---|---|
-| `GET /api/v1/sessions/{id}` | | Sesión, nodo, alternativas, razones y eventos narrativos |
+| `GET /api/v1/sessions/{id}` | | Sesión, introducción de su versión, nodo, alternativas, razones y eventos narrativos |
 | `POST /api/v1/sessions/{id}/decisions` | `node_key`, `option_key`, `reason_keys` | 200: confirmada y estado actual; `replayed` si es reintento |
 | `POST /api/v1/sessions/{id}/advance` | `from_node_key` | 200: estado actual |
 
