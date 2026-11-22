@@ -12,3 +12,17 @@ No. Con la universidad, la asignatura, la cuenta de GitHub o los documentos se p
 
 **¿Cómo se sabe que un documento no cambió si no está en git?**
 Para el archivo principal de cada documento, el KG guarda su sha256 y el validador lo compara donde existe docs/. Las copias, plantillas y fuentes LaTeX solo se comprueban por existencia. En un clon sin esa carpeta no lo comprueba y lo avisa (D-13, Regla 2).
+
+## E2 · Base ejecutable y entrada
+
+**¿Por qué una tabla sin identificadores puede no ser anónima?**
+PostgreSQL guarda en cada fila la transacción que la escribió (`xmin`). Con el diseño viejo, un JOIN por `xmin` decía
+quién eligió cada opción. Por eso los hechos se copian solo al cerrar y se reescriben en orden aleatorio (ADR-007).
+
+**¿Por qué la primera sesión la decide la base y no la API?**
+Dos inicios simultáneos veían «no hay sesión previa» y los dos quedaban como primera. El trigger bloquea la fila del
+participante: el segundo espera y ya ve la sesión del primero (RN-18).
+
+**¿Qué impide que otra página haga peticiones a nombre del participante?**
+La cookie `__Host-` con SameSite y, en toda escritura, Origin exacto más una cabecera que otro origen no puede
+enviar sin permiso. La excepción de los GET está declarada en ADR-008.

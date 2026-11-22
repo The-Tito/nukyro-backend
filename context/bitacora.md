@@ -74,3 +74,27 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** la dirección repitió la suite, reprodujo el defecto 2 y halló dos fallos más (reabrir y completar un intento enviado), de rojo a verde. Sin revisión humana.
 - **Decisiones:** ADR-004 reemplazada por ADR-007.
 - **Evidencia:** `bd/pruebas/ejecutar.sh`: 239 comprobaciones; `bd/pruebas/evidencia-rojo.md`.
+
+## 2026-11-22: T-05, base de la API
+- **Resultado:** FastAPI con una conexión por rol, Compose con HTTPS y migración inicial congelada (PR #4).
+- **Revisión:** la dirección leyó el código. La prueba de equivalencia contra `bd/schema.sql` pasa y detecta un GRANT de más.
+- **Decisiones:** ADR-008.
+- **Evidencia:** `./scripts/verify`, integración; S3 comprobado en local.
+
+## 2026-11-22: T-06, verificación y CI
+- **Resultado:** `scripts/verify`, CI y hooks de Python (PR #5).
+- **Revisión:** se quitó una variable que permitía sustituir las pruebas SQL y se corrigió el conteo de suites.
+- **Decisiones:** ninguna.
+- **Evidencia:** sabotajes con exit 1: una prueba fallida (paso integration) y una omitida (paso unit, «no se admiten skipped»). CI en verde.
+
+## 2026-11-22: T-10, recorrido de entrada
+- **Resultado:** aceptación, participante y sesión por HTTPS, con contenido de demostración (PR #6).
+- **Revisión:** la auditoría de E2 con Opus halló 5 bloqueos, atendidos en el PR #7. El principal, de rojo a verde: al cambiar la versión de un documento, quien tenía cookie no podía volver a aceptar.
+- **Decisiones:** excepción de CSRF en los GET, declarada en ADR-008.
+- **Evidencia:** prueba del orden físico vista fallar al quitar el orden aleatorio; dos inicios simultáneos dejan una primera sesión.
+
+## 2026-11-22: E2 cerrada por delegación
+- **Resultado:** Puerta B delegada (D-24). 8 de 87 RF: 6 demostrados y 2 con interfaz pendiente.
+- **Revisión:** auditor con Opus, hallazgos atendidos; no se volvió a auditar después del arreglo. Sin revisión humana.
+- **Decisiones:** ninguna.
+- **Evidencia:** EV-02: `./scripts/verify` con sql=242, unit=14, integration=26, blackbox=40.
