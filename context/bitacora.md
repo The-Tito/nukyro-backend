@@ -38,3 +38,33 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** correcciones comprobadas por el mismo asistente, sin segunda auditoría: validador en 3.9 y 3.13, cuatro casos que deben fallar, comandos del README con 52/52 en PostgreSQL 16.15.
 - **Decisiones:** D-14, S-02.
 - **Evidencia:** KG v1.19.0, PR de feature/T-01-metodologia.
+
+## 2026-11-22: análisis del estado del proyecto
+- **Resultado:** sin código de aplicación, plan con tarea para 27 de 87 RF y defectos de diseño hallados por lectura (luego 13, con la revisión del agente de planeación). Las pruebas SQL **no se ejecutaron**: Docker estaba apagado y el control de permisos bloqueó dos veces un PostgreSQL temporal; no se insistió.
+- **Revisión:** validador del KG, hooks y gitleaks en un clon, escáner de datos personales sobre las ramas publicadas (0 hallazgos). Los defectos no se reprodujeron (S-03).
+- **Decisiones:** ninguna.
+- **Evidencia:** `MODELO-DATOS.pendientes` del KG.
+
+## 2026-11-22: T-08, plan del backend
+- **Resultado:** el usuario respondió ocho preguntas y aprobó el plan E2 a E8. Un agente de planeación revisó el diseño.
+- **Revisión:** reparto de los 87 RF comprobado por script, sin huecos ni repetidos.
+- **Decisiones:** D-15 a D-23, CONF-15 a CONF-21, CA-01 a CA-03, S-03, S-04.
+- **Evidencia:** `context/plan.md`, KG v1.20.0.
+
+## 2026-11-22: T-08, en pausa y cierre de sesión
+- **Resultado:** el usuario pidió no empezar el plan y retomarlo en otro chat. El mensaje llegó con el registro en el KG y las vistas ya escrito: se conservó sin commit. No se instalaron `/fase`, la plantilla, el cambio de CLAUDE.md ni las reglas del validador; no se programó nada.
+- **Revisión:** validador, comparación del KG contra HEAD (0 nodos y 0 aristas perdidos) y de las vistas contra el KG. Sin auditor ni revisión humana del diff. T-08 sigue abierta.
+- **Decisiones:** pausa registrada en la nota de T-08.
+- **Evidencia:** rama local feature/T-08-plan-backend, KG v1.20.1.
+
+## 2026-11-22: T-08, protocolo instalado y ejecución delegada
+- **Resultado:** el usuario delegó la ejecución (D-24). Quedaron `/fase`, la plantilla, CLAUDE.md, `retomar` y las reglas del validador. Seguro local del límite de 5 horas al 96%.
+- **Revisión:** 12 casos de `context/pruebas/probar_validador.py` y rechazos repetidos sobre una copia del KG real. Sin revisión humana.
+- **Decisiones:** D-24, D-25.
+- **Evidencia:** línea base SQL 52/52 en PostgreSQL 16.15, antes de tocar el esquema.
+
+## 2026-11-22: T-08, auditada y cerrada por delegación; Puerta A de E2
+- **Resultado:** T-08 cerrada con EV-01. E2 planeada en `context/etapas/etapa-2.md` y en curso.
+- **Revisión:** auditor con Sonnet sin bloqueos; se completó la cita de D-24. Revisión humana pendiente.
+- **Decisiones:** Puerta A de E2 delegada (D-24).
+- **Evidencia:** EV-01, KG v1.23.0.

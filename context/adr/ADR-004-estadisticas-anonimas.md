@@ -9,6 +9,8 @@ kg: [ADR-004, D6, C5, C8, C7, C9, ENCUESTA-APP, PROC-10, RET-06]
 
 # ADR-004 · Estadísticas anónimas desde el diseño
 
+> **Superado en parte por D-19 a D-21 (2026-11-22):** no implementar el §2. ADR-007 lo reemplazará en T-09.
+
 ## Contexto
 
 - Las sesiones sin cuenta se desvinculan a los 30 días (RET-06); las cuentas se cancelan tras 12 meses de inactividad, con un bloqueo previo de 30 días (RET-01, DEC-BLOQUEO); cualquier persona puede pedir la cancelación (ARCO).

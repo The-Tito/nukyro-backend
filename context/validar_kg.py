@@ -111,6 +111,67 @@ def revisar_tabla(nodos: dict[str, dict]) -> list[str]:
     return errores
 
 
+ENCABEZADOS_PLAN = ("## Reafirmación", "## Dictamen", "## Criterios por RF", "## Puerta A", "## Puerta B")
+
+
+def revisar_puerta(puerta, num: int, nodos: dict[str, dict], plan: bool) -> list[str]:
+    if not isinstance(puerta, dict):
+        return ["falta o está mal tipada"]
+    errores = []
+    estado, fecha, dec = (puerta.get(c) for c in ("estado", "fecha", "decision"))
+    if estado not in ("aprobada", "delegada"):
+        errores.append("«estado» debe ser aprobada o delegada")
+    if not (isinstance(fecha, str) and re.fullmatch(r"\d{4}-\d{2}-\d{2}", fecha)):
+        errores.append("«fecha» debe ser AAAA-MM-DD")
+    if not (isinstance(dec, str) and nodos.get(dec, {}).get("tipo") == "Decision" and nodos[dec].get("estado") == "tomada"):
+        errores.append("«decision» debe ser una Decision con estado tomada")
+    if plan:
+        ruta = puerta.get("plan")
+        if ruta != f"context/etapas/etapa-{num}.md":
+            errores.append(f"«plan» debe ser context/etapas/etapa-{num}.md")
+        elif not (RAIZ / ruta).is_file():
+            errores.append(f"«plan» {ruta} no existe")
+        else:
+            texto = (RAIZ / ruta).read_text("utf-8", "ignore")
+            errores += [f"«plan» no tiene el encabezado «{h}»" for h in ENCABEZADOS_PLAN if h not in texto]
+    return errores
+
+
+def revisar_fases(nodos: dict[str, dict], aristas: list[dict]) -> list[str]:
+    errores = []
+    etapas = {i for i, n in nodos.items() if n["tipo"] == "Etapa"}
+    for id_, nodo in nodos.items():
+        if nodo["tipo"] == "RequerimientoFuncional" and nodo.get("mvp") is not False:
+            destinos = [a.get("destino") for a in aristas if a.get("origen") == id_ and a.get("relacion") == "se_planea_en"]
+            if len(destinos) != 1 or destinos[0] not in etapas:
+                errores.append(f"{id_}: debe tener exactamente una arista se_planea_en hacia una Etapa (tiene {destinos})")
+    for id_, etapa in nodos.items():
+        num = re.fullmatch(r"E(\d+)", id_)
+        if etapa["tipo"] != "Etapa" or not num or int(num[1]) < 2:
+            continue
+        n, estado = int(num[1]), etapa.get("estado")
+        if estado in ("en_curso", "cerrada"):
+            errores += [f"{id_}: puerta_a {e}" for e in revisar_puerta(etapa.get("puerta_a"), n, nodos, True)]
+            if n >= 3 and nodos.get(f"E{n - 1}", {}).get("estado") != "cerrada":
+                errores.append(f"{id_}: la etapa anterior E{n - 1} no está cerrada")
+        if estado == "cerrada":
+            errores += [f"{id_}: puerta_b {e}" for e in revisar_puerta(etapa.get("puerta_b"), n, nodos, False)]
+            if not any(
+                a.get("relacion") == "respalda" and a.get("destino") == id_
+                and nodos.get(a.get("origen"), {}).get("tipo") == "Evidencia"
+                and nodos[a["origen"]].get("estado") == "vigente"
+                and all(isinstance(nodos[a["origen"]].get(c), str) and nodos[a["origen"]][c].strip() for c in ("commit", "comando", "resultado"))
+                for a in aristas
+            ):
+                errores.append(f"{id_}: sin Evidencia vigente (con commit, comando y resultado) que la respalde")
+            for a in aristas:
+                tarea = nodos.get(a.get("origen"), {})
+                if a.get("relacion") == "pertenece_a" and a.get("destino") == id_ and tarea.get("tipo") == "Tarea" \
+                        and tarea.get("estado") in ("pendiente", "en_curso"):
+                    errores.append(f"{id_}: la tarea {a['origen']} sigue {tarea['estado']}")
+    return errores
+
+
 def validar(kg: dict) -> list[str]:
     lista, aristas, conflictos = kg["nodos"], kg["aristas"], kg["conflictos"]
     tipos, relaciones = set(kg["esquema"]["tipos_nodo"]), set(kg["esquema"]["tipos_relacion"])
@@ -154,7 +215,7 @@ def validar(kg: dict) -> list[str]:
         errores.append("«estadisticas» no coincide con el contenido")
     if kg["meta"]["historial"][-1]["version"] != kg["meta"]["version"]:
         errores.append("meta.version no es la última de meta.historial")
-    return errores + revisar_tabla(nodos)
+    return errores + revisar_fases(nodos, aristas) + revisar_tabla(nodos)
 
 
 if __name__ == "__main__":

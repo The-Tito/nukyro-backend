@@ -11,8 +11,10 @@ Retoma la sesión. **No leas documentos completos.**
    - si el remoto ya tiene `develop`: `git fetch -q`,
      `git rev-list --left-right --count develop...origin/develop` y
      `gh pr list --state all --limit 6`;
+   - fase y puerta actuales:
+     `jq -c '.nodos[]|select(.tipo=="Etapa" and .estado=="en_curso")|{id,puerta_a,puerta_b}' context/proyecto/kg.json`;
    - para decisiones o tareas, `jq` sobre `context/proyecto/kg.json` (consultas en `context/README.md`).
-3. Responde en pocas líneas: dónde quedamos, qué cambió desde el HANDOFF, qué sigue, qué lo bloquea y los
+3. Responde en pocas líneas: dónde quedamos, qué cambió desde el HANDOFF, fase y puerta, qué sigue, qué lo bloquea y los
    pasos cortos. Si se abre una etapa sin análisis aprobado, ese es el primer paso.
 4. **Menciona los conflictos sin resolver. Espera confirmación antes de implementar** y haz las preguntas de «Decisiones pendientes», cada una
    con su recomendación.

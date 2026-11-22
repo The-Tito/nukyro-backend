@@ -46,6 +46,7 @@ Los documentos de `docs/` no se sobrescriben: un cambio produce una versión nue
 
 - **Retomar** (`/retomar`, o «verifica dónde lo dejamos»): `.claude/commands/retomar.md`. Se lee solo
   `HANDOFF.md`, nunca el HISTORIAL, y se contrasta con git y el KG.
+- **Fase** (`/fase planear|comprobar|cerrar N`): `.claude/commands/fase.md`.
 - **Cerrar** (`/cerrar`): `.claude/commands/cerrar.md`.
 - **Lectura económica:** el KG se consulta con `jq`; los documentos largos, con `grep -n` y por rango.
 
@@ -61,11 +62,13 @@ Los documentos de `docs/` no se sobrescriben: un cambio produce una versión nue
 
 ## Forma de trabajo
 
-1. **Plan por etapa:** `context/etapas/etapa-N.md`, aprobado por el usuario antes del primer paso.
+1. **Plan por etapa:** `context/etapas/etapa-N.md`, aprobado antes del primer paso.
 2. **Explicar antes:** qué, por qué y qué concepto o riesgo hay detrás.
-3. **Un paso a la vez:** al terminar cada uno, detenerse y esperar la revisión.
+3. **Dos puertas (D-22), de E2 a E8:** Reafirmar, planear, Puerta A, construir, comprobar, Puerta B. Entre puertas solo
+   se detiene por conflicto, desvío, permiso o bloqueo. Fuera de esas fases, un paso a la vez.
+   Mientras rija D-24 el asistente pasa las puertas como «delegada»; lo que D-24 no delega se bloquea y se reporta.
 4. **Mostrar:** lo creado, el comando para comprobarlo y el resultado esperado.
-5. **El usuario cierra las tareas.** Antes de cerrar un entregable se usa el agente `auditor`.
+5. **El usuario cierra las tareas**, salvo delegación vigente (D-24). Antes de cerrar un entregable se usa el agente `auditor`.
 6. **Ninguna decisión se pierde:** va al KG y a su vista en el mismo commit. Cada paso, a `context/bitacora.md`.
 7. **Para defender:** al cerrar, proponer 2 o 3 preguntas con respuesta para `context/estudio.md`.
 8. **Registro de IA:** skill `registro-ia` al cerrar cada tarea y sesión.
@@ -81,10 +84,10 @@ Los documentos de `docs/` no se sobrescriben: un cambio produce una versión nue
 
 - **Gitflow:** `main` (versiones etiquetadas), `develop` (integración), `feature/T-xx-<descripcion>`
   (sale de `develop` y vuelve por PR), `release/x.y.z`, `hotfix/x.y.z`.
-- Verificar la rama antes de editar. Una rama por entregable. D-11, hasta que el usuario la revoque: el asistente crea y fusiona los PR; al revocarla, el usuario revisa y fusiona.
+- Verificar la rama antes de editar. Una rama por entregable. D-11, hasta que el usuario la revoque: el asistente sube la rama, crea y fusiona los PR; al revocarla, el usuario revisa y fusiona.
 - Un commit por implementación, Conventional Commits en español: `tipo(alcance): descripción (T-xx, D-xx)`.
 - Sin coautoría ni líneas de atribución de IA en commits o PR.
-- Sin commit ni push si el usuario no lo pide. Sin push directo a `main` ni `develop`, salvo la fusión de D-11. Nunca `--no-verify`.
+- Sin commit ni push si el usuario no lo pide (D-24 los autoriza para E2 a E8 mientras rija). Sin push directo a `main` ni `develop`, salvo la fusión de D-11. Nunca `--no-verify`.
 - Fusión (D-11): con el PR abierto, `git merge --no-ff` local en `develop` y push. Nunca `gh pr merge` ni el botón de GitHub: publican nombre y correo del perfil (ADR-006).
 - Nunca secretos ni datos personales en git: el remoto es público (D-09). Personas por id `PER-xx`; firma `The-Tito` con noreply (D-10).
 
