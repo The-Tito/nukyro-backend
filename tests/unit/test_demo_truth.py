@@ -289,3 +289,17 @@ def test_la_longitud_y_la_posicion_de_la_correcta_no_la_revelan():
             by_slot[at] = by_slot.get(at, 0) + 1
         assert max(by_rank) <= cap, (name, "rango de longitud (corta, media, larga)", by_rank, cap)
         assert max(by_slot.values()) <= cap, (name, "posición de la correcta", by_slot, cap)
+
+
+def test_la_longitud_de_las_razones_no_aprueba_h05():
+    """Quien elige razones solo por su longitud no llega a 3 de 4 (H05)."""
+    picks = [lambda r, i=i: r[i : i + 1] for i in range(4)]
+    picks += [lambda r, i=i: r[-1 - i :][:1] for i in range(4)]
+    picks += [lambda r: r[:2], lambda r: r[1:3], lambda r: r[-2:]]
+    for pick in picks:
+        hits = 0
+        for node in (n for n in DECISIONS if n.get("h05")):
+            chosen = pick(sorted(node["reasons"], key=lambda r: len(r["label"])))
+            enough = len(chosen) >= node.get("min_correct", 1)
+            hits += enough and all(r.get("correct") for r in chosen)
+        assert hits <= 2

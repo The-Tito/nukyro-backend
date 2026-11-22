@@ -689,7 +689,7 @@
       "reasons": [
         {
           "key": "r8_1d5f",
-          "label": "Si el problema ya pasó, no hace falta revisar nada.",
+          "label": "Si el problema ya pasó, no hace falta revisar nada más.",
           "correct": false
         },
         {
