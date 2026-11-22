@@ -167,29 +167,29 @@ def event_of(name):
 # Por pregunta causal (clave `requires`): texto de la opción -> la afirmación es cierta en esa ruta.
 CAUSAL = {
     "EV_ACCESS": {
-        "Las decisiones de las etapas previas modificaron el acceso al formulario y, al salir de las pruebas, quedó en un nivel bajo; ese nivel activó el aviso.": lambda r: changed(r, "access", ORDER[:5]) and r.after["D6"]["access"] <= 4,
-        "Apareció al azar al terminar las pruebas.": sorteo,
+        "El acceso quedó bajo al salir de las pruebas y eso activó el aviso.": lambda r: changed(r, "access", ORDER[:5]) and r.after["D6"]["access"] <= 4,
+        "Apareció al azar, sin depender de ninguna medida del escenario.": sorteo,
         "Lo activó solo la decisión de pruebas, sin relación con las anteriores.": solo_esa_decision("D6", event_of("EV_ACCESS")),
     },
     "EV_LEAK": {
-        "Las decisiones de las etapas previas modificaron la protección de datos y, al salir de la entrega, quedó en un nivel bajo; ese nivel activó el aviso.": lambda r: changed(r, "privacy", ORDER[:6]) and r.after["D7"]["privacy"] <= 4,
-        "Lo activó un sorteo del sistema.": sorteo,
-        "Lo activó solo la decisión de entrega, sin relación con las anteriores.": solo_esa_decision("D7", event_of("EV_LEAK")),
+        "La protección de datos quedó baja tras la entrega y activó el aviso.": lambda r: changed(r, "privacy", ORDER[:6]) and r.after["D7"]["privacy"] <= 4,
+        "Apareció al azar al cerrar la entrega, sin depender de ninguna medida.": sorteo,
+        "Lo activó solo la decisión de entrega, sin relación con las decisiones anteriores.": solo_esa_decision("D7", event_of("EV_LEAK")),
     },
     "OUT_SOLID": {
-        "Al terminar de decidir, la protección de datos, el acceso y la calidad quedaron en un nivel alto a la vez.": solid,
-        "Se asignó por un sorteo del sistema al final.": sorteo,
-        "Dependió solo de la última decisión.": solo_esa_decision("D8", outcome_of),
+        "Al terminar, datos, acceso y calidad quedaron en nivel alto a la vez.": solid,
+        "Se asignó al azar al final, sin depender de las medidas del escenario.": sorteo,
+        "Dependió solo de la última decisión, sin importar las anteriores.": solo_esa_decision("D8", outcome_of),
     },
     "OUT_MIXED": {
-        "Al terminar de decidir, al menos un indicador quedó por debajo del nivel alto, sin llegar a un nivel crítico.": lambda r: not solid(r) and not crisis(r),
-        "Dependió solo de la protección de datos.": solo_la_variable("privacy", outcome_of),
-        "Se asignó por un sorteo del sistema al final.": sorteo,
+        "Al terminar, algún indicador quedó bajo el nivel alto, sin llegar al crítico.": lambda r: not solid(r) and not crisis(r),
+        "Dependió solo de la protección de datos, sin importar las demás medidas.": solo_la_variable("privacy", outcome_of),
+        "Se asignó al azar al final, sin depender de las medidas del escenario.": sorteo,
     },
     "OUT_CRISIS": {
-        "Al terminar de decidir, la protección de datos quedó muy baja, o el acceso y la calidad quedaron bajos a la vez.": crisis,
-        "Se asignó por un sorteo del sistema al final.": sorteo,
-        "Dependió solo de la última decisión.": solo_esa_decision("D8", outcome_of),
+        "Al terminar, la protección de datos quedó muy baja, o acceso y calidad bajos.": crisis,
+        "Se asignó al azar al final, sin depender de ninguna de las medidas del escenario.": sorteo,
+        "Dependió solo de la última decisión tomada, sin importar las anteriores.": solo_esa_decision("D8", outcome_of),
     },
 }  # fmt: skip
 
@@ -272,3 +272,19 @@ def test_cada_texto_solo_afirma_lo_cierto_en_toda_ruta_que_lo_muestra():
             assert all(claim(r) for r in presented), (key, phrase)
     for key in ("EV_ACCESS", "EV_LEAK"):  # los títulos tampoco narran lo que pudo no ocurrir
         assert not FORBIDDEN.search(NODES[key]["title"])
+
+
+def test_la_longitud_de_la_opcion_no_revela_la_correcta():
+    """Elegir siempre la más larga (o la más corta) no debe aprobar: H02, H03 y H04 dependen de ello."""
+    for name, questions in SETS.items():
+        n = len(questions)
+        largest = shortest = 0
+        for q in questions:
+            sizes = {o["key"]: len(o["label"]) for o in q["options"]}
+            right = next(o["key"] for o in q["options"] if o["correct"])
+            assert max(sizes.values()) <= 1.5 * min(sizes.values()), (q["key"], sizes)
+            others = [s for k, s in sizes.items() if k != right]
+            largest += sizes[right] > max(others)
+            shortest += sizes[right] < min(others)
+        assert largest <= n // 3, (name, "correcta más larga", largest, n)
+        assert shortest <= n // 3, (name, "correcta más corta", shortest, n)

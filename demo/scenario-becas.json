@@ -844,7 +844,7 @@
         "options": [
           {
             "key": "a",
-            "label": "Pedir todo, por si sirve después.",
+            "label": "Pedir todo y borrar lo que no se use después de un año.",
             "correct": false
           },
           {
@@ -868,12 +868,12 @@
         "options": [
           {
             "key": "a",
-            "label": "Cifrar los documentos y limitar quién puede abrirlos.",
+            "label": "Cifrar los documentos y limitar el acceso.",
             "correct": true
           },
           {
             "key": "b",
-            "label": "Cambiar el nombre de la carpeta.",
+            "label": "Cambiar el nombre de la carpeta y moverla a otro lugar.",
             "correct": false
           },
           {
@@ -892,12 +892,12 @@
         "options": [
           {
             "key": "a",
-            "label": "Mantener el trámite igual, porque ya funciona en la oficina.",
+            "label": "Mantener el trámite igual, ya funciona en la oficina.",
             "correct": false
           },
           {
             "key": "b",
-            "label": "Pedir a las personas que busquen una mejor conexión.",
+            "label": "Pedir que busquen una mejor conexión.",
             "correct": false
           },
           {
@@ -916,12 +916,12 @@
         "options": [
           {
             "key": "a",
-            "label": "Lo uso, porque está publicado.",
+            "label": "Lo uso, porque lo publicado en un foro es libre.",
             "correct": false
           },
           {
             "key": "b",
-            "label": "Lo uso solo en la versión de prueba, sin revisar su licencia.",
+            "label": "Lo uso solo en la versión de prueba, sin revisarlo.",
             "correct": false
           },
           {
@@ -940,7 +940,7 @@
         "options": [
           {
             "key": "a",
-            "label": "Mantener los criterios en secreto para que nadie los use.",
+            "label": "Mantener los criterios en reserva para evitar abusos.",
             "correct": false
           },
           {
@@ -950,7 +950,7 @@
           },
           {
             "key": "c",
-            "label": "Publicar los criterios y permitir que una persona revise los casos dudosos.",
+            "label": "Publicar los criterios y permitir una revisión humana.",
             "correct": true
           }
         ]
@@ -964,12 +964,12 @@
         "options": [
           {
             "key": "a",
-            "label": "Aviso al equipo y a quien decide, y propongo corregirlo antes de lanzar.",
+            "label": "Aviso al equipo y propongo corregirlo antes de lanzar.",
             "correct": true
           },
           {
             "key": "b",
-            "label": "Lanzo y espero que nadie lo note.",
+            "label": "Lanzo como está y lo reviso cuando llegue la primera queja.",
             "correct": false
           },
           {
@@ -990,12 +990,12 @@
         "options": [
           {
             "key": "a",
-            "label": "Pedir todo, y quitar los datos que no se usen cuando alguien lo reclame.",
+            "label": "Pedir todo y quitar lo que no se use cuando alguien lo reclame.",
             "correct": false
           },
           {
             "key": "b",
-            "label": "Pedir todo, pero no mostrarlo a nadie.",
+            "label": "Pedir todo, pero mostrarlo solo al personal.",
             "correct": false
           },
           {
@@ -1019,12 +1019,12 @@
           },
           {
             "key": "b",
-            "label": "Enviar los documentos en horas de poco tráfico.",
+            "label": "Enviar los documentos solo en horas de poco tráfico.",
             "correct": false
           },
           {
             "key": "c",
-            "label": "Usar un canal cifrado con acceso limitado a quien lo necesita.",
+            "label": "Usar un canal cifrado y limitar quién lo recibe.",
             "correct": true
           }
         ]
@@ -1043,7 +1043,7 @@
           },
           {
             "key": "b",
-            "label": "Hacerlo compatible con versiones antiguas o dar otra vía de acceso.",
+            "label": "Hacerlo compatible con modelos antiguos.",
             "correct": true
           },
           {
@@ -1062,7 +1062,7 @@
         "options": [
           {
             "key": "a",
-            "label": "Elijo otra biblioteca con licencia compatible o pido permiso.",
+            "label": "Elijo otra biblioteca con licencia compatible.",
             "correct": true
           },
           {
@@ -1091,12 +1091,12 @@
           },
           {
             "key": "b",
-            "label": "Explicar la regla y permitir una revisión humana a quien la pida.",
+            "label": "Explicar la regla y permitir una revisión humana.",
             "correct": true
           },
           {
             "key": "c",
-            "label": "Cambiar la regla cada semana sin avisar.",
+            "label": "Cambiar la regla cada semana sin avisar a nadie.",
             "correct": false
           }
         ]
@@ -1120,7 +1120,7 @@
           },
           {
             "key": "c",
-            "label": "Aviso al equipo y a quien decide, y propongo corregirlo antes de entregar.",
+            "label": "Aviso al equipo y propongo corregirlo antes de entregar.",
             "correct": true
           }
         ]
@@ -1135,17 +1135,17 @@
         "options": [
           {
             "key": "a",
-            "label": "Guardarlos sin límite, porque el almacenamiento es barato.",
+            "label": "Guardarlos sin límite de tiempo, porque el almacenamiento es barato.",
             "correct": false
           },
           {
             "key": "b",
-            "label": "Borrar o anonimizar lo que ya no necesita y explicar por cuánto tiempo conserva el resto.",
+            "label": "Borrar o anonimizar lo que no necesita y fijar un plazo para el resto.",
             "correct": true
           },
           {
             "key": "c",
-            "label": "Guardarlos y no mencionarlo, para no preocupar a nadie.",
+            "label": "Guardarlos y no mencionarlo en el aviso de privacidad, para no preocupar a nadie.",
             "correct": false
           }
         ]
@@ -1168,7 +1168,7 @@
           },
           {
             "key": "c",
-            "label": "Hacer la aplicación accesible para lectores de pantalla y comprobarlo con pruebas.",
+            "label": "Hacer la aplicación accesible para lectores de pantalla.",
             "correct": true
           }
         ]
@@ -1181,17 +1181,17 @@
         "options": [
           {
             "key": "a",
-            "label": "Entrego y lo corrijo si alguien lo reporta.",
+            "label": "Entrego hoy, y si alguien reporta pérdida de registros, lo corrijo después.",
             "correct": false
           },
           {
             "key": "b",
-            "label": "Aviso del riesgo al equipo y al cliente, y propongo corregirlo o acordar cómo reducirlo antes de entregar.",
+            "label": "Aviso del riesgo al equipo y al cliente, y propongo corregirlo antes.",
             "correct": true
           },
           {
             "key": "c",
-            "label": "Lo arreglo después de entregar, sin decir nada.",
+            "label": "Lo arreglo yo después de entregar, sin decir nada a nadie.",
             "correct": false
           }
         ]
@@ -1204,17 +1204,17 @@
         "options": [
           {
             "key": "a",
-            "label": "Buscar quién es la persona autora y qué licencia tiene, o usar una imagen con licencia clara.",
+            "label": "Buscar la autoría y la licencia, o elegir una con licencia clara.",
             "correct": true
           },
           {
             "key": "b",
-            "label": "Usarla, porque aparece en el buscador.",
+            "label": "Usarla, porque aparece en un buscador de imágenes público.",
             "correct": false
           },
           {
             "key": "c",
-            "label": "Usarla con una marca de agua propia.",
+            "label": "Usarla y poner una marca de agua con el nombre de la agencia.",
             "correct": false
           }
         ]
@@ -1232,12 +1232,12 @@
           },
           {
             "key": "b",
-            "label": "Publicar los criterios completos en un anexo técnico, sin camino de revisión.",
+            "label": "Publicar los criterios en un anexo técnico, sin vía de revisión.",
             "correct": false
           },
           {
             "key": "c",
-            "label": "Explicar los criterios en lenguaje claro y ofrecer una revisión a quien la pida.",
+            "label": "Explicar los criterios con claridad y ofrecer una revisión.",
             "correct": true
           }
         ]
@@ -1253,7 +1253,7 @@
         "options": [
           {
             "key": "a",
-            "label": "Apareció al azar al terminar las pruebas.",
+            "label": "Apareció al azar, sin depender de ninguna medida del escenario.",
             "correct": false
           },
           {
@@ -1263,7 +1263,7 @@
           },
           {
             "key": "c",
-            "label": "Las decisiones de las etapas previas modificaron el acceso al formulario y, al salir de las pruebas, quedó en un nivel bajo; ese nivel activó el aviso.",
+            "label": "El acceso quedó bajo al salir de las pruebas y eso activó el aviso.",
             "correct": true
           }
         ]
@@ -1277,17 +1277,17 @@
         "options": [
           {
             "key": "a",
-            "label": "Las decisiones de las etapas previas modificaron la protección de datos y, al salir de la entrega, quedó en un nivel bajo; ese nivel activó el aviso.",
+            "label": "La protección de datos quedó baja tras la entrega y activó el aviso.",
             "correct": true
           },
           {
             "key": "b",
-            "label": "Lo activó un sorteo del sistema.",
+            "label": "Apareció al azar al cerrar la entrega, sin depender de ninguna medida.",
             "correct": false
           },
           {
             "key": "c",
-            "label": "Lo activó solo la decisión de entrega, sin relación con las anteriores.",
+            "label": "Lo activó solo la decisión de entrega, sin relación con las decisiones anteriores.",
             "correct": false
           }
         ]
@@ -1301,17 +1301,17 @@
         "options": [
           {
             "key": "a",
-            "label": "Se asignó por un sorteo del sistema al final.",
+            "label": "Se asignó al azar al final, sin depender de las medidas del escenario.",
             "correct": false
           },
           {
             "key": "b",
-            "label": "Al terminar de decidir, la protección de datos, el acceso y la calidad quedaron en un nivel alto a la vez.",
+            "label": "Al terminar, datos, acceso y calidad quedaron en nivel alto a la vez.",
             "correct": true
           },
           {
             "key": "c",
-            "label": "Dependió solo de la última decisión.",
+            "label": "Dependió solo de la última decisión, sin importar las anteriores.",
             "correct": false
           }
         ]
@@ -1325,17 +1325,17 @@
         "options": [
           {
             "key": "a",
-            "label": "Dependió solo de la protección de datos.",
+            "label": "Dependió solo de la protección de datos, sin importar las demás medidas.",
             "correct": false
           },
           {
             "key": "b",
-            "label": "Se asignó por un sorteo del sistema al final.",
+            "label": "Se asignó al azar al final, sin depender de las medidas del escenario.",
             "correct": false
           },
           {
             "key": "c",
-            "label": "Al terminar de decidir, al menos un indicador quedó por debajo del nivel alto, sin llegar a un nivel crítico.",
+            "label": "Al terminar, algún indicador quedó bajo el nivel alto, sin llegar al crítico.",
             "correct": true
           }
         ]
@@ -1349,17 +1349,17 @@
         "options": [
           {
             "key": "a",
-            "label": "Al terminar de decidir, la protección de datos quedó muy baja, o el acceso y la calidad quedaron bajos a la vez.",
+            "label": "Al terminar, la protección de datos quedó muy baja, o acceso y calidad bajos.",
             "correct": true
           },
           {
             "key": "b",
-            "label": "Se asignó por un sorteo del sistema al final.",
+            "label": "Se asignó al azar al final, sin depender de ninguna de las medidas del escenario.",
             "correct": false
           },
           {
             "key": "c",
-            "label": "Dependió solo de la última decisión.",
+            "label": "Dependió solo de la última decisión tomada, sin importar las anteriores.",
             "correct": false
           }
         ]
