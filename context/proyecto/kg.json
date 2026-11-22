@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.25.0",
+    "version": "1.26.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -185,6 +185,11 @@
         "version": "1.25.0",
         "fecha": "2026-11-22",
         "cambio": "Modelo v0.3: defectos 2 a 9 reproducidos y corregidos en la base (T-09)."
+      },
+      {
+        "version": "1.26.0",
+        "fecha": "2026-11-22",
+        "cambio": "E2 cerrada por delegación (D-24) con EV-02: 8 de 87 RF, 2 de ellos con interfaz pendiente."
       }
     ]
   },
@@ -335,8 +340,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 483,
-    "aristas": 790,
+    "nodos": 484,
+    "aristas": 795,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 16,
@@ -404,7 +409,7 @@
       "Tarea": 28,
       "Tipografia": 1,
       "TonoVoz": 1,
-      "Evidencia": 1
+      "Evidencia": 2
     }
   },
   "nodos": [
@@ -6685,7 +6690,7 @@
       "tipo": "Etapa",
       "nombre": "Base ejecutable y entrada",
       "texto": "Esquema corregido y primer recorrido HTTPS hasta la base",
-      "estado": "en_curso",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "| E2 |",
@@ -6702,6 +6707,21 @@
         "fecha": "2026-11-22",
         "decision": "D-24",
         "plan": "context/etapas/etapa-2.md"
+      },
+      "puerta_b": {
+        "estado": "delegada",
+        "fecha": "2026-11-22",
+        "decision": "D-24"
+      },
+      "rf_estado": {
+        "RF-001": "demostrado",
+        "RF-002": "demostrado",
+        "RF-003": "demostrado",
+        "RF-004": "demostrado",
+        "RF-062": "demostrado",
+        "RF-071": "demostrado",
+        "RF-068": "backend demostrado, interfaz pendiente",
+        "RF-073": "backend demostrado, interfaz pendiente"
       }
     },
     {
@@ -6791,7 +6811,7 @@
       "tipo": "Tarea",
       "nombre": "Base de la API y migración inicial",
       "texto": "FastAPI, Compose con TLS local, Alembic y roles",
-      "estado": "en_curso",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-05 ·",
@@ -6806,14 +6826,15 @@
         "el esquema equivale a `bd/schema.sql`",
         "pasan las pruebas SQL vigentes, con los cambios aprobados en la Puerta A",
         "la API arranca con una conexión por rol"
-      ]
+      ],
+      "nota": "Cerrada el 2026-11-22 por delegación (D-24) con EV-02. El usuario no la ha revisado."
     },
     {
       "id": "T-06",
       "tipo": "Tarea",
       "nombre": "Revisiones automáticas del backend",
       "texto": "CI, hooks de Python y `scripts/verify`",
-      "estado": "en_curso",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-06 ·",
@@ -6827,7 +6848,8 @@
         "CI corre las pruebas SQL y de la API",
         "formato y lint con versión fija",
         "`./scripts/verify` falla ante una prueba fallida u omitida"
-      ]
+      ],
+      "nota": "Cerrada el 2026-11-22 por delegación (D-24) con EV-02. El usuario no la ha revisado."
     },
     {
       "id": "T-07",
@@ -7273,10 +7295,11 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "en_curso",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
-      "buscar": "### T-09 ·"
+      "buscar": "### T-09 ·",
+      "nota": "Cerrada el 2026-11-22 por delegación (D-24) con EV-02. El usuario no la ha revisado."
     },
     {
       "id": "T-10",
@@ -7297,10 +7320,11 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
-      "buscar": "### T-10 ·"
+      "buscar": "### T-10 ·",
+      "nota": "Cerrada el 2026-11-22 por delegación (D-24) con EV-02. El usuario no la ha revisado."
     },
     {
       "id": "T-11",
@@ -7838,6 +7862,25 @@
         }
       ],
       "nota": "Aceptada por delegación (D-24), sin revisión humana."
+    },
+    {
+      "id": "EV-02",
+      "tipo": "Evidencia",
+      "nombre": "E2 comprobada",
+      "estado": "vigente",
+      "fecha": "2026-11-22",
+      "texto": "Verificación acumulada desde una base vacía, CI y auditoría de la fase.",
+      "commit": "ee25eef",
+      "comando": "./scripts/verify",
+      "resultado": "sql=242, unit=14, integration=26, blackbox=40; CI en verde; auditoría con Opus y hallazgos atendidos en el PR #7",
+      "ruta": "context/bitacora.md",
+      "buscar": "EV-02",
+      "fuente": [
+        {
+          "doc": "D-24",
+          "seccion": "verificación delegada"
+        }
+      ]
     }
   ],
   "aristas": [
@@ -11809,6 +11852,31 @@
       "origen": "ADR-008",
       "relacion": "concreta",
       "destino": "ADR-005"
+    },
+    {
+      "origen": "EV-02",
+      "relacion": "respalda",
+      "destino": "E2"
+    },
+    {
+      "origen": "EV-02",
+      "relacion": "respalda",
+      "destino": "T-09"
+    },
+    {
+      "origen": "EV-02",
+      "relacion": "respalda",
+      "destino": "T-05"
+    },
+    {
+      "origen": "EV-02",
+      "relacion": "respalda",
+      "destino": "T-06"
+    },
+    {
+      "origen": "EV-02",
+      "relacion": "respalda",
+      "destino": "T-10"
     }
   ],
   "conflictos": [

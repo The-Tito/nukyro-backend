@@ -43,3 +43,9 @@ Solo peticiones que deciden algo, inician una tarea o corrigen el rumbo.
 **Prompt:** «no quiero que empieces aun con el plan, quiero que hagamos /cerrar para que retome en un nuevo chat y empecemos con el plan»
 **Resultado:** T-08 en pausa con registro parcial sin commit; bitácora y handoff
 **Revisión humana:** pendiente
+
+## 2026-11-22: ejecución autónoma del plan, T-08 y E2 (T-05, T-06, T-08, T-09, T-10)
+**Modelo:** Claude Opus 5.5 (dirección, diseño y auditoría de fase), Claude Sonnet (programación y auditoría de T-08), Claude Haiku (lectura)
+**Prompt:** «quiero que te quedes realizando el desarollo, quiero que uses distintos tipos de modelos, por ejemplo opus el cerebro, sonnet para programar,  haiku para leer archivos, etc etc, tu lo defines segun lo mejor, y empieces con el desarrollo, quiero que vayas haciendo commits, prs y los fusiones, verifiques que todo se vaya implementando correctamente y siguiendo el plan que es la base, pon un seguro que si se llega al 96% de uso del limite de 5 horas se haga automaticamente /cerrar para no quedarnos parados sin registrar en que, dicho esto te dejo trabajando, no estare para aprobar, verificar o hacer prs, tu haras todo hasta finalizar.»
+**Resultado:** D-24, D-25, protocolo por fases, ADR-007 y ADR-008, esquema v0.3, base de la API, CI, recorrido de entrada y E2 cerrada por delegación (EV-01, EV-02). Código en `src/`, `bd/`, `tests/`.
+**Revisión humana:** pendiente

@@ -113,4 +113,10 @@ No cubre AWS, textos legales reales, datos personales ni conflictos.
 
 ## Puerta B
 
-Pendiente.
+**Delegada el 2026-11-22 (D-24), sin revisión humana.** Evidencia: EV-02 (commit `ee25eef`).
+
+- **Comprobar:** `./scripts/verify`. Esperado: `verify OK` con sql=242, unit=14, integration=26, blackbox=40.
+- **Demostrados:** RF-001 a RF-004, RF-062 y RF-071. **Backend demostrado, interfaz pendiente:** RF-068 y RF-073. 8 de 87.
+- **S3:** Alembic migra una base vacía igual a `bd/schema.sql`, con owner sin superusuario.
+- **No probado:** RDS y Cognito (S-04); el orden físico aleatorio de los hechos; el recorrido manual del usuario.
+- **Sigue abierto:** defecto 2 en la encuesta (T-16, CONF-21) y defecto 9 en la vinculación (T-18).

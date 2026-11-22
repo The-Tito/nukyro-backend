@@ -93,7 +93,7 @@ Los documentos de `docs/` no se sobrescriben: un cambio produce una versión nue
 
 ## Entorno y comandos
 
-PostgreSQL 16 (RDS; Docker en local), FastAPI, SQLAlchemy 2.x, Alembic y psycopg 3 (DEC-STACK). Aún no hay código de aplicación.
+PostgreSQL 16 (RDS; Docker en local), FastAPI, SQLAlchemy 2.x, Alembic y psycopg 3 (DEC-STACK). Código en `src/nukyro/` (ADR-008).
 
 | Qué | Comando |
 |---|---|
@@ -101,4 +101,6 @@ PostgreSQL 16 (RDS; Docker en local), FastAPI, SQLAlchemy 2.x, Alembic y psycopg
 | Revisar lo preparado | `pre-commit run` |
 | Buscar secretos en el historial | `pre-commit run gitleaks-historial --hook-stage manual` |
 | Validar el KG | `python3 context/validar_kg.py` |
-| Probar la base | comandos de `bd/pruebas/README.md` |
+| Verificar todo el backend | `./scripts/verify` |
+| Probar solo la base | `bd/pruebas/ejecutar.sh` |
+| Regenerar la migración inicial | `python3 scripts/freeze_schema.py` (solo antes del primer despliegue) |

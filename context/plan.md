@@ -17,7 +17,7 @@ E1 va aparte y no bloquea el backend local. Cada RF tiene una sola fase principa
 |---|---|---|---|---|---|
 | E0 | Adopción de la metodología | Método instalado, validado y confirmado | | | cerrada |
 | E1 | Cierre documental | Documentos coherentes con el KG | | | pendiente |
-| E2 | Base ejecutable y entrada | Esquema corregido y primer recorrido HTTPS hasta la base | 001-004, 062, 068, 071, 073 | E0 | en_curso |
+| E2 | Base ejecutable y entrada | Esquema corregido y primer recorrido HTTPS hasta la base | 001-004, 062, 068, 071, 073 | E0 | cerrada |
 | E3 | Motor de simulación | Consecuencias deterministas decididas por el servidor | 006, 013-038, 063-066 | E2 | pendiente |
 | E4 | Experiencia educativa | Recorrido completo, del pre-test al resumen | 005, 007-012, 039-061, 067 | E3 | pendiente |
 | E5 | Identidad y aislamiento | Con o sin cuenta, cada persona accede solo a lo suyo | 074-077 | E4 | pendiente |
@@ -133,7 +133,8 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-09 · Decisiones de base y esquema corregido
 - Etapa: E2
-- Estado: en_curso
+- Estado: cerrada
+- Nota: Cerrada el 2026-11-22 por delegación (D-24) con EV-02. El usuario no la ha revisado.
 - Entregable: ADR-007, ADR-008, esquema, modelo y pruebas SQL
 - Criterios de cierre:
   - ADR-007 reemplaza a ADR-004 y declara el riesgo residual (D-19 a D-21)
@@ -150,7 +151,8 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-05 · Base de la API y migración inicial
 - Etapa: E2
-- Estado: en_curso
+- Estado: cerrada
+- Nota: Cerrada el 2026-11-22 por delegación (D-24) con EV-02. El usuario no la ha revisado.
 - Entregable: FastAPI, Compose con TLS local, Alembic y roles
 - Criterios de cierre:
   - `alembic upgrade head` crea el esquema en PostgreSQL 16 vacío, con owner sin superusuario
@@ -160,7 +162,8 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-06 · Revisiones automáticas del backend
 - Etapa: E2
-- Estado: en_curso
+- Estado: cerrada
+- Nota: Cerrada el 2026-11-22 por delegación (D-24) con EV-02. El usuario no la ha revisado.
 - Entregable: CI, hooks de Python y `scripts/verify`
 - Criterios de cierre:
   - CI corre las pruebas SQL y de la API
@@ -169,7 +172,8 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-10 · Recorrido de entrada
 - Etapa: E2
-- Estado: pendiente
+- Estado: cerrada
+- Nota: Cerrada el 2026-11-22 por delegación (D-24) con EV-02. El usuario no la ha revisado.
 - Entregable: aceptación, participante y sesión por HTTPS
 - Criterios de cierre:
   - sin las tres aceptaciones no hay sesión (RF-073)
