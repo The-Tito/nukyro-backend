@@ -196,11 +196,13 @@ SELECT pg_temp.expect('T26 regla activada dos veces en la sesión',
     VALUES ('00000000-0000-0000-0000-000000005e01', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000071')$q$, '23505');
 
 -- Evaluaciones
-INSERT INTO assessment_attempts (id, session_id, scenario_version_id, question_set_id, submitted_at, answered_count, correct_count, score)
+INSERT INTO assessment_attempts (id, session_id, scenario_version_id, question_set_id)
 VALUES ('00000000-0000-0000-0000-0000000a0001', '00000000-0000-0000-0000-000000005e01', '00000000-0000-0000-0000-000000000011',
-        '00000000-0000-0000-0000-000000000091', now(), 1, 1, 100);
+        '00000000-0000-0000-0000-000000000091');
 INSERT INTO assessment_answers (attempt_id, question_set_id, question_id, option_id)
 VALUES ('00000000-0000-0000-0000-0000000a0001', '00000000-0000-0000-0000-000000000091', '00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000b1');
+UPDATE assessment_attempts SET submitted_at = now(), answered_count = 1, correct_count = 1, score = 100
+ WHERE id = '00000000-0000-0000-0000-0000000a0001';
 
 SELECT pg_temp.expect('T27 RN-19 un intento por conjunto',
  $q$INSERT INTO assessment_attempts (session_id, scenario_version_id, question_set_id)

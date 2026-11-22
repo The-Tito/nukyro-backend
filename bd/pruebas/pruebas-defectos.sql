@@ -144,15 +144,17 @@ BEGIN
     INSERT INTO nukyro.session_decisions (id, session_id, scenario_version_id, node_id, option_id, justification_correct)
     VALUES (pg_temp.id('dd', p_n), s, '00000000-0000-0000-0000-000000000011',
             '00000000-0000-0000-0000-000000000042', '00000000-0000-0000-0000-000000000051', true);
-    INSERT INTO nukyro.assessment_attempts (id, session_id, scenario_version_id, question_set_id, submitted_at,
-                                            answered_count, correct_count, score) VALUES
-        (pg_temp.id('a1', p_n), s, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000091',
-         '2026-11-29 23:01:00-06', 1, 1, 100),
-        (pg_temp.id('a2', p_n), s, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000092',
-         '2026-11-29 23:12:00-06', 1, 0, 0);
+    INSERT INTO nukyro.assessment_attempts (id, session_id, scenario_version_id, question_set_id) VALUES
+        (pg_temp.id('a1', p_n), s, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000091'),
+        (pg_temp.id('a2', p_n), s, '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000092');
     INSERT INTO nukyro.assessment_answers (attempt_id, question_set_id, question_id, option_id) VALUES
         (pg_temp.id('a1', p_n), '00000000-0000-0000-0000-000000000091', '00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000b1'),
         (pg_temp.id('a2', p_n), '00000000-0000-0000-0000-000000000092', '00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000b4');
+    -- se envía después de responder: un intento enviado no admite respuestas
+    UPDATE nukyro.assessment_attempts SET submitted_at = '2026-11-29 23:01:00-06', answered_count = 1, correct_count = 1, score = 100
+     WHERE id = pg_temp.id('a1', p_n);
+    UPDATE nukyro.assessment_attempts SET submitted_at = '2026-11-29 23:12:00-06', answered_count = 1, correct_count = 0, score = 0
+     WHERE id = pg_temp.id('a2', p_n);
 END $$;
 
 -- =====================================================================
@@ -664,6 +666,14 @@ SELECT pg_temp.allow('D7-54 api envía el intento',
  $q$UPDATE nukyro.assessment_attempts SET submitted_at = now(), answered_count = 1, correct_count = 1, score = 100 WHERE id = pg_temp.id('a1', 220)$q$);
 SELECT pg_temp.expect('D7-55 tras el envío no se cambian las respuestas',
  $q$UPDATE nukyro.assessment_answers SET option_id = '00000000-0000-0000-0000-0000000000b2' WHERE attempt_id = pg_temp.id('a1', 220)$q$, '23514');
+SELECT pg_temp.expect('D7-55b un intento enviado no se reabre',
+ $q$UPDATE nukyro.assessment_attempts SET submitted_at = NULL, score = NULL WHERE id = pg_temp.id('a1', 220)$q$, '23514');
+SELECT pg_temp.allow('D7-55c api crea y envía otro intento sin respuestas',
+ $q$WITH i AS (INSERT INTO nukyro.assessment_attempts (id, session_id, scenario_version_id, question_set_id, submitted_at)
+    VALUES (pg_temp.id('a9', 220), pg_temp.id('cc', 220), '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000092', now()) RETURNING 1) SELECT 1 FROM i$q$);
+SELECT pg_temp.expect('D7-55d tras el envío no se agregan respuestas',
+ $q$INSERT INTO nukyro.assessment_answers (attempt_id, question_set_id, question_id, option_id)
+    VALUES (pg_temp.id('a9', 220), '00000000-0000-0000-0000-000000000092', '00000000-0000-0000-0000-0000000000a2', '00000000-0000-0000-0000-0000000000b4')$q$, '23514');
 SELECT pg_temp.expect('D7-56 api no cambia el conjunto de preguntas del intento',
  $q$UPDATE nukyro.assessment_attempts SET question_set_id = question_set_id WHERE id = pg_temp.id('a1', 220)$q$, '42501');
 SELECT pg_temp.expect('D7-57 api no cambia la versión del intento',

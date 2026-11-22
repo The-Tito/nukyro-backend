@@ -648,7 +648,19 @@ BEGIN
     RETURN NULL;
 END $$;
 CREATE TRIGGER trg_guard_answer_after_submit
-    AFTER UPDATE ON assessment_answers FOR EACH ROW EXECUTE FUNCTION guard_answer_after_submit();
+    AFTER INSERT OR UPDATE ON assessment_answers FOR EACH ROW EXECUTE FUNCTION guard_answer_after_submit();
+
+-- Un intento enviado es definitivo: no se reabre ni se vuelve a puntuar (RN-19)
+CREATE FUNCTION guard_attempt_submitted() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF OLD.submitted_at IS NOT NULL THEN
+        RAISE EXCEPTION 'El intento % ya se envió: no cambia', OLD.id USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$;
+CREATE TRIGGER trg_guard_attempt_submitted
+    BEFORE UPDATE ON assessment_attempts FOR EACH ROW EXECUTE FUNCTION guard_attempt_submitted();
 
 -- ---------------------------------------------------------------------
 -- Estadísticas anónimas (ADR-004, ADR-007): sin sesión, participante ni cuenta.

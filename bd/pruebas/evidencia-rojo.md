@@ -29,3 +29,18 @@ Comando: `GUARDAR=<carpeta> bd/pruebas/ejecutar.sh` (código de salida 1).
 
 - T32b a T39 de `pruebas-reglas.sql` no se alcanzaron en rojo: el script se detiene en el primer FAIL (T31).
 - El orden físico aleatorio de las filas reescritas no se prueba (solo el xmin compartido).
+
+## Agregado en la revisión
+
+**Defecto 2, reproducido contra el esquema de 60e867e.** Como `nukyro_api`, una transacción inserta un participante
+y su fila de `decision_facts`, como hacía P5. Después:
+
+```sql
+SELECT p.id, f.decision_key, f.option_key
+  FROM nukyro.participants p JOIN nukyro.decision_facts f ON f.xmin = p.xmin;
+```
+
+Devolvió una fila: el participante, `D01` y `A`. El hecho «anónimo» decía quién eligió qué.
+
+**Intentos enviados (defecto 7).** Con la primera corrección, D7-55b y D7-55d fallaron: la API podía reabrir un
+intento enviado y agregarle respuestas. Pasan con `trg_guard_attempt_submitted` y el trigger de respuestas también en INSERT.
