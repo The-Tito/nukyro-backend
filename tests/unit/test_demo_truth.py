@@ -187,7 +187,7 @@ CAUSAL = {
         "Se asignó al azar al final, sin depender de las medidas del escenario.": sorteo,
     },
     "OUT_CRISIS": {
-        "Al terminar, la protección de datos quedó muy baja, o acceso y calidad bajos.": crisis,
+        "Al terminar, la protección de datos quedó muy baja, o el acceso y la calidad bajos.": crisis,
         "Se asignó al azar al final, sin depender de ninguna de las medidas del escenario.": sorteo,
         "Dependió solo de la última decisión tomada, sin importar las anteriores.": solo_esa_decision("D8", outcome_of),
     },
@@ -274,17 +274,18 @@ def test_cada_texto_solo_afirma_lo_cierto_en_toda_ruta_que_lo_muestra():
         assert not FORBIDDEN.search(NODES[key]["title"])
 
 
-def test_la_longitud_de_la_opcion_no_revela_la_correcta():
-    """Elegir siempre la más larga (o la más corta) no debe aprobar: H02, H03 y H04 dependen de ello."""
+def test_la_longitud_y_la_posicion_de_la_correcta_no_la_revelan():
+    """Ni la longitud ni la posición delatan la correcta: H02, H03 y H04 dependen de ello."""
     for name, questions in SETS.items():
-        n = len(questions)
-        largest = shortest = 0
+        cap = -(-len(questions) // 3)  # ceil(n/3)
+        by_rank = [0, 0, 0]  # corta, media, larga
+        by_slot = {}
         for q in questions:
-            sizes = {o["key"]: len(o["label"]) for o in q["options"]}
-            right = next(o["key"] for o in q["options"] if o["correct"])
-            assert max(sizes.values()) <= 1.5 * min(sizes.values()), (q["key"], sizes)
-            others = [s for k, s in sizes.items() if k != right]
-            largest += sizes[right] > max(others)
-            shortest += sizes[right] < min(others)
-        assert largest <= n // 3, (name, "correcta más larga", largest, n)
-        assert shortest <= n // 3, (name, "correcta más corta", shortest, n)
+            sizes = [len(o["label"]) for o in q["options"]]
+            assert len(set(sizes)) == len(sizes), (q["key"], "empate de longitud", sizes)
+            assert max(sizes) <= 1.5 * min(sizes), (q["key"], sizes)
+            at = next(i for i, o in enumerate(q["options"]) if o["correct"])
+            by_rank[sorted(sizes).index(sizes[at])] += 1
+            by_slot[at] = by_slot.get(at, 0) + 1
+        assert max(by_rank) <= cap, (name, "rango de longitud (corta, media, larga)", by_rank, cap)
+        assert max(by_slot.values()) <= cap, (name, "posición de la correcta", by_slot, cap)

@@ -926,7 +926,7 @@
           },
           {
             "key": "c",
-            "label": "Busco la licencia o pido permiso antes de usarlo.",
+            "label": "Busco la licencia o pido permiso al autor antes de usarlo.",
             "correct": true
           }
         ]
@@ -945,13 +945,13 @@
           },
           {
             "key": "b",
-            "label": "Aplicar el puntaje sin permitir excepciones ni revisión.",
-            "correct": false
+            "label": "Publicar los criterios y permitir una revisión humana de la decisión.",
+            "correct": true
           },
           {
             "key": "c",
-            "label": "Publicar los criterios y permitir una revisión humana.",
-            "correct": true
+            "label": "Aplicar el puntaje sin permitir excepciones ni revisión.",
+            "correct": false
           }
         ]
       },
@@ -1024,7 +1024,7 @@
           },
           {
             "key": "c",
-            "label": "Usar un canal cifrado y limitar quién lo recibe.",
+            "label": "Usar un canal cifrado y limitar bien quién puede recibirlo.",
             "correct": true
           }
         ]
@@ -1062,7 +1062,7 @@
         "options": [
           {
             "key": "a",
-            "label": "Elijo otra biblioteca con licencia compatible.",
+            "label": "Elijo otra biblioteca con una licencia compatible con la mía.",
             "correct": true
           },
           {
@@ -1086,13 +1086,13 @@
         "options": [
           {
             "key": "a",
-            "label": "Aplicar la regla sin explicarla, para evitar discusiones.",
-            "correct": false
+            "label": "Explicar la regla y permitir revisión humana.",
+            "correct": true
           },
           {
             "key": "b",
-            "label": "Explicar la regla y permitir una revisión humana.",
-            "correct": true
+            "label": "Aplicar la regla sin explicarla, para evitar discusiones.",
+            "correct": false
           },
           {
             "key": "c",
@@ -1110,18 +1110,18 @@
         "options": [
           {
             "key": "a",
-            "label": "Entrego igual y lo menciono si alguien pregunta.",
-            "correct": false
-          },
-          {
-            "key": "b",
             "label": "Lo arreglo yo solo después de entregar, sin avisar a nadie.",
             "correct": false
           },
           {
-            "key": "c",
+            "key": "b",
             "label": "Aviso al equipo y propongo corregirlo antes de entregar.",
             "correct": true
+          },
+          {
+            "key": "c",
+            "label": "Entrego igual y lo menciono si alguien pregunta.",
+            "correct": false
           }
         ]
       }
@@ -1237,7 +1237,7 @@
           },
           {
             "key": "c",
-            "label": "Explicar los criterios con claridad y ofrecer una revisión.",
+            "label": "Explicar los criterios y ofrecer una revisión.",
             "correct": true
           }
         ]
@@ -1349,7 +1349,7 @@
         "options": [
           {
             "key": "a",
-            "label": "Al terminar, la protección de datos quedó muy baja, o acceso y calidad bajos.",
+            "label": "Al terminar, la protección de datos quedó muy baja, o el acceso y la calidad bajos.",
             "correct": true
           },
           {
