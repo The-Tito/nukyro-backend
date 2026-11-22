@@ -7,6 +7,8 @@ from sqlalchemy import create_engine
 
 from nukyro.main import create_app
 
+CSRF = {"Origin": "https://test", "X-Nukyro-Request": "1"}
+
 
 class Body(BaseModel):
     name: str
@@ -16,6 +18,7 @@ class Body(BaseModel):
 def app():
     app = create_app()
     app.state.engines = {"api": create_engine("sqlite://")}
+    app.state.origin = "https://test"
 
     @app.post("/prueba")
     def prueba(body: Body):
@@ -58,7 +61,7 @@ def test_404_es_json_con_la_forma_del_contrato(client):
 
 
 def test_422_no_devuelve_la_entrada(client):
-    response = client.post("/prueba", json={"name": 5, "extra": "valor-secreto-456"})
+    response = client.post("/prueba", json={"name": 5, "extra": "valor-secreto-456"}, headers=CSRF)
     assert response.status_code == 422
     assert "valor-secreto-456" not in response.text
     assert response.json()["error"]["code"] == "validation_error"
@@ -75,9 +78,26 @@ def test_los_logs_no_llevan_cookies_cuerpos_ni_query(client, caplog):
         client.post(
             "/prueba?token=query-secreto",
             json={"name": "cuerpo-secreto"},
-            headers={"Cookie": "__Host-sid=cookie-secreta"},
+            headers={**CSRF, "Cookie": "__Host-sid=cookie-secreta"},
         )
         client.get("/falla")
     assert "/prueba" in caplog.text
     for secreto in ("query-secreto", "cuerpo-secreto", "cookie-secreta", "dato-privado-123"):
         assert secreto not in caplog.text
+
+
+def test_csrf_toda_escritura_sin_cabeceras_exactas_es_403(client):
+    for headers in (
+        {},
+        {"Origin": "https://test"},
+        {"Origin": "https://otro", **{"X-Nukyro-Request": "1"}},
+    ):
+        response = client.post("/prueba", json={"name": "x"}, headers=headers)
+        assert response.status_code == 403
+        assert response.json()["error"]["code"] == "forbidden"
+    assert client.get("/api/v1/health").status_code == 200
+
+
+def test_toda_respuesta_lleva_no_store(client):
+    assert client.get("/api/v1/health").headers["cache-control"] == "no-store"
+    assert client.post("/prueba", json={}).headers["cache-control"] == "no-store"

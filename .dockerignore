@@ -4,6 +4,7 @@
 !src
 !migrations
 !alembic.ini
+!demo/documents.json
 !tests/conftest.py
 !tests/blackbox
 **/__pycache__

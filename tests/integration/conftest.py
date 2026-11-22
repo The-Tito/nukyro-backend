@@ -5,11 +5,15 @@ NUKYRO_ENV_FILE      archivo con los secretos de ese proyecto
 La base debe estar arriba y migrada, con compose.test.yaml (puerto en 127.0.0.1).
 """
 
+import hashlib
 import os
 import shlex
+import ssl
 import subprocess
+import time
 from pathlib import Path
 
+import httpx
 import psycopg
 import pytest
 
@@ -71,3 +75,65 @@ def superuser(settings, secrets):
 @pytest.fixture(scope="session")
 def owner_password(secrets) -> str:
     return secrets["NUKYRO_DB_OWNER_PASSWORD"]
+
+
+# --- API real por HTTPS (la levanta scripts/verify con `up -d proxy`) ---
+ORIGIN = "https://proxy"  # el mismo valor por defecto de NUKYRO_ORIGIN en compose.yaml
+WRITE = {"Origin": ORIGIN, "X-Nukyro-Request": "1"}
+ACCEPT = {"age_confirmed": True, "privacy_notice_version": "DEMO-1", "terms_version": "DEMO-1"}
+
+
+@pytest.fixture(scope="session")
+def api_https(tmp_path_factory):
+    """(URL base, archivo de la CA de Caddy) de la API ya levantada; espera a que responda."""
+    port = compose("port", "proxy", "443").strip().rsplit(":", 1)[1]
+    ca = tmp_path_factory.mktemp("ca") / "root.crt"
+    deadline = time.monotonic() + 90
+    while True:
+        try:  # Caddy crea su CA al arrancar
+            compose("cp", "proxy:/data/caddy/pki/authorities/local/root.crt", str(ca))
+            context = ssl.create_default_context(cafile=str(ca))
+            base = f"https://localhost:{port}"
+            httpx.get(f"{base}/api/v1/health", verify=context, timeout=5).raise_for_status()
+            return base, str(ca)
+        except (subprocess.CalledProcessError, httpx.HTTPError):
+            if time.monotonic() > deadline:
+                raise
+            time.sleep(2)
+
+
+@pytest.fixture
+def new_client(api_https):
+    base, ca = api_https
+    clients = []
+
+    def make() -> httpx.Client:
+        client = httpx.Client(
+            base_url=base, verify=ssl.create_default_context(cafile=ca), timeout=15
+        )
+        clients.append(client)
+        return client
+
+    yield make
+    for client in clients:
+        client.close()
+
+
+@pytest.fixture
+def person(new_client):
+    """Cliente con un participante nuevo (cookie incluida)."""
+    client = new_client()
+    assert client.post("/api/v1/participants", json=ACCEPT, headers=WRITE).status_code == 201
+    return client
+
+
+def secret_of(client) -> str:
+    return client.cookies.get("__Host-nukyro_participant")
+
+
+def participant_id(superuser, client):
+    digest = hashlib.sha256(secret_of(client).encode()).digest()
+    row = superuser.execute(
+        "SELECT id FROM nukyro.participants WHERE secret_hash = %s", (digest,)
+    ).fetchone()
+    return row[0]

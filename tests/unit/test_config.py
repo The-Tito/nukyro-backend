@@ -34,3 +34,11 @@ def test_la_representacion_no_muestra_el_secreto():
     env = {k: ("secreto-xyz" if k.endswith("PASSWORD") else "u") for k in ROLES}
     settings = load_settings({**BASE, **env})
     assert "secreto-xyz" not in repr(settings)
+
+
+def test_el_origin_es_obligatorio():
+    from nukyro.config import load_web_settings
+
+    with pytest.raises(RuntimeError, match="NUKYRO_ORIGIN"):
+        load_web_settings({})
+    assert load_web_settings({"NUKYRO_ORIGIN": "https://x"}).origin == "https://x"

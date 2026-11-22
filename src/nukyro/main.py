@@ -9,8 +9,11 @@ from fastapi.responses import JSONResponse
 from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from nukyro.config import load_settings
+from nukyro import security
+from nukyro.config import load_settings, load_web_settings
 from nukyro.db import build_engines, verify_engines
+from nukyro.modules.entry import service as entry_service
+from nukyro.modules.entry.routes import router as entry_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("nukyro")
@@ -25,6 +28,9 @@ async def lifespan(app: FastAPI):
     settings = load_settings()
     engines = build_engines(settings)
     verify_engines(settings, engines)
+    web = load_web_settings()  # falla al arrancar si falta NUKYRO_ORIGIN
+    app.state.origin = web.origin
+    app.state.documents = entry_service.load_documents(web.documents_path)
     app.state.engines = engines
     log.info("API lista: %d conexiones verificadas", len(engines))
     yield
@@ -36,6 +42,8 @@ def create_app() -> FastAPI:
     # Sin documentación pública: el contrato vive en el repositorio
     app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None, openapi_url=None)
 
+    security.install(app)
+
     @app.middleware("http")
     async def access_log(request: Request, call_next):
         # Solo método, ruta y estado: ni cookies, ni cuerpo, ni query
@@ -45,7 +53,12 @@ def create_app() -> FastAPI:
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException):
-        code = {404: "not_found", 405: "method_not_allowed"}.get(exc.status_code, "http_error")
+        code = {
+            401: "unauthorized",
+            403: "forbidden",
+            404: "not_found",
+            405: "method_not_allowed",
+        }.get(exc.status_code, "http_error")
         return error_response(exc.status_code, code, "Solicitud no válida")
 
     @app.exception_handler(RequestValidationError)
@@ -68,6 +81,7 @@ def create_app() -> FastAPI:
             return error_response(503, "database_unavailable", "La base de datos no responde")
         return {"status": "ok"}
 
+    app.include_router(entry_router)
     return app
 
 
