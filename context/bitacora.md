@@ -62,3 +62,15 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** 12 casos de `context/pruebas/probar_validador.py` y rechazos repetidos sobre una copia del KG real. Sin revisión humana.
 - **Decisiones:** D-24, D-25.
 - **Evidencia:** línea base SQL 52/52 en PostgreSQL 16.15, antes de tocar el esquema.
+
+## 2026-11-22: T-08, auditada y cerrada por delegación; Puerta A de E2
+- **Resultado:** T-08 cerrada con EV-01. E2 planeada en `context/etapas/etapa-2.md` y en curso.
+- **Revisión:** auditor con Sonnet sin bloqueos; se completó la cita de D-24. Revisión humana pendiente.
+- **Decisiones:** Puerta A de E2 delegada (D-24).
+- **Evidencia:** EV-01, KG v1.23.0.
+
+## 2026-11-22: T-09, esquema v0.3
+- **Resultado:** ADR-007 y ADR-008, defectos 2 a 9 corregidos en la base, funciones de archivo y permisos por columna.
+- **Revisión:** la dirección repitió la suite, reprodujo el defecto 2 y halló dos fallos más (reabrir y completar un intento enviado), de rojo a verde. Sin revisión humana.
+- **Decisiones:** ADR-004 reemplazada por ADR-007.
+- **Evidencia:** `bd/pruebas/ejecutar.sh`: 239 comprobaciones; `bd/pruebas/evidencia-rojo.md`.

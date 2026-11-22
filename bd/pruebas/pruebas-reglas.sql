@@ -33,9 +33,11 @@ BEGIN
 END $$;
 
 -- ------------------------- Contenido ---------------------------------
-SELECT pg_temp.expect('T01 RN-16 una sola versión publicada',
- $q$INSERT INTO scenario_versions (scenario_id, version_number, title, status, published_at)
-    VALUES ('00000000-0000-0000-0000-000000000001', 9, 'otra', 'published', now())$q$, '23505');
+-- Etapa 2 (defecto 5): ya no se inserta una versión publicada; se publica un borrador
+-- teniendo otra publicada. Insertar publicado se prueba aparte (pruebas-defectos.sql).
+SELECT pg_temp.expect('T01 RN-16 una sola versión publicada (publicar un borrador con otra publicada)',
+ $q$UPDATE scenario_versions SET status = 'published', published_at = now()
+    WHERE id = '00000000-0000-0000-0000-000000000012'$q$, '23505');
 
 SELECT pg_temp.expect('T02 RN-16/H-10 un solo borrador',
  $q$INSERT INTO scenario_versions (scenario_id, version_number, title) VALUES ('00000000-0000-0000-0000-000000000001', 9, 'otro borrador')$q$, '23505');
@@ -122,12 +124,18 @@ SELECT pg_temp.expect('T18 nodo actual de otra versión',
  $q$INSERT INTO sessions (participant_id, scenario_version_id, current_node_id, self_reported_first, has_prior_session)
     VALUES ('00000000-0000-0000-0000-00000000aa01', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000142', true, false)$q$, '23503');
 
+-- Preparación (defecto 9): has_prior_session lo calcula la base e ignora el valor enviado.
+-- Para que 5e03 siga siendo «no primera sesión», aa03 tiene antes otra sesión (5e04).
+INSERT INTO sessions (id, participant_id, scenario_version_id, current_node_id, self_reported_first, has_prior_session, pretest_completed_at) VALUES
+ ('00000000-0000-0000-0000-000000005e04', '00000000-0000-0000-0000-00000000aa03', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000042', false, false, now());
 INSERT INTO sessions (id, participant_id, scenario_version_id, current_node_id, self_reported_first, has_prior_session, pretest_completed_at) VALUES
  ('00000000-0000-0000-0000-000000005e01', '00000000-0000-0000-0000-00000000aa01', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000042', true,  false, now()),
  ('00000000-0000-0000-0000-000000005e02', '00000000-0000-0000-0000-00000000aa02', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000042', false, false, now()),
  ('00000000-0000-0000-0000-000000005e03', '00000000-0000-0000-0000-00000000aa03', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000042', true,  true,  now());
 SELECT pg_temp.ok('T19 RN-18 is_first_session generada',
- (SELECT array_agg(is_first_session ORDER BY id) FROM sessions) = ARRAY[true, false, false]);
+ (SELECT array_agg(is_first_session ORDER BY id) FROM sessions
+   WHERE id IN ('00000000-0000-0000-0000-000000005e01', '00000000-0000-0000-0000-000000005e02',
+                '00000000-0000-0000-0000-000000005e03')) = ARRAY[true, false, false]);
 
 INSERT INTO session_variables (session_id, scenario_version_id, variable_id, value)
 SELECT s.id, s.scenario_version_id, v.id, v.initial_value
@@ -188,11 +196,13 @@ SELECT pg_temp.expect('T26 regla activada dos veces en la sesión',
     VALUES ('00000000-0000-0000-0000-000000005e01', '00000000-0000-0000-0000-000000000011', '00000000-0000-0000-0000-000000000071')$q$, '23505');
 
 -- Evaluaciones
-INSERT INTO assessment_attempts (id, session_id, scenario_version_id, question_set_id, submitted_at, answered_count, correct_count, score)
+INSERT INTO assessment_attempts (id, session_id, scenario_version_id, question_set_id)
 VALUES ('00000000-0000-0000-0000-0000000a0001', '00000000-0000-0000-0000-000000005e01', '00000000-0000-0000-0000-000000000011',
-        '00000000-0000-0000-0000-000000000091', now(), 1, 1, 100);
+        '00000000-0000-0000-0000-000000000091');
 INSERT INTO assessment_answers (attempt_id, question_set_id, question_id, option_id)
 VALUES ('00000000-0000-0000-0000-0000000a0001', '00000000-0000-0000-0000-000000000091', '00000000-0000-0000-0000-0000000000a1', '00000000-0000-0000-0000-0000000000b1');
+UPDATE assessment_attempts SET submitted_at = now(), answered_count = 1, correct_count = 1, score = 100
+ WHERE id = '00000000-0000-0000-0000-0000000a0001';
 
 SELECT pg_temp.expect('T27 RN-19 un intento por conjunto',
  $q$INSERT INTO assessment_attempts (session_id, scenario_version_id, question_set_id)
@@ -211,16 +221,17 @@ SELECT pg_temp.expect('T30 hitos fuera de orden (desenlace sin pre-test)',
     WHERE id = '00000000-0000-0000-0000-000000005e01'$q$, '23514');
 
 SELECT pg_temp.expect('T31 hechos con fecha que no es lunes',
- $q$INSERT INTO session_facts (scenario_version_id, week_start, closure_reason, is_first_session, outcome_reached, evaluations_completed)
-    VALUES ('00000000-0000-0000-0000-000000000011', '2026-11-03', 'completed', true, false, false)$q$, '23514');
+ $q$INSERT INTO session_facts (scenario_version_id, week_start, is_first_session, outcome_reached, evaluations_completed)
+    VALUES ('00000000-0000-0000-0000-000000000011', '2026-11-03', true, false, false)$q$, '23514');
 
 -- ------------------------- Privilegios -------------------------------
 SET ROLE nukyro_api;
-INSERT INTO nukyro.session_facts (scenario_version_id, week_start, closure_reason, is_first_session, outcome_reached, evaluations_completed)
-VALUES ('00000000-0000-0000-0000-000000000011', date_trunc('week', now())::date, 'completed', true, true, true);
 INSERT INTO nukyro.consent_events (account_id, consent_type, granted, source)
 VALUES ('00000000-0000-0000-0000-00000000ac01', 'newsletter', true, 'registration');
 SELECT pg_temp.expect('T32 api no puede modificar hechos', $q$UPDATE nukyro.session_facts SET is_first_session = false$q$, '42501');
+SELECT pg_temp.expect('T32b api no inserta hechos (ni con RETURNING)',
+ $q$INSERT INTO nukyro.session_facts (scenario_version_id, week_start, is_first_session, outcome_reached, evaluations_completed)
+    VALUES ('00000000-0000-0000-0000-000000000011', date_trunc('week', now())::date, true, true, true) RETURNING id$q$, '42501');
 SELECT pg_temp.expect('T33 api no escribe la bitácora del panel', $q$INSERT INTO nukyro.admin_audit_log (admin_user_id, action, entity_type) VALUES (gen_random_uuid(), 'x', 'y')$q$, '42501');
 SELECT pg_temp.expect('T34 api no puede leer hechos', $q$SELECT count(*) FROM nukyro.session_facts$q$, '42501');
 SELECT pg_temp.expect('T34b F4 api no modifica contenido', $q$UPDATE nukyro.nodes SET title = 'x' WHERE version_id = '00000000-0000-0000-0000-000000000012'$q$, '42501');
@@ -239,15 +250,22 @@ RESET ROLE;
 
 SET ROLE nukyro_analytics;
 SELECT pg_temp.expect('T35 analítica no lee datos personales', $q$SELECT count(*) FROM nukyro.participants$q$, '42501');
-SELECT pg_temp.ok('T36 analítica lee hechos', (SELECT count(*) FROM nukyro.session_facts) = 1);
+SELECT pg_temp.expect('T36 analítica no lee filas de hechos', $q$SELECT count(*) FROM nukyro.session_facts$q$, '42501');
+SELECT pg_temp.ok('T36b analítica solo recibe el agregado, suprimido con menos de 10',
+ (SELECT suppressed AND first_sessions IS NULL
+    FROM nukyro.report_session_summary('00000000-0000-0000-0000-000000000011')));
 RESET ROLE;
 
 -- Cascada ejecutada por el rol de tareas (RF-080, ADR-004)
+-- Etapa 2 (ADR-007): la misma cascada, ahora mediante las funciones del owner
+UPDATE participants SET last_activity_at = now() - interval '40 days' WHERE id = '00000000-0000-0000-0000-00000000aa01';
 SET ROLE nukyro_jobs;
-INSERT INTO nukyro.session_facts (scenario_version_id, week_start, closure_reason, is_first_session, outcome_reached, evaluations_completed)
-VALUES ('00000000-0000-0000-0000-000000000011', date_trunc('week', now())::date, 'expired', true, false, false);
-DELETE FROM nukyro.participants WHERE id = '00000000-0000-0000-0000-00000000aa01';
-DELETE FROM nukyro.accounts WHERE id = '00000000-0000-0000-0000-00000000ac01';
+SELECT pg_temp.ok('T38a caducidad: expira solo al anónimo inactivo',
+ nukyro.expire_anonymous_participants(now() - interval '30 days') = 1);
+SELECT pg_temp.ok('T38b bloqueo de la cuenta (archiva sus hechos)',
+ nukyro.block_account('00000000-0000-0000-0000-00000000ac01', 'user_request', now() - interval '1 hour'));
+SELECT pg_temp.ok('T38c purga de la cuenta vencida',
+ nukyro.purge_blocked_accounts(now()) = 1);
 SELECT pg_temp.expect('T37 tareas no pueden modificar contenido',
  $q$UPDATE nukyro.nodes SET title = 'x' WHERE version_id = '00000000-0000-0000-0000-000000000012'$q$, '42501');
 RESET ROLE;
@@ -259,7 +277,8 @@ SELECT pg_temp.ok('T38 cascada: sin rastro de los participantes borrados',
  AND NOT EXISTS (SELECT 1 FROM document_acceptances WHERE participant_id = '00000000-0000-0000-0000-00000000aa01')
  AND NOT EXISTS (SELECT 1 FROM participants WHERE account_id IS NOT NULL)
  AND NOT EXISTS (SELECT 1 FROM consent_events));
-SELECT pg_temp.ok('T39 los hechos anónimos sobreviven a los borrados', (SELECT count(*) FROM session_facts) = 2);
+SELECT pg_temp.ok('T39 los hechos archivados por la función sobreviven a los borrados',
+ (SELECT count(*) FROM session_facts) = 3 AND (SELECT count(*) FROM decision_facts) = 1);
 
 -- ------------------------- Ciclo de versiones ------------------------
 SELECT pg_temp.expect('T40 contenido publicado no se borra por cascada',

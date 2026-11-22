@@ -1,9 +1,11 @@
 -- =====================================================================
 -- Nukyro · DDL de referencia · PostgreSQL 16
--- Modelo: bd/modelo-datos.md · Decisiones: context/adr/ADR-001..005
+-- Modelo: bd/modelo-datos.md · Decisiones: context/adr/ADR-001..007
 -- Este archivo es la referencia del esquema; en el proyecto se traduce
--- a migraciones de Alembic. Ejecutar como nukyro_owner (o superusuario
--- en local).
+-- a migraciones de Alembic. Se aplica como nukyro_owner, que NO necesita
+-- SUPERUSER ni CREATEROLE: si los cuatro roles de grupo ya existen, no los
+-- crea; si faltan y quien aplica es superusuario, los crea (idempotente).
+-- Etapa 2 (T-09): corrige los defectos 2 a 9; ver bd/pruebas/.
 -- =====================================================================
 
 BEGIN;
@@ -48,10 +50,10 @@ CREATE TABLE scenario_versions (
     title                text NOT NULL,
     introduction         text NOT NULL DEFAULT '',
     rubric_version       text NOT NULL DEFAULT '1',
-    created_by           uuid REFERENCES admin_users (id) ON DELETE SET NULL,
+    created_by           uuid REFERENCES admin_users (id) ON DELETE RESTRICT,
     created_at           timestamptz NOT NULL DEFAULT now(),
     published_at         timestamptz,
-    published_by         uuid REFERENCES admin_users (id) ON DELETE SET NULL,
+    published_by         uuid REFERENCES admin_users (id) ON DELETE RESTRICT,
     retired_at           timestamptz,
     UNIQUE (scenario_id, version_number),
     CHECK ((status = 'draft') = (published_at IS NULL)),
@@ -252,22 +254,31 @@ CREATE UNIQUE INDEX ux_question_options_one_correct
     ON question_options (question_id) WHERE is_correct;
 
 -- Inmutabilidad del contenido fuera de borrador (ADR-001, RN-15, RN-17)
+-- La versión se lee con FOR SHARE: editar y publicar se ordenan. Si otra
+-- transacción publica a la vez, la edición espera, relee el estado y falla;
+-- si la edición va primero, la publicación espera a que termine. También se
+-- valida la versión de origen (OLD) en un UPDATE.
 CREATE FUNCTION guard_content_version() RETURNS trigger
 LANGUAGE plpgsql AS $$
 DECLARE
     v_status text;
+    v_old    uuid;
+    v_new    uuid;
 BEGIN
+    IF TG_OP IN ('UPDATE', 'DELETE') THEN v_old := OLD.version_id; END IF;
+    IF TG_OP IN ('INSERT', 'UPDATE') THEN v_new := NEW.version_id; END IF;
+    IF TG_OP = 'UPDATE' AND v_new <> v_old THEN
+        RAISE EXCEPTION 'No se puede mover contenido entre versiones' USING ERRCODE = 'check_violation';
+    END IF;
     SELECT status INTO v_status
       FROM nukyro.scenario_versions
-     WHERE id = CASE WHEN TG_OP = 'DELETE' THEN OLD.version_id ELSE NEW.version_id END;
+     WHERE id = coalesce(v_old, v_new)
+       FOR SHARE;
     -- NULL: la versión se está borrando en cascada (solo posible en borrador)
     IF v_status IS NOT NULL AND v_status <> 'draft' THEN
         RAISE EXCEPTION 'La versión % está %; solo se edita contenido en borrador (RN-15/ADR-001)',
-            CASE WHEN TG_OP = 'DELETE' THEN OLD.version_id ELSE NEW.version_id END, v_status
+            coalesce(v_old, v_new), v_status
             USING ERRCODE = 'check_violation';
-    END IF;
-    IF TG_OP = 'UPDATE' AND NEW.version_id <> OLD.version_id THEN
-        RAISE EXCEPTION 'No se puede mover contenido entre versiones' USING ERRCODE = 'check_violation';
     END IF;
     RETURN CASE WHEN TG_OP = 'DELETE' THEN OLD ELSE NEW END;
 END $$;
@@ -285,29 +296,41 @@ BEGIN
     END LOOP;
 END $$;
 
--- Transiciones válidas de la versión (draft → published → retired)
+-- Ciclo de vida de la versión (draft → published → retired), defecto 5:
+--  · INSERT: solo borrador, sin fechas ni responsable de publicación o retiro.
+--  · draft: pasa a draft o a published y no cambia de escenario.
+--  · published → retired: la fila completa debe ser igual salvo status y retired_at.
+--  · retired: no cambia (ni una actualización vacía).
 CREATE FUNCTION guard_version_status() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN
-    IF TG_OP = 'DELETE' THEN
+    IF TG_OP = 'INSERT' THEN
+        IF NEW.status <> 'draft' OR NEW.published_at IS NOT NULL
+           OR NEW.published_by IS NOT NULL OR NEW.retired_at IS NOT NULL THEN
+            RAISE EXCEPTION 'Una versión nace en borrador, sin fechas ni responsable de publicación o retiro'
+                USING ERRCODE = 'check_violation';
+        END IF;
+        RETURN NEW;
+    ELSIF TG_OP = 'DELETE' THEN
         IF OLD.status <> 'draft' THEN
             RAISE EXCEPTION 'Solo se puede borrar una versión en borrador (RN-17)' USING ERRCODE = 'check_violation';
         END IF;
         RETURN OLD;
     END IF;
     IF OLD.status = 'draft' THEN
-        RETURN NEW;                                   -- borrador: editable o publicable
+        IF NEW.status IN ('draft', 'published') AND NEW.scenario_id = OLD.scenario_id THEN
+            RETURN NEW;                               -- borrador: editable o publicable
+        END IF;
     ELSIF OLD.status = 'published' AND NEW.status = 'retired'
-          AND (NEW.title, NEW.introduction, NEW.rubric_version, NEW.version_number, NEW.published_at)
-              IS NOT DISTINCT FROM (OLD.title, OLD.introduction, OLD.rubric_version, OLD.version_number, OLD.published_at) THEN
-        RETURN NEW;                                   -- retirar sin cambiar contenido
+          AND (to_jsonb(NEW) - 'status' - 'retired_at') = (to_jsonb(OLD) - 'status' - 'retired_at') THEN
+        RETURN NEW;                                   -- retirar sin cambiar nada más
     END IF;
     RAISE EXCEPTION 'Transición o cambio no permitido en versión % (%→%)', OLD.id, OLD.status, NEW.status
         USING ERRCODE = 'check_violation';
 END $$;
 
 CREATE TRIGGER trg_guard_version_status
-    BEFORE UPDATE OR DELETE ON scenario_versions
+    BEFORE INSERT OR UPDATE OR DELETE ON scenario_versions
     FOR EACH ROW EXECUTE FUNCTION guard_version_status();
 
 -- ---------------------------------------------------------------------
@@ -331,6 +354,23 @@ CREATE TABLE accounts (
 CREATE INDEX ix_accounts_inactivity ON accounts (last_login_at) WHERE status = 'active';
 CREATE INDEX ix_accounts_deletion_due ON accounts (deletion_due_at) WHERE status = 'blocked';
 
+-- Una cuenta bloqueada es terminal (D-20): no se modifica ni se reactiva, y
+-- cognito_sub nunca cambia. El bloqueo mismo (active → blocked) lo hace block_account.
+CREATE FUNCTION guard_account_update() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF OLD.status = 'blocked' THEN
+        RAISE EXCEPTION 'La cuenta % está bloqueada: no se modifica ni se reactiva (D-20)', OLD.id
+            USING ERRCODE = 'check_violation';
+    END IF;
+    IF NEW.cognito_sub IS DISTINCT FROM OLD.cognito_sub THEN
+        RAISE EXCEPTION 'cognito_sub es inmutable' USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$;
+CREATE TRIGGER trg_guard_account_update
+    BEFORE UPDATE ON accounts FOR EACH ROW EXECUTE FUNCTION guard_account_update();
+
 CREATE TABLE participants (
     id                  uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     account_id          uuid UNIQUE REFERENCES accounts (id) ON DELETE CASCADE,
@@ -343,6 +383,22 @@ CREATE TABLE participants (
 -- RF-080: caducidad de participantes sin cuenta
 CREATE INDEX ix_participants_anonymous_activity
     ON participants (last_activity_at) WHERE account_id IS NULL;
+
+-- account_id es inmutable una vez asignado; secret_hash solo puede quedarse
+-- igual o pasar a NULL (al vincular el navegador con una cuenta).
+CREATE FUNCTION guard_participant_update() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF OLD.account_id IS NOT NULL AND NEW.account_id IS DISTINCT FROM OLD.account_id THEN
+        RAISE EXCEPTION 'account_id es inmutable una vez asignado' USING ERRCODE = 'check_violation';
+    END IF;
+    IF NEW.secret_hash IS NOT NULL AND NEW.secret_hash IS DISTINCT FROM OLD.secret_hash THEN
+        RAISE EXCEPTION 'secret_hash solo puede quedarse igual o pasar a NULL' USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$;
+CREATE TRIGGER trg_guard_participant_update
+    BEFORE UPDATE ON participants FOR EACH ROW EXECUTE FUNCTION guard_participant_update();
 
 CREATE TABLE document_acceptances (
     id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -415,7 +471,7 @@ CREATE TABLE sessions (
     completed_at          timestamptz,
     last_activity_at      timestamptz NOT NULL DEFAULT now(),
     self_reported_first   boolean NOT NULL,
-    has_prior_session     boolean NOT NULL,
+    has_prior_session     boolean NOT NULL DEFAULT false,   -- lo fija el trigger trg_session_prior
     is_first_session      boolean GENERATED ALWAYS AS (self_reported_first AND NOT has_prior_session) STORED,
     survey_answered       boolean NOT NULL DEFAULT false,
     facts_written_at      timestamptz,
@@ -441,6 +497,31 @@ BEGIN
 END $$;
 CREATE TRIGGER trg_guard_session_version
     BEFORE INSERT ON sessions FOR EACH ROW EXECUTE FUNCTION guard_session_version();
+
+-- Defecto 9: la base decide si hay sesión previa. Bloquea la fila del participante
+-- (dos inicios simultáneos se ordenan aquí), rechaza cuentas bloqueadas y calcula
+-- has_prior_session (otra sesión del participante en el mismo escenario, de cualquier
+-- versión). El valor enviado por el cliente se ignora. Orden de bloqueo (cuenta,
+-- participante, sesiones): este trigger toma solo el participante.
+CREATE FUNCTION compute_session_prior() RETURNS trigger
+LANGUAGE plpgsql AS $$
+DECLARE
+    v_scenario uuid;
+BEGIN
+    PERFORM 1 FROM nukyro.participants WHERE id = NEW.participant_id FOR NO KEY UPDATE;
+    IF EXISTS (SELECT 1 FROM nukyro.participants p JOIN nukyro.accounts a ON a.id = p.account_id
+                WHERE p.id = NEW.participant_id AND a.status = 'blocked') THEN
+        RAISE EXCEPTION 'Una cuenta bloqueada no inicia sesiones nuevas (D-20)' USING ERRCODE = 'check_violation';
+    END IF;
+    SELECT scenario_id INTO v_scenario FROM nukyro.scenario_versions WHERE id = NEW.scenario_version_id;
+    NEW.has_prior_session := EXISTS (
+        SELECT 1 FROM nukyro.sessions s
+          JOIN nukyro.scenario_versions v ON v.id = s.scenario_version_id
+         WHERE s.participant_id = NEW.participant_id AND v.scenario_id = v_scenario);
+    RETURN NEW;
+END $$;
+CREATE TRIGGER trg_session_prior
+    BEFORE INSERT ON sessions FOR EACH ROW EXECUTE FUNCTION compute_session_prior();
 
 CREATE TABLE session_steps (
     id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -552,15 +633,44 @@ CREATE TABLE assessment_answers (
     FOREIGN KEY (question_id, option_id) REFERENCES question_options (question_id, id)
 );
 
+-- Tras enviar el intento (submitted_at) las respuestas no cambian. Es un trigger
+-- AFTER (corre tras las comprobaciones de llaves foráneas, que son AFTER con nombre
+-- RI_…) y lee el intento con FOR SHARE: enviar y responder a la vez se ordenan.
+CREATE FUNCTION guard_answer_after_submit() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    PERFORM 1 FROM nukyro.assessment_attempts
+     WHERE id = NEW.attempt_id AND submitted_at IS NOT NULL FOR SHARE;
+    IF FOUND THEN
+        RAISE EXCEPTION 'El intento % ya se envió: sus respuestas no cambian', NEW.attempt_id
+            USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NULL;
+END $$;
+CREATE TRIGGER trg_guard_answer_after_submit
+    AFTER INSERT OR UPDATE ON assessment_answers FOR EACH ROW EXECUTE FUNCTION guard_answer_after_submit();
+
+-- Un intento enviado es definitivo: no se reabre ni se vuelve a puntuar (RN-19)
+CREATE FUNCTION guard_attempt_submitted() RETURNS trigger
+LANGUAGE plpgsql AS $$
+BEGIN
+    IF OLD.submitted_at IS NOT NULL THEN
+        RAISE EXCEPTION 'El intento % ya se envió: no cambia', OLD.id USING ERRCODE = 'check_violation';
+    END IF;
+    RETURN NEW;
+END $$;
+CREATE TRIGGER trg_guard_attempt_submitted
+    BEFORE UPDATE ON assessment_attempts FOR EACH ROW EXECUTE FUNCTION guard_attempt_submitted();
+
 -- ---------------------------------------------------------------------
--- Estadísticas anónimas (ADR-004): sin sesión, participante ni cuenta
+-- Estadísticas anónimas (ADR-004, ADR-007): sin sesión, participante ni cuenta.
+-- Ningún rol de conexión lee ni escribe estas tablas: las llena y las
+-- reescribe solo el owner, mediante las funciones de más abajo.
 -- ---------------------------------------------------------------------
 CREATE TABLE session_facts (
     id                     uuid PRIMARY KEY DEFAULT gen_random_uuid(),
     scenario_version_id    uuid NOT NULL REFERENCES scenario_versions (id) ON DELETE RESTRICT,
     week_start             date NOT NULL CHECK (extract(isodow FROM week_start) = 1),
-    closure_reason         text NOT NULL CHECK (closure_reason IN ('completed', 'expired', 'account_deleted',
-                                                                   'self_deleted', 'arco')),
     is_first_session       boolean NOT NULL,
     pretest_score          numeric(5,2) CHECK (pretest_score BETWEEN 0 AND 100),
     posttest_score         numeric(5,2) CHECK (posttest_score BETWEEN 0 AND 100),
@@ -572,11 +682,14 @@ CREATE TABLE session_facts (
     justification_total    smallint,
     outcome_reached        boolean NOT NULL,
     outcome_key            text,
+    stopped_at_key         text,            -- clave del nodo actual si no llegó al desenlace
     evaluations_completed  boolean NOT NULL,
     duration_bucket_min    smallint CHECK (duration_bucket_min >= 0 AND duration_bucket_min % 5 = 0),
     CHECK (transfer_correct IS NULL OR transfer_correct <= transfer_total),
     CHECK (causal_correct IS NULL OR causal_correct <= causal_total),
-    CHECK (justification_correct IS NULL OR justification_correct <= justification_total)
+    CHECK (justification_correct IS NULL OR justification_correct <= justification_total),
+    CHECK (outcome_reached OR outcome_key IS NULL),
+    CHECK (NOT outcome_reached OR stopped_at_key IS NULL)
 );
 
 CREATE TABLE decision_facts (
@@ -586,6 +699,19 @@ CREATE TABLE decision_facts (
     decision_key         text NOT NULL,
     option_key           text NOT NULL,
     is_first_session     boolean NOT NULL
+);
+
+-- Aciertos por tema y tipo de conjunto; sin vínculo con session_facts (ADR-007)
+CREATE TABLE topic_facts (
+    id                   uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+    scenario_version_id  uuid NOT NULL REFERENCES scenario_versions (id) ON DELETE RESTRICT,
+    week_start           date NOT NULL CHECK (extract(isodow FROM week_start) = 1),
+    set_type             text NOT NULL CHECK (set_type IN ('pretest', 'posttest', 'transfer', 'causal')),
+    topic                text NOT NULL,
+    is_first_session     boolean NOT NULL,
+    correct              smallint NOT NULL CHECK (correct >= 0),
+    total                smallint NOT NULL CHECK (total > 0),
+    CHECK (correct <= total)
 );
 
 CREATE TABLE survey_responses (
@@ -615,6 +741,259 @@ CREATE TABLE admin_audit_log (
 );
 CREATE INDEX ix_admin_audit_log_occurred ON admin_audit_log (occurred_at);
 
+-- ---------------------------------------------------------------------
+-- Funciones del owner (ADR-007). SECURITY DEFINER: corren con los permisos del
+-- dueño, por eso fijan search_path, califican todos los nombres y no son
+-- ejecutables por PUBLIC (más abajo). Orden de bloqueo en todas las rutas:
+-- cuenta, participante, sesiones, y al final las tablas de hechos (siempre en el
+-- mismo orden: decision_facts, session_facts, topic_facts). El bloqueo de los
+-- hechos se toma ANTES de copiar (no después): dos archivos simultáneos que
+-- insertaran primero y bloquearan después se interbloquearían.
+-- ---------------------------------------------------------------------
+
+-- Interna (sin GRANT). El llamador ya bloqueó la cuenta y el participante.
+-- Copia a los hechos, por cada sesión con facts_written_at nulo, los datos de
+-- sesión (puntuaciones, aciertos, desenlace, duración por tramos de 5 min), de
+-- decisión y por tema, y fija facts_written_at. No copia nada si el participante
+-- se opuso (exclude_from_stats) o su cuenta está bloqueada por menor de edad.
+-- La semana es la del inicio de la sesión, en UTC. Devuelve las sesiones copiadas.
+CREATE FUNCTION archive_participant(p_participant uuid) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+DECLARE
+    v_excluded boolean;
+    v_account  uuid;
+    v_ids      uuid[];
+BEGIN
+    SELECT p.exclude_from_stats, p.account_id INTO v_excluded, v_account
+      FROM nukyro.participants p WHERE p.id = p_participant FOR NO KEY UPDATE;
+    IF NOT FOUND OR v_excluded THEN RETURN 0; END IF;
+    IF v_account IS NOT NULL AND EXISTS (
+           SELECT 1 FROM nukyro.accounts a
+            WHERE a.id = v_account AND a.status = 'blocked' AND a.block_reason = 'underage') THEN
+        RETURN 0;
+    END IF;
+
+    SELECT array_agg(l.id) INTO v_ids
+      FROM (SELECT s.id FROM nukyro.sessions s
+             WHERE s.participant_id = p_participant AND s.facts_written_at IS NULL
+             ORDER BY s.id FOR UPDATE) l;
+    IF v_ids IS NULL THEN RETURN 0; END IF;
+
+    LOCK TABLE nukyro.decision_facts, nukyro.session_facts, nukyro.topic_facts IN ACCESS EXCLUSIVE MODE;
+
+    INSERT INTO nukyro.session_facts (
+        scenario_version_id, week_start, is_first_session, pretest_score, posttest_score,
+        transfer_correct, transfer_total, causal_correct, causal_total,
+        justification_correct, justification_total, outcome_reached, outcome_key, stopped_at_key,
+        evaluations_completed, duration_bucket_min)
+    SELECT s.scenario_version_id,
+           date_trunc('week', s.started_at AT TIME ZONE 'UTC')::date,
+           s.is_first_session,
+           pre.score, post.score,
+           tr.correct_count, tr.answered_count, ca.correct_count, ca.answered_count,
+           CASE WHEN j.t > 0 THEN j.c END, CASE WHEN j.t > 0 THEN j.t END,
+           s.outcome_reached_at IS NOT NULL,
+           CASE WHEN s.outcome_reached_at IS NOT NULL THEN o.key END,
+           CASE WHEN s.outcome_reached_at IS NULL THEN c.key END,
+           -- supuesto: evaluaciones completas = todos los conjuntos de la versión enviados
+           NOT EXISTS (SELECT 1 FROM nukyro.question_sets q
+                        WHERE q.version_id = s.scenario_version_id
+                          AND NOT EXISTS (SELECT 1 FROM nukyro.assessment_attempts a
+                                           WHERE a.session_id = s.id AND a.question_set_id = q.id
+                                             AND a.submitted_at IS NOT NULL)),
+           (greatest(0, floor(extract(epoch FROM
+               coalesce(s.completed_at, s.outcome_reached_at, s.last_activity_at) - s.started_at) / 300)) * 5)::smallint
+      FROM nukyro.sessions s
+      LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
+                           FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
+                          WHERE a.session_id = s.id AND q.set_type = 'pretest' AND a.submitted_at IS NOT NULL) pre ON true
+      LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
+                           FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
+                          WHERE a.session_id = s.id AND q.set_type = 'posttest' AND a.submitted_at IS NOT NULL) post ON true
+      LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
+                           FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
+                          WHERE a.session_id = s.id AND q.set_type = 'transfer' AND a.submitted_at IS NOT NULL) tr ON true
+      LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
+                           FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
+                          WHERE a.session_id = s.id AND q.set_type = 'causal' AND a.submitted_at IS NOT NULL) ca ON true
+      LEFT JOIN LATERAL (SELECT (count(*) FILTER (WHERE d.justification_correct))::smallint AS c, count(*)::smallint AS t
+                           FROM nukyro.session_decisions d
+                           JOIN nukyro.decision_points dp ON dp.version_id = d.scenario_version_id AND dp.node_id = d.node_id
+                          WHERE d.session_id = s.id AND dp.evaluated_for_h05 AND d.justification_correct IS NOT NULL) j ON true
+      LEFT JOIN nukyro.nodes o ON o.id = s.outcome_node_id
+      LEFT JOIN nukyro.nodes c ON c.id = s.current_node_id
+     WHERE s.id = ANY (v_ids);
+
+    INSERT INTO nukyro.decision_facts (scenario_version_id, week_start, decision_key, option_key, is_first_session)
+    SELECT s.scenario_version_id, date_trunc('week', s.started_at AT TIME ZONE 'UTC')::date,
+           n.key, o.key, s.is_first_session
+      FROM nukyro.sessions s
+      JOIN nukyro.session_decisions d ON d.session_id = s.id
+      JOIN nukyro.nodes n ON n.id = d.node_id
+      JOIN nukyro.options o ON o.id = d.option_id
+     WHERE s.id = ANY (v_ids);
+
+    INSERT INTO nukyro.topic_facts (scenario_version_id, week_start, set_type, topic, is_first_session, correct, total)
+    SELECT s.scenario_version_id, date_trunc('week', s.started_at AT TIME ZONE 'UTC')::date,
+           qs.set_type, q.topic, s.is_first_session,
+           (count(*) FILTER (WHERE qo.is_correct))::smallint, count(*)::smallint
+      FROM nukyro.sessions s
+      JOIN nukyro.assessment_attempts a ON a.session_id = s.id AND a.submitted_at IS NOT NULL
+      JOIN nukyro.question_sets qs ON qs.id = a.question_set_id
+      JOIN nukyro.assessment_answers aa ON aa.attempt_id = a.id
+      JOIN nukyro.questions q ON q.id = aa.question_id
+      JOIN nukyro.question_options qo ON qo.id = aa.option_id
+     WHERE s.id = ANY (v_ids)
+     GROUP BY s.id, s.scenario_version_id, s.started_at, s.is_first_session, qs.set_type, q.topic;
+
+    UPDATE nukyro.sessions SET facts_written_at = now() WHERE id = ANY (v_ids);
+    RETURN cardinality(v_ids);
+END $$;
+
+-- Interna (sin GRANT). Tras archivar, reescribe TODAS las filas de las tres tablas
+-- con id nuevo y en orden aleatorio (DELETE ... RETURNING + INSERT en una sentencia):
+-- todas comparten xmin y el orden físico no sigue al de llegada. Si se agrega una
+-- columna a un hecho, hay que agregarla aquí.
+CREATE FUNCTION rewrite_facts() RETURNS void
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+BEGIN
+    LOCK TABLE nukyro.decision_facts, nukyro.session_facts, nukyro.topic_facts IN ACCESS EXCLUSIVE MODE;
+
+    WITH d AS (DELETE FROM nukyro.decision_facts
+               RETURNING scenario_version_id, week_start, decision_key, option_key, is_first_session)
+    INSERT INTO nukyro.decision_facts (scenario_version_id, week_start, decision_key, option_key, is_first_session)
+    SELECT scenario_version_id, week_start, decision_key, option_key, is_first_session FROM d ORDER BY random();
+
+    WITH d AS (DELETE FROM nukyro.session_facts
+               RETURNING scenario_version_id, week_start, is_first_session, pretest_score, posttest_score,
+                         transfer_correct, transfer_total, causal_correct, causal_total,
+                         justification_correct, justification_total, outcome_reached, outcome_key,
+                         stopped_at_key, evaluations_completed, duration_bucket_min)
+    INSERT INTO nukyro.session_facts (scenario_version_id, week_start, is_first_session, pretest_score, posttest_score,
+                         transfer_correct, transfer_total, causal_correct, causal_total,
+                         justification_correct, justification_total, outcome_reached, outcome_key,
+                         stopped_at_key, evaluations_completed, duration_bucket_min)
+    SELECT scenario_version_id, week_start, is_first_session, pretest_score, posttest_score,
+           transfer_correct, transfer_total, causal_correct, causal_total,
+           justification_correct, justification_total, outcome_reached, outcome_key,
+           stopped_at_key, evaluations_completed, duration_bucket_min
+      FROM d ORDER BY random();
+
+    WITH d AS (DELETE FROM nukyro.topic_facts
+               RETURNING scenario_version_id, week_start, set_type, topic, is_first_session, correct, total)
+    INSERT INTO nukyro.topic_facts (scenario_version_id, week_start, set_type, topic, is_first_session, correct, total)
+    SELECT scenario_version_id, week_start, set_type, topic, is_first_session, correct, total FROM d ORDER BY random();
+END $$;
+
+-- api: borra a un participante anónimo (RF-080 por petición propia). Bloquea,
+-- rechaza si tiene cuenta, archiva, reescribe y borra. false si no existe.
+CREATE FUNCTION erase_anonymous_participant(p_participant uuid) RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+DECLARE
+    v_account uuid;
+BEGIN
+    SELECT p.account_id INTO v_account FROM nukyro.participants p WHERE p.id = p_participant FOR UPDATE;
+    IF NOT FOUND THEN RETURN false; END IF;
+    IF v_account IS NOT NULL THEN
+        RAISE EXCEPTION 'El participante % tiene cuenta: se borra con el bloqueo y la purga de la cuenta', p_participant
+            USING ERRCODE = 'check_violation';
+    END IF;
+    IF nukyro.archive_participant(p_participant) > 0 THEN PERFORM nukyro.rewrite_facts(); END IF;
+    DELETE FROM nukyro.participants WHERE id = p_participant;
+    RETURN true;
+END $$;
+
+-- api, admin, jobs: bloquea una cuenta (terminal, D-20). Orden: cuenta, participante,
+-- sesiones. Salvo oposición o menor de edad, archiva y reescribe. Si la cuenta ya
+-- está bloqueada no hace nada y devuelve false.
+CREATE FUNCTION block_account(p_account uuid, p_reason text, p_deletion_due_at timestamptz) RETURNS boolean
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+DECLARE
+    v_status      text;
+    v_participant uuid;
+BEGIN
+    SELECT a.status INTO v_status FROM nukyro.accounts a WHERE a.id = p_account FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'La cuenta % no existe', p_account USING ERRCODE = 'no_data_found';
+    END IF;
+    IF v_status = 'blocked' THEN RETURN false; END IF;
+    SELECT p.id INTO v_participant FROM nukyro.participants p WHERE p.account_id = p_account FOR UPDATE;
+    UPDATE nukyro.accounts
+       SET status = 'blocked', blocked_at = now(), block_reason = p_reason, deletion_due_at = p_deletion_due_at
+     WHERE id = p_account;
+    IF v_participant IS NOT NULL AND p_reason <> 'underage' THEN
+        -- archive_participant también omite al opuesto (exclude_from_stats)
+        IF nukyro.archive_participant(v_participant) > 0 THEN PERFORM nukyro.rewrite_facts(); END IF;
+    END IF;
+    RETURN true;
+END $$;
+
+-- jobs: caducidad de anónimos (RF-080). Bloquea y revalida last_activity_at de cada
+-- candidato (alguien pudo volver mientras se esperaba el bloqueo), archiva, reescribe
+-- una sola vez y borra. Devuelve cuántos participantes se borraron.
+CREATE FUNCTION expire_anonymous_participants(p_cutoff timestamptz) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+DECLARE
+    v_id       uuid;
+    v_ids      uuid[] := '{}';
+    v_archived integer := 0;
+BEGIN
+    FOR v_id IN SELECT p.id FROM nukyro.participants p
+                 WHERE p.account_id IS NULL AND p.last_activity_at < p_cutoff ORDER BY p.id
+    LOOP
+        PERFORM 1 FROM nukyro.participants p
+         WHERE p.id = v_id AND p.account_id IS NULL AND p.last_activity_at < p_cutoff FOR UPDATE;
+        IF FOUND THEN v_ids := v_ids || v_id; END IF;
+    END LOOP;
+    IF cardinality(v_ids) = 0 THEN RETURN 0; END IF;
+    FOREACH v_id IN ARRAY v_ids LOOP
+        v_archived := v_archived + nukyro.archive_participant(v_id);
+    END LOOP;
+    IF v_archived > 0 THEN PERFORM nukyro.rewrite_facts(); END IF;
+    DELETE FROM nukyro.participants WHERE id = ANY (v_ids);
+    RETURN cardinality(v_ids);
+END $$;
+
+-- jobs: purga de cuentas bloqueadas. SOLO borra las vencidas (D-20); no archiva
+-- (el archivo ocurrió al bloquear). Devuelve cuántas se borraron.
+CREATE FUNCTION purge_blocked_accounts(p_now timestamptz) RETURNS integer
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+DECLARE
+    v_n integer;
+BEGIN
+    WITH d AS (DELETE FROM nukyro.accounts
+                WHERE status = 'blocked' AND deletion_due_at <= p_now RETURNING 1)
+    SELECT count(*) INTO v_n FROM d;
+    RETURN v_n;
+END $$;
+
+-- analytics: resumen de primeras sesiones de una versión. Con menos de 10 devuelve
+-- suprimido y sin valores; con 10 o más, agregados (cada promedio exige además 10
+-- valores propios, para no exponer a una sola persona).
+CREATE FUNCTION report_session_summary(p_version uuid)
+RETURNS TABLE (suppressed boolean, first_sessions integer, outcome_reached_count integer,
+               avg_pretest_score numeric, avg_posttest_score numeric)
+LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+BEGIN
+    RETURN QUERY
+    SELECT false, count(*)::integer, (count(*) FILTER (WHERE f.outcome_reached))::integer,
+           CASE WHEN count(f.pretest_score)  >= 10 THEN round(avg(f.pretest_score), 2) END,
+           CASE WHEN count(f.posttest_score) >= 10 THEN round(avg(f.posttest_score), 2) END
+      FROM nukyro.session_facts f
+     WHERE f.scenario_version_id = p_version AND f.is_first_session
+    HAVING count(*) >= 10;
+    IF NOT FOUND THEN
+        RETURN QUERY SELECT true, NULL::integer, NULL::integer, NULL::numeric, NULL::numeric;
+    END IF;
+END $$;
+
 COMMIT;
 
 -- ---------------------------------------------------------------------
@@ -636,33 +1015,62 @@ END $$;
 REVOKE ALL ON SCHEMA nukyro FROM PUBLIC;
 GRANT USAGE ON SCHEMA nukyro TO nukyro_api, nukyro_admin, nukyro_jobs, nukyro_analytics;
 
--- API de participantes: contenido de solo lectura; identidad y simulación propias
+-- Ninguna función es ejecutable por PUBLIC; solo se concede lo indicado abajo.
+-- (Los triggers no necesitan EXECUTE al dispararse.)
+REVOKE EXECUTE ON ALL FUNCTIONS IN SCHEMA nukyro FROM PUBLIC;
+
+-- Nada de «GRANT ... ON ALL TABLES»: session_facts, decision_facts y topic_facts no
+-- se conceden a ningún rol de conexión (ADR-007); solo las funciones del owner las tocan.
+
+-- API de participantes: contenido de solo lectura; identidad y simulación con el mínimo
+-- necesario, por columna (defecto 7)
 GRANT SELECT ON
     nukyro.scenarios, nukyro.scenario_versions, nukyro.learning_objectives, nukyro.state_variables,
     nukyro.nodes, nukyro.decision_points, nukyro.options, nukyro.justification_reasons, nukyro.rules,
     nukyro.educational_references, nukyro.decision_references, nukyro.feedback_items,
     nukyro.question_sets, nukyro.questions, nukyro.question_options
 TO nukyro_api;
-GRANT SELECT, INSERT, UPDATE, DELETE ON
-    nukyro.accounts, nukyro.participants, nukyro.document_acceptances, nukyro.sessions,
-    nukyro.session_steps, nukyro.session_decisions, nukyro.session_decision_reasons,
-    nukyro.session_variables, nukyro.session_effects, nukyro.session_events,
-    nukyro.session_event_causes, nukyro.assessment_attempts, nukyro.assessment_answers
+GRANT SELECT ON
+    nukyro.accounts, nukyro.participants, nukyro.sessions, nukyro.session_variables,
+    nukyro.assessment_attempts, nukyro.assessment_answers
 TO nukyro_api;
+GRANT SELECT, INSERT ON
+    nukyro.document_acceptances, nukyro.session_steps, nukyro.session_decisions,
+    nukyro.session_decision_reasons, nukyro.session_effects, nukyro.session_events,
+    nukyro.session_event_causes
+TO nukyro_api;
+GRANT INSERT (id, cognito_sub, email, nickname, newsletter_opt_in, surveys_opt_in, last_login_at, created_at)
+    ON nukyro.accounts TO nukyro_api;
+GRANT UPDATE (email, nickname, newsletter_opt_in, surveys_opt_in, last_login_at) ON nukyro.accounts TO nukyro_api;
+GRANT INSERT ON nukyro.participants TO nukyro_api;
+GRANT UPDATE (account_id, secret_hash, exclude_from_stats, last_activity_at) ON nukyro.participants TO nukyro_api;
+GRANT INSERT (id, participant_id, scenario_version_id, current_node_id, self_reported_first)
+    ON nukyro.sessions TO nukyro_api;
+GRANT UPDATE (current_node_id, outcome_node_id, pretest_completed_at, outcome_reached_at, completed_at,
+              last_activity_at, survey_answered) ON nukyro.sessions TO nukyro_api;
+GRANT INSERT ON nukyro.session_variables, nukyro.assessment_attempts, nukyro.assessment_answers TO nukyro_api;
+GRANT UPDATE (value, updated_at) ON nukyro.session_variables TO nukyro_api;
+GRANT UPDATE (submitted_at, answered_count, correct_count, score) ON nukyro.assessment_attempts TO nukyro_api;
+GRANT UPDATE (option_id, answered_at) ON nukyro.assessment_answers TO nukyro_api;
 GRANT SELECT, INSERT ON nukyro.consent_events TO nukyro_api;
-GRANT INSERT ON nukyro.session_facts, nukyro.decision_facts, nukyro.survey_responses TO nukyro_api;
+GRANT INSERT ON nukyro.survey_responses TO nukyro_api;          -- solo INSERT: ni lee ni modifica
+GRANT EXECUTE ON FUNCTION nukyro.erase_anonymous_participant(uuid) TO nukyro_api;
+GRANT EXECUTE ON FUNCTION nukyro.block_account(uuid, text, timestamptz) TO nukyro_api;
 
 -- Panel de administración: contenido, ARCO y bitácora; datos de participantes
--- solo para atender ARCO (consultar, rectificar, oponerse, bloquear)
+-- solo para atender ARCO (consultar, rectificar, oponerse, bloquear). Sin DELETE de admin_users.
 GRANT SELECT, INSERT, UPDATE, DELETE ON
-    nukyro.admin_users, nukyro.scenarios, nukyro.scenario_versions, nukyro.learning_objectives,
+    nukyro.scenarios, nukyro.scenario_versions, nukyro.learning_objectives,
     nukyro.state_variables, nukyro.nodes, nukyro.decision_points, nukyro.options,
     nukyro.justification_reasons, nukyro.rules, nukyro.educational_references,
     nukyro.decision_references, nukyro.feedback_items, nukyro.question_sets, nukyro.questions,
     nukyro.question_options
 TO nukyro_admin;
+GRANT SELECT, INSERT, UPDATE ON nukyro.admin_users TO nukyro_admin;
 GRANT SELECT, INSERT, UPDATE ON nukyro.arco_requests TO nukyro_admin;
-GRANT SELECT, UPDATE ON nukyro.accounts, nukyro.participants TO nukyro_admin;
+GRANT SELECT ON nukyro.accounts, nukyro.participants TO nukyro_admin;
+GRANT UPDATE (email, nickname, newsletter_opt_in, surveys_opt_in) ON nukyro.accounts TO nukyro_admin;
+GRANT UPDATE (exclude_from_stats) ON nukyro.participants TO nukyro_admin;
 GRANT SELECT, INSERT ON nukyro.consent_events TO nukyro_admin;
 GRANT SELECT ON
     nukyro.document_acceptances, nukyro.sessions, nukyro.session_steps, nukyro.session_decisions,
@@ -671,14 +1079,18 @@ GRANT SELECT ON
     nukyro.assessment_answers
 TO nukyro_admin;
 GRANT SELECT, INSERT ON nukyro.admin_audit_log TO nukyro_admin;
+GRANT EXECUTE ON FUNCTION nukyro.block_account(uuid, text, timestamptz) TO nukyro_admin;
 
--- Tareas programadas (caducidad, purga de cuentas, solicitudes ARCO y bitácora)
-GRANT SELECT ON ALL TABLES IN SCHEMA nukyro TO nukyro_jobs;
-GRANT UPDATE ON nukyro.accounts, nukyro.sessions TO nukyro_jobs;
-GRANT DELETE ON nukyro.participants, nukyro.accounts, nukyro.admin_audit_log, nukyro.arco_requests TO nukyro_jobs;
-GRANT INSERT ON nukyro.session_facts TO nukyro_jobs;
+-- Tareas programadas (caducidad, purga de cuentas, solicitudes ARCO y bitácora): sin
+-- lectura de hechos ni de encuestas, sin DELETE directo de participantes ni cuentas
+-- y sin UPDATE de cuentas ni sesiones; todo eso pasa por las funciones.
+GRANT SELECT, DELETE ON nukyro.admin_audit_log, nukyro.arco_requests TO nukyro_jobs;
+GRANT SELECT (id, status, last_login_at, block_reason, deletion_due_at) ON nukyro.accounts TO nukyro_jobs;
+GRANT EXECUTE ON FUNCTION nukyro.block_account(uuid, text, timestamptz) TO nukyro_jobs;
+GRANT EXECUTE ON FUNCTION nukyro.expire_anonymous_participants(timestamptz) TO nukyro_jobs;
+GRANT EXECUTE ON FUNCTION nukyro.purge_blocked_accounts(timestamptz) TO nukyro_jobs;
 
--- Analítica: solo hechos anónimos y catálogo de versiones
-GRANT SELECT ON nukyro.session_facts, nukyro.decision_facts, nukyro.survey_responses,
-                nukyro.scenarios, nukyro.scenario_versions TO nukyro_analytics;
+-- Analítica: catálogo de versiones y el resumen agregado con umbral de 10; ninguna fila de hechos
+GRANT SELECT ON nukyro.scenarios, nukyro.scenario_versions TO nukyro_analytics;
+GRANT EXECUTE ON FUNCTION nukyro.report_session_summary(uuid) TO nukyro_analytics;
 COMMIT;
