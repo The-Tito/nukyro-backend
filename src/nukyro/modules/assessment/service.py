@@ -16,8 +16,10 @@ def _load(conn: Connection, session, version) -> dict:
     sets: dict = {}
     for r in queries.question_rows(conn, version):
         s = sets.setdefault(
-            r["set_type"], {"id": r["set_id"], "all": r["requires_all_answers"], "questions": []}
+            r["set_type"],
+            {"id": r["set_id"], "all": r["requires_all_answers"], "questions": [], "any": False},
         )
+        s["any"] = s["any"] or r["question_id"] is not None
         if r["question_id"] is not None and scoring.applies(r["requires_node_id"], path, targets):
             s["questions"].append(r)
     return sets
@@ -83,7 +85,11 @@ def _run(engine: Engine, secret: str, session_id: str, kind: str, write: bool, a
         if row is None:
             raise HTTPException(404)
         sets = _load(conn, session, row["version"])
-        if kind not in sets or (kind in scoring.FINAL and kind not in _present(sets)):
+        reached = row["outcome_reached_at"] is not None
+        # Antes del desenlace no se sabe qué causales aplicarán: basta con que haya preguntas
+        if kind not in sets or (
+            kind in scoring.FINAL and not sets[kind]["questions" if reached else "any"]
+        ):
             raise HTTPException(404)
         s = sets[kind]
         attempts = queries.attempts(conn, session)
@@ -96,9 +102,7 @@ def _run(engine: Engine, secret: str, session_id: str, kind: str, write: bool, a
             "set": s,
             "attempt": attempt,
             "done": kind in submitted,
-            "turn": scoring.is_turn(
-                kind, row["outcome_reached_at"] is not None, _present(sets), submitted
-            ),
+            "turn": scoring.is_turn(kind, reached, _present(sets), submitted),
         }
         result = act(context)  # una excepción revierte todo: rechazar no cambia nada
         if write:

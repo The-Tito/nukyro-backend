@@ -8,5 +8,6 @@
 !demo/scenario-becas.json
 !tests/conftest.py
 !tests/recorridos.py
+!tests/evaluaciones.py
 !tests/blackbox
 **/__pycache__

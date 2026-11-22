@@ -1,17 +1,10 @@
 -- Preparación de las pruebas de caja negra de la simulación (T-07). SOLO se usa con el perfil test.
 -- Siembra dos escenarios ficticios con el mismo contenido (variable p entre 0 y 5, valor inicial 3):
---   T07-NEGRO          el pre-test se marca completado al crear la sesión (E4 lo califica; aquí no).
---   T07-NEGRO-PRETEST  el pre-test queda pendiente (RF-016).
+--   T07-NEGRO          las pruebas completan su pre-test (vacío) por la API antes de salir del primer nodo.
+--   T07-NEGRO-PRETEST  las pruebas dejan el pre-test pendiente (RF-016).
 -- Recorrido: intro, INFO, D1 (A: p-2, B: p+1; razones R1 correcta y R2 incorrecta), D2 (C: p-2,
 -- D: p+1), EVR (evento en la ruta) y BUENO. Al salir de D2: evento EV si p<2; MALO si p<=1.
 -- Idempotente. Como owner, tras migrar y sembrar la entrada.
-CREATE OR REPLACE FUNCTION nukyro.t07_negro_mark_pretest() RETURNS trigger
-LANGUAGE plpgsql AS $f$
-BEGIN
-    NEW.pretest_completed_at := NEW.started_at;
-    RETURN NEW;
-END $f$;
-
 DO $$
 DECLARE
     v_key       text;
@@ -81,31 +74,5 @@ BEGIN
         INSERT INTO nukyro.question_sets (version_id, set_type) VALUES (v_version, 'pretest');
         UPDATE nukyro.scenario_versions
            SET status = 'published', published_at = now() WHERE id = v_version;
-
-        IF v_key = 'T07-NEGRO' THEN
-            -- Solo esta versión: la sesión nace con el pre-test completado (no lo hace la API)
-            EXECUTE format(
-                'CREATE TRIGGER trg_t07_negro_pretest BEFORE INSERT ON nukyro.sessions '
-                'FOR EACH ROW WHEN (NEW.scenario_version_id = %L) '
-                'EXECUTE FUNCTION nukyro.t07_negro_mark_pretest()', v_version);
-        END IF;
     END LOOP;
-END $$;
-
--- T-13: DEMO-BECAS (la siembra la publica por P12). Para recorrerla por HTTPS sin E4, las sesiones que se
--- declaran de quien ya jugó (self_reported_first = false) nacen con el pre-test completado; las demás no.
-DO $$
-DECLARE
-    v_version uuid;
-BEGIN
-    SELECT v.id INTO v_version FROM nukyro.scenarios s
-      JOIN nukyro.scenario_versions v ON v.scenario_id = s.id
-     WHERE s.key = 'DEMO-BECAS' AND v.status = 'published';
-    IF v_version IS NOT NULL AND NOT EXISTS (
-        SELECT 1 FROM pg_trigger WHERE tgname = 'trg_t13_becas_pretest') THEN
-        EXECUTE format(
-            'CREATE TRIGGER trg_t13_becas_pretest BEFORE INSERT ON nukyro.sessions '
-            'FOR EACH ROW WHEN (NEW.scenario_version_id = %L AND NOT NEW.self_reported_first) '
-            'EXECUTE FUNCTION nukyro.t07_negro_mark_pretest()', v_version);
-    END IF;
 END $$;
