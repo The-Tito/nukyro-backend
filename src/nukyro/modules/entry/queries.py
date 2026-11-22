@@ -11,7 +11,8 @@ STATE = (
 SESSION_SELECT = f"""
     SELECT s.id, sc.key AS scenario_key, v.title AS scenario_title, v.version_number,
            v.introduction AS scenario_introduction,
-           s.started_at, s.is_first_session, {STATE} AS state,
+           s.started_at, s.pretest_completed_at, s.outcome_reached_at, s.completed_at,
+           s.is_first_session, {STATE} AS state,
            n.key AS node_key, n.node_type AS node_type, n.title AS node_title, n.body AS node_body
       FROM nukyro.sessions s
       JOIN nukyro.scenario_versions v ON v.id = s.scenario_version_id

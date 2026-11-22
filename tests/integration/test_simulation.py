@@ -196,7 +196,9 @@ def test_rf064_cuatro_recorridos_persisten_valores_causas_y_final(
     last = decide(person, sid, "D2", path[1])
     assert last.status_code == 200 and last.json()["replayed"] is False
     view = last.json()["session"]
-    assert view["current_node"]["key"] == final and view["state"] == "outcome_reached"
+    assert (
+        view["current_node"]["key"] == final and view["state"] == "completed"
+    )  # sin evaluaciones finales termina al llegar (T-14)
     assert [x["title"] for x in view["events"]] == (["Título EV"] if event else [])
     values = dict(
         superuser.execute(
@@ -368,6 +370,9 @@ def test_las_respuestas_no_traen_nada_interno(person, superuser, content):
         "option_key",
         "reason_keys",
         "session",
+        "phases",
+        "phase",
+        "at",
     }
     for r in responses:
         assert r.status_code == 200
@@ -926,7 +931,7 @@ def run_path(client, superuser, content, path):
     shown = {
         k: v
         for k, v in view.items()
-        if k not in ("id", "started_at", "is_first_session", "options", "reasons")
+        if k not in ("id", "started_at", "is_first_session", "options", "reasons", "phases")
     }
     return shown, values_of(superuser, sid), causes, steps
 
@@ -941,7 +946,7 @@ def test_determinismo_hasta_el_desenlace_misma_ruta_mismo_resultado(
     two = run_path(person, superuser, content, path)
     three = run_path(other, superuser, content, path)  # otra persona, la misma ruta
     assert one == two == three
-    assert one[0]["state"] == "outcome_reached" and one[0]["current_node"]["type"] == "outcome"
+    assert one[0]["state"] == "completed" and one[0]["current_node"]["type"] == "outcome"
 
 
 def test_rf063_un_secreto_falso_en_decisions_es_401_y_cero_cambios(

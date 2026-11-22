@@ -8,6 +8,7 @@ from fastapi import HTTPException
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import IntegrityError
 
+from nukyro.modules.assessment.phases import phases
 from nukyro.modules.entry import queries
 from nukyro.security import hash_secret, new_secret
 
@@ -63,6 +64,15 @@ def _view(row) -> dict:
         "started_at": row["started_at"].astimezone(UTC),
         "is_first_session": row["is_first_session"],
         "state": row["state"],
+        "phases": [
+            {"phase": name, "at": at.astimezone(UTC)}
+            for name, at in phases(
+                row["started_at"],
+                row["pretest_completed_at"],
+                row["outcome_reached_at"],
+                row["completed_at"],
+            )
+        ],
         "current_node": {
             "key": row["node_key"],
             "type": row["node_type"],
