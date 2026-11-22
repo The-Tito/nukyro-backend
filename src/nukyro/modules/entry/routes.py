@@ -48,11 +48,3 @@ def list_sessions(request: Request, response: Response):
     result = service.list_sessions(engine(request), secret)
     set_cookie(response, secret)
     return result
-
-
-@router.get("/sessions/{session_id}", response_model=SessionOut)
-def get_session(session_id: str, request: Request, response: Response):
-    secret = require_secret(request)
-    result = service.get_session(engine(request), secret, session_id)
-    set_cookie(response, secret)
-    return result

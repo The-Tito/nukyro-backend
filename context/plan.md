@@ -196,6 +196,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 ### T-07 · Motor de simulación
 - Etapa: E3
 - Estado: en_curso
+- Nota: A medias al cierre del 2026-11-22: motor y P5 en feature/T-07-motor, sin fusionar, verify en verde. Falta: pruebas de caja negra de E3, regla de las versiones sin pre-test, auditoría y fusión.
 - Entregable: motor puro, proceso P5, avance y reanudación
 - Criterios de cierre:
   - cada proceso tiene pruebas
