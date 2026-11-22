@@ -38,7 +38,8 @@ def _apply_effects(content, values, effects):
             raise InvalidContent("invalid_effect")
         previous = values[var.key]
         raw = previous + e.value if e.op == "add" else e.value
-        new = max(var.min_value, min(var.max_value, raw))
+        new = raw if var.max_value is None else min(var.max_value, raw)
+        new = new if var.min_value is None else max(var.min_value, new)
         values[var.key] = new
         applied.append(AppliedEffect(var.key, previous, new))
     return values, tuple(applied)
@@ -101,11 +102,11 @@ def decide(content, state, node_key, option_key, reason_keys) -> Result:
     return _result(content, new_state, applied, activations, target, False)
 
 
-def _check_reasons(node: Node, reason_keys) -> bool:
+def _check_reasons(node: Node, reason_keys) -> bool | None:
     if not node.requires_justification:
         if reason_keys:
             raise DomainError("reasons_not_allowed")
-        return True
+        return None
     if not reason_keys:
         raise DomainError("reasons_required")
     if len(set(reason_keys)) != len(reason_keys):
@@ -127,7 +128,7 @@ def advance(content, state, from_node_key) -> Result:
         raise DomainError("node_not_current")
     if node.kind == "decision":
         raise DomainError("decision_pending")
-    if node.kind in ("outcome", "event"):
+    if node.kind == "outcome":  # un evento en la ruta sí avanza
         raise DomainError("not_advanceable")
     activations, target = _leave(content, state, node, state.values, state.decisions, None)
     new_state = State(target, (*state.path, target), state.values, state.decisions)

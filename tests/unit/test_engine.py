@@ -381,3 +381,38 @@ def test_input_not_mutated_and_deterministic():
     r2 = decide(EXAMPLE, st, "D1", "A", ())
     assert st == before_state and EXAMPLE == before_content
     assert r1 == r2
+
+
+def test_un_evento_en_la_ruta_si_avanza():
+    content = Content(
+        nodes={
+            "intro": Node("intro", "intro", default_next_node_key="EV"),
+            "EV": Node("EV", "event", default_next_node_key="FIN"),
+            **_outcomes("FIN"),
+        },
+        variables=_vars(),
+        rules=(),
+    )
+    at_event = advance(content, initial_state(content), "intro").state
+    assert advance(content, at_event, "EV").finished
+
+
+def test_variable_sin_limites_y_decision_sin_justificacion():
+    content = Content(
+        nodes={
+            "intro": Node("intro", "intro", default_next_node_key="D1"),
+            "D1": Node(
+                "D1",
+                "decision",
+                options=(Option("A", (Effect("p", "add", -9),)),),
+                default_next_node_key="FIN",
+            ),
+            **_outcomes("FIN"),
+        },
+        variables={"p": Variable("p", 3, None, None)},  # el esquema admite límites nulos
+        rules=(),
+    )
+    at_decision = advance(content, initial_state(content), "intro").state
+    state = decide(content, at_decision, "D1", "A", ()).state
+    assert state.values["p"] == -6
+    assert state.decisions[0].correct is None

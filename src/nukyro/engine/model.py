@@ -24,8 +24,8 @@ class InvalidContent(DomainError):
 class Variable:
     key: str
     initial: int
-    min_value: int
-    max_value: int
+    min_value: int | None  # None: sin límite, como en el esquema
+    max_value: int | None
 
 
 @dataclass(frozen=True)
@@ -103,7 +103,7 @@ class Decision:
     node_key: str
     option_key: str
     reason_keys: tuple[str, ...]
-    correct: bool
+    correct: bool | None  # None: la decisión no pide justificación
     effects: tuple[AppliedEffect, ...]
     activations: tuple[Activation, ...]
     next_node_key: str | None
