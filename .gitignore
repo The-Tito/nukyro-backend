@@ -10,6 +10,10 @@ id_ed25519
 # Cachés
 __pycache__/
 
+# Estado local de la sesión (D-03)
+/HANDOFF.md
+/HISTORIAL.md
+
 # Sistema y editores
 .DS_Store
 .idea/
