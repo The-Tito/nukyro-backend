@@ -56,3 +56,9 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** validador, comparación del KG contra HEAD (0 nodos y 0 aristas perdidos) y de las vistas contra el KG. Sin auditor ni revisión humana del diff. T-08 sigue abierta.
 - **Decisiones:** pausa registrada en la nota de T-08.
 - **Evidencia:** rama local feature/T-08-plan-backend, KG v1.20.1.
+
+## 2026-11-22: T-08, protocolo instalado y ejecución delegada
+- **Resultado:** el usuario delegó la ejecución (D-24). Quedaron `/fase`, la plantilla, CLAUDE.md, `retomar` y las reglas del validador. Seguro local del límite de 5 horas al 96%.
+- **Revisión:** 12 casos de `context/pruebas/probar_validador.py` y rechazos repetidos sobre una copia del KG real. Sin revisión humana.
+- **Decisiones:** D-24, D-25.
+- **Evidencia:** línea base SQL 52/52 en PostgreSQL 16.15, antes de tocar el esquema.

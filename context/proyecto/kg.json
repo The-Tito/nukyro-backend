@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.20.1",
+    "version": "1.21.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -160,6 +160,11 @@
         "version": "1.20.1",
         "fecha": "2026-11-22",
         "cambio": "T-08 en pausa por indicación del usuario, con lo hecho y lo que falta."
+      },
+      {
+        "version": "1.21.0",
+        "fecha": "2026-11-22",
+        "cambio": "D-24 y D-25: ejecución delegada con límites y reparto de modelos. T-08 retomada; protocolo de fases."
       }
     ]
   },
@@ -310,8 +315,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 478,
-    "aristas": 756,
+    "nodos": 480,
+    "aristas": 766,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 16,
@@ -331,7 +336,7 @@
       "ConjuntoPrincipios": 1,
       "Contacto": 1,
       "Cookie": 2,
-      "Decision": 41,
+      "Decision": 43,
       "Degradado": 2,
       "Descargo": 4,
       "DisenoEvaluacion": 1,
@@ -7215,7 +7220,7 @@
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-08 ·",
-      "nota": "En pausa desde el 2026-11-22 por indicación del usuario: se retoma en un chat nuevo. Hecho: registro en el KG y vistas, sin revisar ni auditar. Falta: protocolo (/fase, plantilla, CLAUDE.md, retomar), reglas del validador con sus pruebas, auditoría y revisión del usuario."
+      "nota": "Retomada el 2026-11-22 con D-24. Protocolo, reglas del validador y sus pruebas en curso; la revisión humana queda pendiente."
     },
     {
       "id": "T-09",
@@ -7720,6 +7725,41 @@
         {
           "doc": "DECISION-USUARIO",
           "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-24",
+      "tipo": "Decision",
+      "nombre": "Ejecución delegada del plan",
+      "texto": "En ausencia del usuario, el asistente trabaja hasta terminar el plan: pasa las Puertas A y B y cierra tareas con auditor y evidencia, instala las dependencias del plan, usa Docker local, hace commits, push de ramas, PR y fusiones según D-11. Toda puerta así pasada queda como «delegada», con revisión humana pendiente. No delega conflictos, textos legales, datos personales o su conservación, alcance, gasto, releases a main ni acciones irreversibles: eso queda bloqueado y se reporta. Al 96% del límite de 5 horas se ejecuta /cerrar.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-24 |",
+      "cita": "no estare para aprobar, verificar o hacer prs, tu haras todo hasta finalizar",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ]
+    },
+    {
+      "id": "D-25",
+      "tipo": "Decision",
+      "nombre": "Reparto de modelos",
+      "texto": "Opus dirige, decide el diseño y hace la auditoría de cada fase; Sonnet programa y prueba; Haiku lee y resume. Ningún agente fusiona ni hace push: lo hace el director tras repetir la verificación.",
+      "quien": "asistente (declarada)",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-25 |",
+      "fuente": [
+        {
+          "doc": "D-24",
+          "seccion": "el usuario pidió usar varios modelos y dejó el reparto al asistente"
         }
       ]
     }
@@ -11523,6 +11563,56 @@
       "origen": "D-17",
       "relacion": "afecta",
       "destino": "CA-03"
+    },
+    {
+      "origen": "D-24",
+      "relacion": "afecta",
+      "destino": "E2"
+    },
+    {
+      "origen": "D-24",
+      "relacion": "afecta",
+      "destino": "E3"
+    },
+    {
+      "origen": "D-24",
+      "relacion": "afecta",
+      "destino": "E4"
+    },
+    {
+      "origen": "D-24",
+      "relacion": "afecta",
+      "destino": "E5"
+    },
+    {
+      "origen": "D-24",
+      "relacion": "afecta",
+      "destino": "E6"
+    },
+    {
+      "origen": "D-24",
+      "relacion": "afecta",
+      "destino": "E7"
+    },
+    {
+      "origen": "D-24",
+      "relacion": "afecta",
+      "destino": "E8"
+    },
+    {
+      "origen": "D-24",
+      "relacion": "modifica",
+      "destino": "D-22"
+    },
+    {
+      "origen": "D-24",
+      "relacion": "modifica",
+      "destino": "D-23"
+    },
+    {
+      "origen": "D-25",
+      "relacion": "basado_en",
+      "destino": "D-24"
     }
   ],
   "conflictos": [

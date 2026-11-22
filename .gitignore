@@ -38,3 +38,6 @@ __pycache__/
 *.out
 *.toc
 *.synctex.gz
+
+# Seguro del límite de uso (local)
+/.claude/seguro/

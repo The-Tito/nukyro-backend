@@ -1,6 +1,6 @@
 # Plan: Nukyro
 
-Vista del KG: si difieren, manda el KG. E0 y E1 aprobadas con D-12; E2 a E8, con D-23 (2026-11-22).
+Vista del KG: si difieren, manda el KG. E0 y E1 aprobadas con D-12; E2 a E8, con D-23 y ejecución delegada por D-24 (2026-11-22).
 
 ## Objetivo y límites
 
@@ -27,7 +27,7 @@ E1 va aparte y no bloquea el backend local. Cada RF tiene una sola fase principa
 
 ## Control de cada fase (D-22)
 
-El comando `/fase` y las reglas del validador **todavía no existen**: se instalan al completar T-08.
+Comando `/fase`; lo comprueba `context/validar_kg.py`. Mientras rija D-24 las puertas se registran como delegadas, con revisión humana pendiente.
 
 1. **Reafirmar:** comprobar con evidencia que se sigue en el camino correcto y dar un dictamen.
 2. **Planear:** criterios por RF, contrato, riesgos y permisos en `context/etapas/etapa-N.md`.
@@ -124,7 +124,7 @@ Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que 
 ### T-08 · Activar el plan del backend
 - Etapa: E2
 - Estado: en_curso
-- Nota: En pausa desde el 2026-11-22 por indicación del usuario: se retoma en un chat nuevo. Hecho: registro en el KG y vistas, sin revisar ni auditar. Falta: protocolo (/fase, plantilla, CLAUDE.md, retomar), reglas del validador con sus pruebas, auditoría y revisión del usuario.
+- Nota: Retomada el 2026-11-22 con D-24. Protocolo, reglas del validador y sus pruebas en curso; la revisión humana queda pendiente.
 - Entregable: KG, vistas, protocolo por fase y validador
 - Criterios de cierre:
   - el KG registra D-15 a D-23, E2 a E8, T-05 a T-28 y una fase por RF
