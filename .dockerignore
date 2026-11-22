@@ -1,0 +1,9 @@
+*
+!pyproject.toml
+!uv.lock
+!src
+!migrations
+!alembic.ini
+!tests/conftest.py
+!tests/blackbox
+**/__pycache__

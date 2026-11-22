@@ -1,0 +1,99 @@
+# Entorno local desechable de Nukyro (D-15). Los secretos NO viven aquí: vienen del entorno o de
+# un .env ignorado por git (scripts/gen-env). Nombre del proyecto: NUKYRO_PROJECT.
+name: ${NUKYRO_PROJECT:-nukyro}
+
+x-db-env: &db-env
+  NUKYRO_DB_HOST: db
+  NUKYRO_DB_NAME: ${NUKYRO_DB_NAME:-nukyro}
+
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_PASSWORD: ${NUKYRO_DB_SUPERUSER_PASSWORD:?falta, ver scripts/gen-env}
+      POSTGRES_DB: ${NUKYRO_DB_NAME:-nukyro}
+      NUKYRO_DB_OWNER_USER: ${NUKYRO_DB_OWNER_USER:-nukyro_owner}
+      NUKYRO_DB_OWNER_PASSWORD: ${NUKYRO_DB_OWNER_PASSWORD:?falta}
+      NUKYRO_DB_API_USER: ${NUKYRO_DB_API_USER:-nukyro_api_app}
+      NUKYRO_DB_API_PASSWORD: ${NUKYRO_DB_API_PASSWORD:?falta}
+      NUKYRO_DB_ADMIN_USER: ${NUKYRO_DB_ADMIN_USER:-nukyro_admin_app}
+      NUKYRO_DB_ADMIN_PASSWORD: ${NUKYRO_DB_ADMIN_PASSWORD:?falta}
+      NUKYRO_DB_JOBS_USER: ${NUKYRO_DB_JOBS_USER:-nukyro_jobs_app}
+      NUKYRO_DB_JOBS_PASSWORD: ${NUKYRO_DB_JOBS_PASSWORD:?falta}
+      NUKYRO_DB_ANALYTICS_USER: ${NUKYRO_DB_ANALYTICS_USER:-nukyro_analytics_app}
+      NUKYRO_DB_ANALYTICS_PASSWORD: ${NUKYRO_DB_ANALYTICS_PASSWORD:?falta}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./compose/db-init.sh:/docker-entrypoint-initdb.d/01-roles.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d $${POSTGRES_DB}"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  migrate:
+    build: .
+    command: ["alembic", "upgrade", "head"]
+    restart: "no"
+    environment:
+      <<: *db-env
+      NUKYRO_DB_OWNER_USER: ${NUKYRO_DB_OWNER_USER:-nukyro_owner}
+      NUKYRO_DB_OWNER_PASSWORD: ${NUKYRO_DB_OWNER_PASSWORD:?falta}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: .
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      <<: *db-env
+      NUKYRO_DB_API_USER: ${NUKYRO_DB_API_USER:-nukyro_api_app}
+      NUKYRO_DB_API_PASSWORD: ${NUKYRO_DB_API_PASSWORD:?falta}
+      NUKYRO_DB_ADMIN_USER: ${NUKYRO_DB_ADMIN_USER:-nukyro_admin_app}
+      NUKYRO_DB_ADMIN_PASSWORD: ${NUKYRO_DB_ADMIN_PASSWORD:?falta}
+      NUKYRO_DB_JOBS_USER: ${NUKYRO_DB_JOBS_USER:-nukyro_jobs_app}
+      NUKYRO_DB_JOBS_PASSWORD: ${NUKYRO_DB_JOBS_PASSWORD:?falta}
+      NUKYRO_DB_ANALYTICS_USER: ${NUKYRO_DB_ANALYTICS_USER:-nukyro_analytics_app}
+      NUKYRO_DB_ANALYTICS_PASSWORD: ${NUKYRO_DB_ANALYTICS_PASSWORD:?falta}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
+      interval: 3s
+      timeout: 5s
+      retries: 20
+
+  proxy:
+    image: caddy:2-alpine
+    ports:
+      # Solo el equipo local; el puerto se cambia con NUKYRO_HTTPS_BIND (p. ej. 127.0.0.1:9443)
+      - "${NUKYRO_HTTPS_BIND:-127.0.0.1:8443}:443"
+    volumes:
+      - ./compose/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+    depends_on:
+      api:
+        condition: service_healthy
+
+  # Pruebas de caja negra: imagen aparte, sin src/. Se lanza con --profile test.
+  blackbox:
+    profiles: [test]
+    build:
+      context: .
+      dockerfile: tests/blackbox/Dockerfile
+    environment:
+      NUKYRO_BASE_URL: https://proxy
+      NUKYRO_CA_FILE: /ca/caddy/pki/authorities/local/root.crt
+    volumes:
+      - caddy_data:/ca:ro
+    depends_on:
+      proxy:
+        condition: service_started
+
+volumes:
+  pgdata:
+  caddy_data:

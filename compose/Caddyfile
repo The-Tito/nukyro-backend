@@ -1,0 +1,10 @@
+{
+	# CA interna de Caddy: el cliente de pruebas la valida con su certificado raíz
+	local_certs
+	auto_https disable_redirects
+}
+
+proxy, localhost {
+	tls internal
+	reverse_proxy api:8000
+}

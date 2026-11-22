@@ -1,0 +1,31 @@
+[project]
+name = "nukyro"
+version = "0.1.0"
+description = "Backend de Nukyro, simulador educativo de decisiones éticas"
+requires-python = ">=3.12,<3.13"
+# Versiones exactas (D-15). PyJWT llega en E5.
+dependencies = [
+    "fastapi==0.165.0",
+    "uvicorn==0.54.0",
+    "sqlalchemy==2.1.9",
+    "alembic==1.20.1",
+    "psycopg[binary]==3.3.9",
+]
+
+[dependency-groups]
+dev = ["pytest==9.2.0", "httpx==0.28.1", "ruff==0.17.6"]
+
+[tool.uv]
+package = false  # aplicación, no biblioteca: src/ se usa con PYTHONPATH
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+addopts = "-p no:cacheprovider"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

@@ -1,0 +1,56 @@
+"""Configuración desde variables de entorno. Falla al arrancar si falta alguna."""
+
+import os
+from dataclasses import dataclass
+
+# Rol de conexión de la aplicación -> rol de grupo de la base (bd/schema.sql)
+ROLES = ("api", "admin", "jobs", "analytics")
+
+
+@dataclass(frozen=True)
+class RoleLogin:
+    user: str
+    password: str = ""
+
+    def __repr__(self) -> str:  # nunca imprime el secreto
+        return f"RoleLogin(user={self.user!r})"
+
+
+@dataclass(frozen=True)
+class Settings:
+    host: str
+    port: int
+    dbname: str
+    logins: dict[str, RoleLogin]
+
+
+def _required(env: dict[str, str], name: str) -> str:
+    value = env.get(name, "")
+    if not value:
+        raise RuntimeError(f"Falta la variable de entorno {name}")
+    return value
+
+
+def _load(env: dict[str, str], roles: tuple[str, ...]) -> Settings:
+    logins = {}
+    for role in roles:
+        prefix = f"NUKYRO_DB_{role.upper()}"
+        logins[role] = RoleLogin(
+            _required(env, f"{prefix}_USER"), _required(env, f"{prefix}_PASSWORD")
+        )
+    return Settings(
+        host=_required(env, "NUKYRO_DB_HOST"),
+        port=int(env.get("NUKYRO_DB_PORT") or 5432),
+        dbname=_required(env, "NUKYRO_DB_NAME"),
+        logins=logins,
+    )
+
+
+def load_settings(env: dict[str, str] | None = None) -> Settings:
+    """Los cuatro usuarios de la API. El owner del esquema nunca llega aquí."""
+    return _load(os.environ if env is None else env, ROLES)
+
+
+def load_owner_settings(env: dict[str, str] | None = None) -> Settings:
+    """Solo para Alembic: un único login, el owner del esquema."""
+    return _load(os.environ if env is None else env, ("owner",))
