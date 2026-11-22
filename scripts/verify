@@ -4,8 +4,6 @@
 #
 # Usa un proyecto Compose único por ejecución y al terminar borra SOLO lo suyo (contenedores,
 # red, volúmenes e imágenes de ese proyecto). Requiere docker, uv y python3.
-#
-# NUKYRO_SQL_RUNNER cambia el ejecutor de las pruebas SQL (por omisión bd/pruebas/ejecutar.sh).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -14,7 +12,7 @@ TMP="$(mktemp -d)"
 ENV_FILE="$TMP/env"
 STEP="preparación"
 COUNTS=""
-SQL_RUNNER="${NUKYRO_SQL_RUNNER:-bd/pruebas/ejecutar.sh}"
+SQL_RUNNER="bd/pruebas/ejecutar.sh"  # fijo: sustituirlo dejaría verify en verde sin las pruebas reales
 
 # Puerto aleatorio en 127.0.0.1 para el proxy; la base se publica así solo con compose.test.yaml
 export NUKYRO_PROJECT="$PROJECT" NUKYRO_HTTPS_BIND="127.0.0.1:"
