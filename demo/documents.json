@@ -1,0 +1,32 @@
+{
+  "demo": true,
+  "privacy_notice": {
+    "marker": "DEMOSTRACIÓN, sin validez legal",
+    "version": "DEMO-1",
+    "controller": "DEMOSTRACIÓN, sin validez legal: Responsable Ficticio S. A. (no existe)",
+    "categories": [
+      "DEMOSTRACIÓN, sin validez legal: identificador aleatorio de navegador",
+      "DEMOSTRACIÓN, sin validez legal: decisiones tomadas en el escenario"
+    ],
+    "purposes": [
+      "DEMOSTRACIÓN, sin validez legal: operar el simulador de ejemplo",
+      "DEMOSTRACIÓN, sin validez legal: estadísticas agregadas de ejemplo"
+    ],
+    "retention": "DEMOSTRACIÓN, sin validez legal: plazo ficticio de 90 días",
+    "contact": "privacidad@example.test"
+  },
+  "documents": [
+    {
+      "type": "privacy_notice",
+      "version": "DEMO-1",
+      "title": "Aviso de privacidad de demostración",
+      "text": "DEMOSTRACIÓN, sin validez legal. Texto ficticio que solo prueba el flujo de aceptación."
+    },
+    {
+      "type": "terms",
+      "version": "DEMO-1",
+      "title": "Términos de uso de demostración",
+      "text": "DEMOSTRACIÓN, sin validez legal. Texto ficticio que solo prueba el flujo de aceptación."
+    }
+  ]
+}

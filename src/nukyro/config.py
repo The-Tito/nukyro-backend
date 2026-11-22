@@ -54,3 +54,17 @@ def load_settings(env: dict[str, str] | None = None) -> Settings:
 def load_owner_settings(env: dict[str, str] | None = None) -> Settings:
     """Solo para Alembic: un único login, el owner del esquema."""
     return _load(os.environ if env is None else env, ("owner",))
+
+
+@dataclass(frozen=True)
+class WebSettings:
+    origin: str  # Origin exacto que se acepta en las escrituras (CSRF)
+    documents_path: str  # JSON con el aviso y los documentos vigentes
+
+
+def load_web_settings(env: dict[str, str] | None = None) -> WebSettings:
+    env = os.environ if env is None else env
+    return WebSettings(
+        origin=_required(env, "NUKYRO_ORIGIN"),
+        documents_path=env.get("NUKYRO_DOCUMENTS_PATH") or "/app/demo/documents.json",
+    )

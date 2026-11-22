@@ -89,6 +89,8 @@ sql_pass="$(sed -nE 's/^-- [a-z]+: ([0-9]+) PASS.*/\1/p' "$TMP/sql.out" | awk '{
 COUNTS="${COUNTS}sql=$sql_pass "
 
 run_pytest unit uv run --frozen pytest tests/unit
+step "API real para las pruebas de integración"
+"${COMPOSE[@]}" up -d --build proxy >/dev/null
 run_pytest integration uv run --frozen pytest tests/integration
 run_pytest blackbox "${COMPOSE[@]}" --profile test run --rm -T --build blackbox
 

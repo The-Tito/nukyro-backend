@@ -43,6 +43,23 @@ services:
       db:
         condition: service_healthy
 
+  # Escenario y documentos ficticios de la entrada (T-10); como owner, tras migrar. No es migración.
+  seed:
+    image: postgres:16
+    restart: "no"
+    entrypoint: ["sh", "-c"]
+    command:
+      - psql -v ON_ERROR_STOP=1 -h db -U "$$NUKYRO_DB_OWNER_USER" -d "$$NUKYRO_DB_NAME" -f /seed/entry-seed.sql
+    environment:
+      NUKYRO_DB_NAME: ${NUKYRO_DB_NAME:-nukyro}
+      NUKYRO_DB_OWNER_USER: ${NUKYRO_DB_OWNER_USER:-nukyro_owner}
+      PGPASSWORD: ${NUKYRO_DB_OWNER_PASSWORD:?falta}
+    volumes:
+      - ./demo/entry-seed.sql:/seed/entry-seed.sql:ro
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
   api:
     build: .
     read_only: true
@@ -50,6 +67,8 @@ services:
     security_opt: ["no-new-privileges:true"]
     environment:
       <<: *db-env
+      # Origin exacto que acepta la API en las escrituras; con el proxy local es https://proxy
+      NUKYRO_ORIGIN: ${NUKYRO_ORIGIN:-https://proxy}
       NUKYRO_DB_API_USER: ${NUKYRO_DB_API_USER:-nukyro_api_app}
       NUKYRO_DB_API_PASSWORD: ${NUKYRO_DB_API_PASSWORD:?falta}
       NUKYRO_DB_ADMIN_USER: ${NUKYRO_DB_ADMIN_USER:-nukyro_admin_app}
@@ -59,7 +78,7 @@ services:
       NUKYRO_DB_ANALYTICS_USER: ${NUKYRO_DB_ANALYTICS_USER:-nukyro_analytics_app}
       NUKYRO_DB_ANALYTICS_PASSWORD: ${NUKYRO_DB_ANALYTICS_PASSWORD:?falta}
     depends_on:
-      migrate:
+      seed:
         condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
@@ -88,6 +107,7 @@ services:
     environment:
       NUKYRO_BASE_URL: https://proxy
       NUKYRO_CA_FILE: /ca/caddy/pki/authorities/local/root.crt
+      NUKYRO_ORIGIN: https://proxy
     volumes:
       - caddy_data:/ca:ro
     depends_on:
