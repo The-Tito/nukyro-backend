@@ -182,7 +182,8 @@ def _run(engine: Engine, secret: str, session_id: str, act):
         raise HTTPException(404) from None
     try:
         with engine.begin() as conn:
-            participant = entry_queries.lock_participant(conn, hash_secret(secret))
+            # El UPDATE bloquea al participante antes que la sesión y renueva su actividad (RF-080)
+            participant = entry_queries.touch_participant(conn, hash_secret(secret))
             if participant is None:
                 raise HTTPException(401)
             row = queries.lock_session(conn, participant, session)

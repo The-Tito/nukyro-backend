@@ -501,3 +501,17 @@ def test_un_fallo_en_cada_escritura_deja_cero_cambios(
     assert hits, f"{name} no se ejecutó"
     monkeypatch.undo()
     assert snapshot(superuser, sid) == base
+
+
+def test_rf080_avanzar_renueva_la_actividad_del_participante(person, superuser, content):
+    sid = new_session(person, content, superuser)
+    owner = superuser.execute(
+        "UPDATE nukyro.participants SET last_activity_at = now() - interval '40 days' "
+        "WHERE id = (SELECT participant_id FROM nukyro.sessions WHERE id = %s) RETURNING id",
+        (sid,),
+    ).fetchone()[0]
+    assert advance(person, sid, "intro").status_code == 200
+    assert superuser.execute(
+        "SELECT last_activity_at > now() - interval '1 day' FROM nukyro.participants WHERE id = %s",
+        (owner,),
+    ).fetchone() == (True,)
