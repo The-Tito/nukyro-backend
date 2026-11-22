@@ -62,7 +62,7 @@ Al final el usuario hace el recorrido manual y el auditor revisa el total.
 
 ## Defectos por corregir
 
-Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que falle antes del arreglo.
+Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`); el 2 sigue abierto para la encuesta (T-16) y el 9 para la vinculación (T-18). El 1 y del 10 al 13: detectados por lectura, sin reproducir (S-03).
 
 | # | Defecto | Arreglo propuesto | Tareas |
 |---|---|---|---|
@@ -133,7 +133,7 @@ Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que 
 
 ### T-09 · Decisiones de base y esquema corregido
 - Etapa: E2
-- Estado: pendiente
+- Estado: en_curso
 - Entregable: ADR-007, ADR-008, esquema, modelo y pruebas SQL
 - Criterios de cierre:
   - ADR-007 reemplaza a ADR-004 y declara el riesgo residual (D-19 a D-21)
@@ -150,7 +150,7 @@ Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que 
 
 ### T-05 · Base de la API y migración inicial
 - Etapa: E2
-- Estado: pendiente
+- Estado: en_curso
 - Entregable: FastAPI, Compose con TLS local, Alembic y roles
 - Criterios de cierre:
   - `alembic upgrade head` crea el esquema en PostgreSQL 16 vacío, con owner sin superusuario
@@ -160,7 +160,7 @@ Detectados por lectura, sin reproducir (S-03). Cada uno necesita una prueba que 
 
 ### T-06 · Revisiones automáticas del backend
 - Etapa: E2
-- Estado: pendiente
+- Estado: en_curso
 - Entregable: CI, hooks de Python y `scripts/verify`
 - Criterios de cierre:
   - CI corre las pruebas SQL y de la API

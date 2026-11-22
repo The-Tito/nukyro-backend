@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.23.0",
+    "version": "1.25.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -175,6 +175,16 @@
         "version": "1.23.0",
         "fecha": "2026-11-22",
         "cambio": "T-08 cerrada por delegación (D-24) con EV-01. D-24 lleva la cita completa y separa la interpretación."
+      },
+      {
+        "version": "1.24.0",
+        "fecha": "2026-11-22",
+        "cambio": "ADR-007 reemplaza a ADR-004; ADR-008 fija la API. T-09, T-05 y T-06 en curso."
+      },
+      {
+        "version": "1.25.0",
+        "fecha": "2026-11-22",
+        "cambio": "Modelo v0.3: defectos 2 a 9 reproducidos y corregidos en la base (T-09)."
       }
     ]
   },
@@ -325,8 +335,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 481,
-    "aristas": 767,
+    "nodos": 483,
+    "aristas": 790,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 16,
@@ -334,7 +344,7 @@
       "pendiente": 5
     },
     "por_tipo": {
-      "ADR": 6,
+      "ADR": 8,
       "Aplicacion": 2,
       "Arquitectura": 1,
       "Artefacto": 4,
@@ -6055,7 +6065,7 @@
       "id": "ADR-004",
       "tipo": "ADR",
       "nombre": "Estadísticas anónimas desde el diseño",
-      "estado": "Aceptada",
+      "estado": "Reemplazada por ADR-007",
       "fecha": "2026-11-01",
       "archivo": "context/adr/ADR-004-estadisticas-anonimas.md",
       "fuente": [
@@ -6064,7 +6074,7 @@
           "seccion": "2026-11-01"
         }
       ],
-      "nota": "Superado por D-19 a D-21 en cuándo y qué se copia. Sigue Aceptada solo hasta que ADR-007 lo reemplace (T-09): no implementar su §2."
+      "nota": "Reemplazada por ADR-007: no implementar su §2."
     },
     {
       "id": "ADR-005",
@@ -6118,16 +6128,16 @@
       "id": "MODELO-DATOS",
       "tipo": "Artefacto",
       "nombre": "Modelo de datos de Nukyro",
-      "version": "0.2",
-      "estado": "Aprobado",
+      "version": "0.3",
+      "estado": "Cambios delegados (D-24), sin revisión humana",
       "archivo": "bd/modelo-datos.md",
       "ddl": "bd/schema.sql",
       "seed": "bd/seed-prueba.sql",
       "pruebas": "bd/pruebas/pruebas-reglas.sql",
       "plan": "context/planes/plan-modelo-datos.md",
-      "fecha": "2026-11-01",
-      "resumen": "35 tablas en 5 dominios (contenido y administración 16, identidad 5 con consent_events, simulación 10, estadísticas 3, bitácora 1), esquema nukyro, PostgreSQL 16. Llaves compuestas (version_id, id); referencias internas del contenido DEFERRABLE; triggers de inmutabilidad; roles nukyro_api, nukyro_admin, nukyro_jobs y nukyro_analytics.",
-      "validacion": "DDL ejecutado en PostgreSQL 16.15 (Docker); 52/52 pruebas de reglas pasan. Diagramas Mermaid confirmados por el usuario. Pruebas técnicas S1–S5 (RDS, Cognito, Alembic, concurrencia, errores diferidos) dadas por validadas por el equipo con base en otros proyectos con la misma configuración y créditos.",
+      "fecha": "2026-11-22",
+      "resumen": "36 tablas en 5 dominios (contenido y administración 16, identidad 5 con consent_events, simulación 10, estadísticas 4, bitácora 1), esquema nukyro, PostgreSQL 16. Llaves compuestas (version_id, id); referencias internas del contenido DEFERRABLE; triggers de inmutabilidad; roles nukyro_api, nukyro_admin, nukyro_jobs y nukyro_analytics.",
+      "validacion": "v0.3 ejecutada en PostgreSQL 16 (Docker) como owner sin superusuario: 239 comprobaciones (57 de reglas, 167 de defectos, 15 de concurrencia). S1 y S2 sin probar (S-04).",
       "pendientes": [
         {
           "n": 1,
@@ -6147,7 +6157,7 @@
             "T-10",
             "T-20"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09); la encuesta sigue pendiente (T-16, CONF-21)"
         },
         {
           "n": 3,
@@ -6156,7 +6166,7 @@
           "tareas": [
             "T-09"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09)"
         },
         {
           "n": 4,
@@ -6165,7 +6175,7 @@
           "tareas": [
             "T-09"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09)"
         },
         {
           "n": 5,
@@ -6174,7 +6184,7 @@
           "tareas": [
             "T-09"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09)"
         },
         {
           "n": 6,
@@ -6184,7 +6194,7 @@
             "T-09",
             "T-12"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09)"
         },
         {
           "n": 7,
@@ -6193,7 +6203,7 @@
           "tareas": [
             "T-09"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09)"
         },
         {
           "n": 8,
@@ -6203,7 +6213,7 @@
             "T-09",
             "T-21"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09)"
         },
         {
           "n": 9,
@@ -6213,7 +6223,7 @@
             "T-10",
             "T-18"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido en la base (T-09); falta la vinculación (T-18)"
         },
         {
           "n": 10,
@@ -6781,7 +6791,7 @@
       "tipo": "Tarea",
       "nombre": "Base de la API y migración inicial",
       "texto": "FastAPI, Compose con TLS local, Alembic y roles",
-      "estado": "pendiente",
+      "estado": "en_curso",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-05 ·",
@@ -6803,7 +6813,7 @@
       "tipo": "Tarea",
       "nombre": "Revisiones automáticas del backend",
       "texto": "CI, hooks de Python y `scripts/verify`",
-      "estado": "pendiente",
+      "estado": "en_curso",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-06 ·",
@@ -7263,7 +7273,7 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "en_curso",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-09 ·"
@@ -7798,6 +7808,36 @@
           "seccion": "verificación delegada"
         }
       ]
+    },
+    {
+      "id": "ADR-007",
+      "tipo": "ADR",
+      "nombre": "Copia anónima solo al borrar o bloquear",
+      "estado": "Aceptada",
+      "fecha": "2026-11-22",
+      "archivo": "context/adr/ADR-007-copia-anonima-al-cerrar.md",
+      "fuente": [
+        {
+          "doc": "D-24",
+          "seccion": "Puerta A de E2, delegada"
+        }
+      ],
+      "nota": "Aceptada por delegación (D-24), sin revisión humana."
+    },
+    {
+      "id": "ADR-008",
+      "tipo": "ADR",
+      "nombre": "Estructura y seguridad de la API",
+      "estado": "Aceptada",
+      "fecha": "2026-11-22",
+      "archivo": "context/adr/ADR-008-estructura-seguridad-api.md",
+      "fuente": [
+        {
+          "doc": "D-24",
+          "seccion": "Puerta A de E2, delegada"
+        }
+      ],
+      "nota": "Aceptada por delegación (D-24), sin revisión humana."
     }
   ],
   "aristas": [
@@ -11654,6 +11694,121 @@
       "origen": "EV-01",
       "relacion": "respalda",
       "destino": "T-08"
+    },
+    {
+      "origen": "ADR-007",
+      "relacion": "afecta",
+      "destino": "RF-070"
+    },
+    {
+      "origen": "ADR-007",
+      "relacion": "afecta",
+      "destino": "RF-072"
+    },
+    {
+      "origen": "ADR-007",
+      "relacion": "afecta",
+      "destino": "RF-078"
+    },
+    {
+      "origen": "ADR-007",
+      "relacion": "afecta",
+      "destino": "RF-079"
+    },
+    {
+      "origen": "ADR-007",
+      "relacion": "afecta",
+      "destino": "RF-080"
+    },
+    {
+      "origen": "ADR-007",
+      "relacion": "afecta",
+      "destino": "RF-085"
+    },
+    {
+      "origen": "ADR-007",
+      "relacion": "afecta",
+      "destino": "RN-20"
+    },
+    {
+      "origen": "ADR-007",
+      "relacion": "concreta",
+      "destino": "D-19"
+    },
+    {
+      "origen": "ADR-007",
+      "relacion": "concreta",
+      "destino": "D-20"
+    },
+    {
+      "origen": "ADR-007",
+      "relacion": "concreta",
+      "destino": "D-21"
+    },
+    {
+      "origen": "T-09",
+      "relacion": "produce",
+      "destino": "ADR-007"
+    },
+    {
+      "origen": "ADR-008",
+      "relacion": "afecta",
+      "destino": "RF-062"
+    },
+    {
+      "origen": "ADR-008",
+      "relacion": "afecta",
+      "destino": "RF-063"
+    },
+    {
+      "origen": "ADR-008",
+      "relacion": "afecta",
+      "destino": "RIS-01"
+    },
+    {
+      "origen": "ADR-008",
+      "relacion": "afecta",
+      "destino": "RNF-03"
+    },
+    {
+      "origen": "ADR-008",
+      "relacion": "afecta",
+      "destino": "RNF-04"
+    },
+    {
+      "origen": "ADR-008",
+      "relacion": "afecta",
+      "destino": "RNF-13"
+    },
+    {
+      "origen": "ADR-008",
+      "relacion": "afecta",
+      "destino": "RNF-15"
+    },
+    {
+      "origen": "ADR-008",
+      "relacion": "afecta",
+      "destino": "RNF-17"
+    },
+    {
+      "origen": "ADR-008",
+      "relacion": "concreta",
+      "destino": "D-15"
+    },
+    {
+      "origen": "T-09",
+      "relacion": "produce",
+      "destino": "ADR-008"
+    },
+    {
+      "origen": "ADR-007",
+      "relacion": "reemplaza",
+      "destino": "ADR-004"
+    },
+    {
+      "origen": "ADR-008",
+      "relacion": "concreta",
+      "destino": "ADR-005"
     }
   ],
   "conflictos": [
