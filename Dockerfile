@@ -16,7 +16,7 @@ COPY --from=builder /app/.venv /app/.venv
 COPY src ./src
 COPY migrations ./migrations
 COPY alembic.ini ./
-COPY demo/documents.json ./demo/documents.json
+COPY demo/documents.json demo/scenario-becas.json ./demo/
 USER 10001
 EXPOSE 8000
 CMD ["uvicorn", "nukyro.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log"]

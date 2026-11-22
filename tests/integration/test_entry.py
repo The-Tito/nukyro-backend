@@ -12,7 +12,7 @@ import pytest
 
 from .conftest import ACCEPT, WRITE, compose, connect, participant_id, secret_of
 
-SCENARIO = {"scenario_key": "DEMO-ENTRADA", "self_reported_first": True}
+SCENARIO = {"scenario_key": "DEMO-BECAS", "self_reported_first": True}
 CONTENT = (
     "scenarios",
     "scenario_versions",
@@ -226,7 +226,7 @@ def test_rf001_la_sesion_nace_con_variables_y_primer_paso(person, superuser):
     assert steps == [(1, "intro")]
     assert superuser.execute(
         "SELECT count(*) FROM nukyro.session_variables WHERE session_id = %s", (sid,)
-    ).fetchone() == (1,)
+    ).fetchone() == (3,)
     assert superuser.execute(
         "SELECT p.last_activity_at >= p.created_at FROM nukyro.participants p "
         "JOIN nukyro.sessions s ON s.participant_id = p.id WHERE s.id = %s",
@@ -250,7 +250,7 @@ def test_rf071_el_escenario_sembrado_es_demo_y_la_api_no_escribe_contenido(
 ):
     row = superuser.execute(
         "SELECT s.title, v.title, v.status FROM nukyro.scenarios s "
-        "JOIN nukyro.scenario_versions v ON v.scenario_id = s.id WHERE s.key = 'DEMO-ENTRADA'"
+        "JOIN nukyro.scenario_versions v ON v.scenario_id = s.id WHERE s.key = 'DEMO-BECAS'"
     ).fetchone()
     assert "DEMOSTRACIÓN" in row[0] and "DEMOSTRACIÓN" in row[1] and row[2] == "published"
     api_password = secrets["NUKYRO_DB_API_PASSWORD"]

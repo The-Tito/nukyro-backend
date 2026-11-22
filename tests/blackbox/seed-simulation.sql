@@ -91,3 +91,21 @@ BEGIN
         END IF;
     END LOOP;
 END $$;
+
+-- T-13: DEMO-BECAS (la siembra la publica por P12). Para recorrerla por HTTPS sin E4, las sesiones que se
+-- declaran de quien ya jugó (self_reported_first = false) nacen con el pre-test completado; las demás no.
+DO $$
+DECLARE
+    v_version uuid;
+BEGIN
+    SELECT v.id INTO v_version FROM nukyro.scenarios s
+      JOIN nukyro.scenario_versions v ON v.scenario_id = s.id
+     WHERE s.key = 'DEMO-BECAS' AND v.status = 'published';
+    IF v_version IS NOT NULL AND NOT EXISTS (
+        SELECT 1 FROM pg_trigger WHERE tgname = 'trg_t13_becas_pretest') THEN
+        EXECUTE format(
+            'CREATE TRIGGER trg_t13_becas_pretest BEFORE INSERT ON nukyro.sessions '
+            'FOR EACH ROW WHEN (NEW.scenario_version_id = %L AND NOT NEW.self_reported_first) '
+            'EXECUTE FUNCTION nukyro.t07_negro_mark_pretest()', v_version);
+    END IF;
+END $$;

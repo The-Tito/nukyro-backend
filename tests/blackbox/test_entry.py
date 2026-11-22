@@ -18,7 +18,7 @@ ORIGIN = os.environ["NUKYRO_ORIGIN"]
 COOKIE = "__Host-nukyro_participant"
 WRITE = {"Origin": ORIGIN, "X-Nukyro-Request": "1"}
 ACCEPT = {"age_confirmed": True, "privacy_notice_version": "DEMO-1", "terms_version": "DEMO-1"}
-SCENARIO = {"scenario_key": "DEMO-ENTRADA", "self_reported_first": True}
+SCENARIO = {"scenario_key": "DEMO-BECAS", "self_reported_first": True}
 FORBIDDEN_KEYS = {"participant_id", "variables", "rules", "effects", "options", "next_node_id"}
 
 
@@ -71,7 +71,7 @@ def test_rf068_entry_publica_responsable_categorias_finalidades_plazo_y_contacto
     for doc in data["documents"]:
         assert doc["version"] == "DEMO-1"
         assert "DEMOSTRACIÓN, sin validez legal" in doc["text"]
-    assert "DEMO-ENTRADA" in [s["key"] for s in data["scenarios"]]
+    assert "DEMO-BECAS" in [s["key"] for s in data["scenarios"]]
     assert response.headers["cache-control"] == "no-store"
 
 
@@ -223,7 +223,7 @@ def test_rf002_un_id_enviado_se_rechaza_422(person):
 
 def test_rf003_la_sesion_devuelve_escenario_y_version_publicada(person):
     data = start(person).json()
-    assert data["scenario"]["key"] == "DEMO-ENTRADA"
+    assert data["scenario"]["key"] == "DEMO-BECAS"
     assert data["scenario"]["version_number"] == 1
     assert "DEMOSTRACIÓN" in data["scenario"]["title"]
 
@@ -245,7 +245,7 @@ def test_rf004_un_started_at_enviado_se_rechaza_422(person):
 
 
 @pytest.mark.parametrize(
-    "body", [{"scenario_key": "DEMO-ENTRADA"}, {**SCENARIO, "self_reported_first": "si"}, {}]
+    "body", [{"scenario_key": "DEMO-BECAS"}, {**SCENARIO, "self_reported_first": "si"}, {}]
 )
 def test_rf001_cuerpo_invalido_es_422_sin_reflejar_la_entrada(person, body):
     response = person.post(

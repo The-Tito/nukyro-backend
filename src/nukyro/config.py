@@ -56,6 +56,11 @@ def load_owner_settings(env: dict[str, str] | None = None) -> Settings:
     return _load(os.environ if env is None else env, ("owner",))
 
 
+def load_admin_settings(env: dict[str, str] | None = None) -> Settings:
+    """Solo para la siembra del escenario de demostración: el login del rol admin."""
+    return _load(os.environ if env is None else env, ("admin",))
+
+
 @dataclass(frozen=True)
 class WebSettings:
     origin: str  # Origin exacto que se acepta en las escrituras (CSRF)
