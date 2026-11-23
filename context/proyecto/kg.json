@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.37.1",
+    "version": "1.37.2",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -250,6 +250,11 @@
         "version": "1.37.1",
         "fecha": "2026-11-22",
         "cambio": "T-17 en curso: verificador OIDC (identity.py), emisor simulado aparte (devtools/issuer) y 37+16 pruebas; pendiente la auditoría."
+      },
+      {
+        "version": "1.37.2",
+        "fecha": "2026-11-22",
+        "cambio": "T-17 cerrada por delegación (D-32) tras la auditoría en Opus (D-33): dos hallazgos corregidos (caché de claves sin espera tras fallo; prueba del emisor caído que no llegaba a pedir las claves)."
       }
     ]
   },
@@ -7627,7 +7632,7 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "en_curso",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-17 ·"

@@ -23,6 +23,7 @@ MAX_TOKEN_LENGTH = 8192
 ADMIN_GROUP = "admins"  # ADR-002 §7: quien administra no es participante
 JWKS_REFRESH_MIN_INTERVAL = 60  # una clave desconocida no dispara más de una descarga por minuto
 JWKS_TTL = 3600
+JWKS_RETRY_AFTER_FAILURE = 10  # segundos sin volver a pedir las claves tras un fallo
 
 
 class InvalidToken(Exception):
@@ -63,23 +64,42 @@ def fetch_jwks(url: str, timeout: float = 5.0) -> dict:
 
 
 class JwksCache:
-    """Claves públicas del emisor, con caducidad y una descarga mínima ante un `kid` nuevo."""
+    """Claves públicas del emisor, con caducidad y una descarga mínima ante un `kid` nuevo.
+
+    Si el emisor falla, no se reintenta antes de JWKS_RETRY_AFTER_FAILURE: así una caída no pone
+    cada petición en fila detrás de un tiempo de espera. Mientras tanto se usan las últimas claves
+    válidas, si las hay.
+    """
 
     def __init__(self, fetch: Callable[[], dict], clock: Callable[[], float] = time.time):
         self._fetch, self._clock = fetch, clock
         self._keys: dict | None = None
         self._loaded_at = 0.0
+        self._failed_at = float("-inf")
         self._lock = threading.Lock()
 
     def __call__(self, force: bool = False) -> dict:
         with self._lock:
             now = self._clock()
-            expired = self._keys is None or now - self._loaded_at >= JWKS_TTL
-            allowed = self._keys is None or now - self._loaded_at >= JWKS_REFRESH_MIN_INTERVAL
-            if expired or (force and allowed):
-                self._keys = self._fetch()
-                self._loaded_at = now
-            return self._keys
+            if self._keys is not None:
+                age = now - self._loaded_at
+                if age < JWKS_TTL and (not force or age < JWKS_REFRESH_MIN_INTERVAL):
+                    return self._keys
+            if now - self._failed_at < JWKS_RETRY_AFTER_FAILURE:
+                if self._keys is not None:
+                    return self._keys
+                raise RuntimeError("jwks_unavailable")
+            try:
+                keys = self._fetch()
+                if not isinstance(keys, dict) or not isinstance(keys.get("keys"), list):
+                    raise ValueError("JWKS mal formado")
+            except Exception:
+                self._failed_at = now
+                if self._keys is not None:
+                    return self._keys
+                raise
+            self._keys, self._loaded_at = keys, now
+            return keys
 
 
 class OidcVerifier:

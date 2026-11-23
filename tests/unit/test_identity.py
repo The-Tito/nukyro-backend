@@ -291,3 +291,46 @@ def test_el_reloj_real_se_usa_por_omision():
     v = OidcVerifier(settings, lambda force=False: jwks_of(KEY))
     now = int(time.time())
     assert v.verify(token(iat=now, exp=now + 600)).sub == "sub-1"
+
+
+def test_tras_un_fallo_no_se_reintenta_de_inmediato():
+    """Una caída del emisor no pone cada petición a esperar su propia descarga."""
+    now, calls = [0.0], []
+
+    def fetch():
+        calls.append(now[0])
+        raise OSError("caído")
+
+    cache = JwksCache(fetch, clock=lambda: now[0])
+    for _ in range(5):
+        with pytest.raises((OSError, RuntimeError)):
+            cache()
+    assert len(calls) == 1
+    now[0] += 10
+    with pytest.raises(OSError):
+        cache()
+    assert len(calls) == 2
+
+
+def test_si_falla_la_renovacion_se_conservan_las_claves_anteriores():
+    now, state = [0.0], {"down": False}
+
+    def fetch():
+        if state["down"]:
+            raise OSError("caído")
+        return jwks_of(KEY)
+
+    cache = JwksCache(fetch, clock=lambda: now[0])
+    first = cache()
+    state["down"] = True
+    now[0] += 3601  # caducadas: toca renovar, y la renovación falla
+    assert cache() == first
+    now[0] += 61
+    assert cache(True) == first
+
+
+@pytest.mark.parametrize("bad", [[], {"keys": "x"}, {"otra": []}, "texto"])
+def test_un_jwks_mal_formado_cuenta_como_fallo(bad):
+    cache = JwksCache(lambda: bad, clock=lambda: 0.0)
+    with pytest.raises(ValueError):
+        cache()

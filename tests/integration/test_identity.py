@@ -88,9 +88,10 @@ def test_el_grupo_admins_no_pasa_como_participante(verifier, mint):
     assert verifier.verify(mint(groups=["admins"]), admin=True).groups == ("admins",)
 
 
-def test_el_emisor_inalcanzable_rechaza_sin_romper():
+def test_el_emisor_inalcanzable_rechaza_sin_romper(mint):
+    """Un token bien formado llega a pedir las claves; sin emisor se rechaza, no revienta."""
     settings = OidcSettings(ISSUER, AUDIENCE, "http://127.0.0.1:9/.well-known/jwks.json")
-    assert reason(OidcVerifier.from_settings(settings), "a.b.c") == "malformed"
+    assert reason(OidcVerifier.from_settings(settings), mint()) == "jwks_unavailable"
 
 
 def test_la_imagen_de_la_api_no_contiene_el_emisor():

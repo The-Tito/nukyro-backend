@@ -190,3 +190,12 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** `./scripts/verify`: sql=269, unit=254, integration=157, blackbox=77. Ocho sabotajes del verificador hacen fallar las pruebas. Falta la auditoría en Opus (D-33); T-17 sigue en curso.
 - **Decisiones:** sin descubrimiento OIDC: la URL de claves por omisión es `{emisor}/.well-known/jwks.json`. Anotado: Cognito real debe fijar el token de identidad en 1 hora o menos.
 - **Evidencia:** pruebas `tests/unit/test_identity.py` y `tests/integration/test_identity.py`.
+
+## 2026-11-22: T-17 auditada y cerrada
+- **Resultado:** T-17 cerrada por delegación (D-32). Cumple sus dos criterios: rechaza firma, emisor, audiencia, tipo, vencimiento y grupo inválidos, y el emisor no entra en la imagen de la API.
+- **Revisión:** auditoría en la sesión con Opus (D-33), sin agentes. Dos hallazgos, corregidos:
+  1. `JwksCache` reintentaba en cada petición con el emisor caído, y con el candado puesto cada petición esperaba su propio tiempo de espera. Ahora espera 10 s tras un fallo y conserva las claves anteriores.
+  2. La prueba de integración del emisor caído usaba un token mal formado y nunca llegaba a pedir las claves. Ahora usa un token real y espera `jwks_unavailable`.
+- **Sabotajes:** la imagen de la API con `devtools/` copiado dentro es detectada por la misma búsqueda de la prueba. Quitar la espera tras fallo hace fallar su prueba. Se repitieron los ocho del verificador.
+- **Para T-18:** `WrongGroup` hereda de `InvalidToken`; hay que atraparla antes para responder 403 y no 401. La comprobación de edad es redundante con la de vida (si exp − iat ≤ 1 h y no venció, la edad es menor de 1 h); se conserva como defensa.
+- **Evidencia:** `./scripts/verify`: sql=269, unit=260, integration=157, blackbox=77. Escáner de datos personales con 0 hallazgos y gitleaks del historial limpio.

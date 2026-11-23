@@ -256,7 +256,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-17 · Verificación de tokens
 - Etapa: E5
-- Estado: en curso
+- Estado: cerrada
 - Entregable: verificador OIDC y emisor simulado aparte
 - Criterios de cierre:
   - rechaza firma, emisor, audiencia, tipo, vencimiento y grupo inválidos
