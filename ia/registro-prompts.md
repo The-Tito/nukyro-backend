@@ -73,3 +73,21 @@ Solo peticiones que deciden algo, inician una tarea o corrigen el rumbo.
 **Prompt:** `/cerrar`, ejecutado por el asistente al 85 % del límite según la instrucción del usuario sobre el límite de uso (resumen)
 **Resultado:** bitácora, registro de IA y handoff para retomar en E5
 **Revisión humana:** pendiente
+
+## 2026-11-22: retomar, D-33 y plan de E5 (T-17)
+**Modelo:** Claude Opus 5.5
+**Prompt:** «/retomar, una cosa, ya no trabajaremos con multi agentes, solo cambio de modelos segun lo acordado, los agentes el paralelo consumen demasiado uso»; luego «sí, confirma D-33 y arranca con /fase planear 5»
+**Resultado:** D-33 en el KG y en sus vistas; CLAUDE.md y `.claude/commands/fase.md` ajustados; `context/etapas/etapa-5.md` con la Puerta A delegada; D-34, D-35 y A-06
+**Revisión humana:** el usuario confirmó D-33; el plan de E5 está pendiente
+
+## 2026-11-22: verificador de tokens y emisor simulado (T-17)
+**Modelo:** Claude Sonnet 5.5 en la sesión principal, sin agentes (D-33)
+**Prompt:** «sigue con T-17»
+**Resultado:** `src/nukyro/identity.py`, `load_oidc_settings`, `devtools/issuer/`, el servicio `issuer` en Compose, PyJWT 2.15.1 y las pruebas `tests/unit/test_identity.py` y `tests/integration/test_identity.py`
+**Revisión humana:** pendiente
+
+## 2026-11-22: auditoría y cierre de T-17
+**Modelo:** Claude Opus 5.5 en la sesión principal (D-33)
+**Prompt:** «audita T-17»
+**Resultado:** dos hallazgos corregidos (la caché de claves no esperaba tras un fallo; una prueba no llegaba a pedir las claves); sabotajes de la imagen y del verificador; T-17 cerrada; PR #18 fusionado en develop
+**Revisión humana:** pendiente
