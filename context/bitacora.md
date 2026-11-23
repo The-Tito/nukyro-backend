@@ -178,3 +178,9 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** validador, vistas y KG al día; sin PR abiertos antes de este. Sin revisión humana del código, las puertas ni los textos.
 - **Decisiones:** esperan al usuario A-04 (release) y A-05 (encuesta). S-02 sigue por verificar.
 - **Evidencia:** EV-03, EV-04, KG v1.36.0.
+
+## 2026-11-22: E5 planeada y D-33
+- **Resultado:** `context/etapas/etapa-5.md`, Puerta A delegada (D-32). Dictamen: con ajuste.
+- **Revisión:** verify sobre develop en d54c24a (sql=269, unit=217, integration=140, blackbox=77) y validador en verde. Sin revisión humana.
+- **Decisiones:** D-33 del usuario (sin multiagentes, modifica D-25; CLAUDE.md y `fase.md` ajustados). Declaradas: D-34 (token de identidad y emisor aparte) y D-35 (defecto 12 por edad del token). Abierta: A-06 (plazo mínimo de bloqueo).
+- **Evidencia:** KG v1.37.0.

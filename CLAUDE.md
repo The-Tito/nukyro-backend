@@ -68,7 +68,7 @@ Los documentos de `docs/` no se sobrescriben: un cambio produce una versión nue
    se detiene por conflicto, desvío, permiso o bloqueo. Fuera de esas fases, un paso a la vez.
    Mientras rija D-24 el asistente pasa las puertas como «delegada»; lo que D-24 no delega se bloquea y se reporta.
 4. **Mostrar:** lo creado, el comando para comprobarlo y el resultado esperado.
-5. **El usuario cierra las tareas**, salvo delegación vigente (D-24). Antes de cerrar un entregable se usa el agente `auditor`.
+5. **El usuario cierra las tareas**, salvo delegación vigente (D-24). Antes de cerrar un entregable se audita en la sesión, con Opus (D-33: sin subagentes).
 6. **Ninguna decisión se pierde:** va al KG y a su vista en el mismo commit. Cada paso, a `context/bitacora.md`.
 7. **Para defender:** al cerrar, proponer 2 o 3 preguntas con respuesta para `context/estudio.md`.
 8. **Registro de IA:** skill `registro-ia` al cerrar cada tarea y sesión.
