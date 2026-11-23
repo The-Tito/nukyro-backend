@@ -3,6 +3,8 @@
 import os
 from dataclasses import dataclass
 
+from nukyro.identity import OidcSettings
+
 # Rol de conexión de la aplicación -> rol de grupo de la base (bd/schema.sql)
 ROLES = ("api", "admin", "jobs", "analytics")
 
@@ -72,4 +74,15 @@ def load_web_settings(env: dict[str, str] | None = None) -> WebSettings:
     return WebSettings(
         origin=_required(env, "NUKYRO_ORIGIN"),
         documents_path=env.get("NUKYRO_DOCUMENTS_PATH") or "/app/demo/documents.json",
+    )
+
+
+def load_oidc_settings(env: dict[str, str] | None = None) -> OidcSettings:
+    """Emisor de identidad (D-34). Sin JWKS explícito, el de Cognito (`/.well-known/jwks.json`)."""
+    env = os.environ if env is None else env
+    issuer = _required(env, "NUKYRO_OIDC_ISSUER").rstrip("/")
+    return OidcSettings(
+        issuer=issuer,
+        audience=_required(env, "NUKYRO_OIDC_AUDIENCE"),
+        jwks_url=env.get("NUKYRO_OIDC_JWKS_URL") or f"{issuer}/.well-known/jwks.json",
     )

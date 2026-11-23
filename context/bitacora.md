@@ -184,3 +184,9 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** verify sobre develop en d54c24a (sql=269, unit=217, integration=140, blackbox=77) y validador en verde. Sin revisión humana.
 - **Decisiones:** D-33 del usuario (sin multiagentes, modifica D-25; CLAUDE.md y `fase.md` ajustados). Declaradas: D-34 (token de identidad y emisor aparte) y D-35 (defecto 12 por edad del token). Abierta: A-06 (plazo mínimo de bloqueo).
 - **Evidencia:** KG v1.37.0.
+
+## 2026-11-22: T-17 construida, pendiente de auditoría
+- **Resultado:** `src/nukyro/identity.py` (RS256 con JWKS, emisor, audiencia, `token_use=id`, vencimiento, edad y vida de 1 hora según D-35, grupo `admins`), `load_oidc_settings`, emisor simulado en `devtools/issuer/` con su contenedor y PyJWT 2.15.1 fijado. Faltar el emisor o la audiencia impide arrancar la API.
+- **Revisión:** `./scripts/verify`: sql=269, unit=254, integration=157, blackbox=77. Ocho sabotajes del verificador hacen fallar las pruebas. Falta la auditoría en Opus (D-33); T-17 sigue en curso.
+- **Decisiones:** sin descubrimiento OIDC: la URL de claves por omisión es `{emisor}/.well-known/jwks.json`. Anotado: Cognito real debe fijar el token de identidad en 1 hora o menos.
+- **Evidencia:** pruebas `tests/unit/test_identity.py` y `tests/integration/test_identity.py`.

@@ -73,7 +73,7 @@ Salida de E5: los tokens inválidos se rechazan, la vinculación concurrente dej
 
 ## Contrato y esquema
 
-- **Configuración nueva:** `NUKYRO_OIDC_ISSUER`, `NUKYRO_OIDC_AUDIENCE` y `NUKYRO_OIDC_JWKS_URL` (opcional; por omisión, la del documento de descubrimiento). Faltar una impide arrancar.
+- **Configuración nueva:** `NUKYRO_OIDC_ISSUER`, `NUKYRO_OIDC_AUDIENCE` y `NUKYRO_OIDC_JWKS_URL` (opcional; por omisión, `{emisor}/.well-known/jwks.json`, que es donde Cognito publica sus claves). Faltar el emisor o la audiencia impide arrancar. Declarado al construir T-17: no se usa el documento de descubrimiento, porque no aporta nada a Cognito y añade una descarga.
 - **Rutas nuevas:**
   - `POST /api/v1/account/login`, con cuerpo `{newsletter_opt_in?, surveys_opt_in?}`. Responde `{nickname, has_participant, linked}`.
   - `GET /api/v1/account`, que responde `{nickname, email, newsletter_opt_in, surveys_opt_in}`.
@@ -87,6 +87,7 @@ Salida de E5: los tokens inválidos se rechazan, la vinculación concurrente dej
 
 ## Riesgos
 
+- **Dependencia con Cognito real (D-35):** el grupo de usuarios debe fijar la vigencia del token de identidad en 1 hora o menos (Cognito permite hasta 24). Si no, la API rechaza los tokens con `lifetime`. Queda anotado para el despliegue real, que D-15 deja fuera.
 - El emisor simulado puede no parecerse a Cognito. Se mitiga copiando sus claims (`token_use`, `cognito:username`, `cognito:groups`, `auth_time`) y declarando «no probado: Cognito real».
 - **Interbloqueo al vincular.** Orden fijo: cuenta y participantes por id. Hay prueba concurrente.
 - La función de vinculación es SECURITY DEFINER: `search_path` fijo, revocada de PUBLIC, y prueba de que otros roles no la ejecutan.

@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.37.0",
+    "version": "1.37.1",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -245,6 +245,11 @@
         "version": "1.37.0",
         "fecha": "2026-11-22",
         "cambio": "D-33 (sin multiagentes, modifica D-25). E5 en curso: Puerta A delegada (D-32) con context/etapas/etapa-5.md; D-34, D-35 y A-06."
+      },
+      {
+        "version": "1.37.1",
+        "fecha": "2026-11-22",
+        "cambio": "T-17 en curso: verificador OIDC (identity.py), emisor simulado aparte (devtools/issuer) y 37+16 pruebas; pendiente la auditoría."
       }
     ]
   },
@@ -7622,7 +7627,7 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "en_curso",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-17 ·"
