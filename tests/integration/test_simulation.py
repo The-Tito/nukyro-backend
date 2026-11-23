@@ -15,6 +15,7 @@ import pytest
 from fastapi import HTTPException
 from sqlalchemy import text
 
+from nukyro.auth import Auth
 from nukyro.db import make_engine
 from nukyro.modules.simulation import queries, service
 from nukyro.modules.simulation.schemas import AdvanceIn, DecisionIn
@@ -430,7 +431,7 @@ def direct_session(db, content):
         "VALUES (%s,%s,%s,1)",
         (sid, v, intro),
     )
-    return secret, str(sid)
+    return Auth(secret=secret), str(sid)
 
 
 def test_mil_pares_concurrentes_no_duplican_nada(api_engine, superuser, content):

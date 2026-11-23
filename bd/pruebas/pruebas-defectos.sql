@@ -859,4 +859,123 @@ SELECT pg_temp.chk('S-13 hay once encuestas con claridad y las sesiones quedan m
         AND (SELECT count(*) FROM sessions WHERE survey_answered AND id IN
              (SELECT pg_temp.id('cc', 410 + g) FROM generate_series(0, 9) g)) = 10$q$);
 
+-- ---------------------------------------------------------------------
+-- T-18 · Vincular el progreso de un navegador con una cuenta (P10, RF-076, defecto 9)
+-- link_participant: función del owner, solo para api. La API no puede borrar participantes
+-- ni mover sesiones por su cuenta.
+-- ---------------------------------------------------------------------
+-- L-01..L-03: la cuenta no tiene participante, el del navegador pasa a ser suyo
+SELECT pg_temp.mk_anon(500);
+SELECT pg_temp.mk_session(500, 500, now() - interval '2 hours');
+SELECT pg_temp.mk_account(500);
+SET ROLE nukyro_api;
+SELECT pg_temp.chk('L-01 sin participante en la cuenta, el del navegador pasa a ser suyo',
+ $q$SELECT nukyro.link_participant(pg_temp.id('ac', 500), sha256(convert_to('secreto-500', 'UTF8'))) = 'linked'$q$);
+RESET ROLE;
+SELECT pg_temp.chk('L-02 queda ligado a la cuenta, sin secreto, y conserva su sesión',
+ $q$SELECT p.account_id = pg_temp.id('ac', 500) AND p.secret_hash IS NULL AND p.id = pg_temp.id('bb', 500)
+        AND (SELECT participant_id FROM sessions WHERE id = pg_temp.id('cc', 500)) = p.id
+      FROM participants p WHERE p.id = pg_temp.id('bb', 500)$q$);
+SET ROLE nukyro_api;
+SELECT pg_temp.chk('L-03 repetirla no hace nada: el secreto ya no existe',
+ $q$SELECT nukyro.link_participant(pg_temp.id('ac', 500), sha256(convert_to('secreto-500', 'UTF8'))) = 'none'$q$);
+RESET ROLE;
+
+-- L-04..L-08: la cuenta ya tenía participante y sesión; el navegador también (el más reciente)
+SELECT pg_temp.mk_account(501, 501);
+SELECT pg_temp.mk_session(501, 501, now() - interval '5 hours');
+SELECT pg_temp.mk_anon(502);
+SELECT pg_temp.mk_session(502, 502, now() - interval '2 hours');
+-- el navegador acepta un documento que la cuenta no tiene, y los dos aceptaron la edad
+INSERT INTO document_acceptances (participant_id, document_type, document_version) VALUES
+  (pg_temp.id('bb', 501), 'age_18_plus', NULL), (pg_temp.id('bb', 502), 'age_18_plus', NULL),
+  (pg_temp.id('bb', 502), 'terms', 'T-B');
+UPDATE participants SET exclude_from_stats = true WHERE id = pg_temp.id('bb', 502);
+SELECT pg_temp.chk('L-04 antes de vincular hay dos primeras sesiones (el defecto 9)',
+ $q$SELECT (SELECT count(*) FROM sessions WHERE id IN (pg_temp.id('cc', 501), pg_temp.id('cc', 502)) AND is_first_session) = 2$q$);
+SET ROLE nukyro_api;
+SELECT pg_temp.chk('L-05 con participante en la cuenta, se trasladan las sesiones',
+ $q$SELECT nukyro.link_participant(pg_temp.id('ac', 501), sha256(convert_to('secreto-502', 'UTF8'))) = 'merged'$q$);
+RESET ROLE;
+SELECT pg_temp.chk('L-06 el del navegador se borra y las dos sesiones son de la cuenta',
+ $q$SELECT NOT EXISTS (SELECT 1 FROM participants WHERE id = pg_temp.id('bb', 502))
+        AND (SELECT count(*) FROM sessions WHERE participant_id = pg_temp.id('bb', 501)
+               AND id IN (pg_temp.id('cc', 501), pg_temp.id('cc', 502))) = 2$q$);
+SELECT pg_temp.chk('L-07 queda una sola primera sesión: la más antigua; la otra tiene previa',
+ $q$SELECT (SELECT is_first_session AND NOT has_prior_session FROM sessions WHERE id = pg_temp.id('cc', 501))
+        AND (SELECT has_prior_session AND NOT is_first_session FROM sessions WHERE id = pg_temp.id('cc', 502))$q$);
+SELECT pg_temp.chk('L-08 las aceptaciones se copian sin duplicar y la exclusión se conserva (OR)',
+ $q$SELECT (SELECT count(*) FROM document_acceptances WHERE participant_id = pg_temp.id('bb', 501)) = 2
+        AND EXISTS (SELECT 1 FROM document_acceptances WHERE participant_id = pg_temp.id('bb', 501)
+                      AND document_type = 'terms' AND document_version = 'T-B')
+        AND (SELECT exclude_from_stats FROM participants WHERE id = pg_temp.id('bb', 501))$q$);
+
+-- L-09: al revés, la sesión del navegador es la más antigua y pasa a ser la primera
+SELECT pg_temp.mk_account(503, 503);
+SELECT pg_temp.mk_session(503, 503, now() - interval '2 hours');
+SELECT pg_temp.mk_anon(504);
+SELECT pg_temp.mk_session(504, 504, now() - interval '6 hours');
+SET ROLE nukyro_api;
+SELECT nukyro.link_participant(pg_temp.id('ac', 503), sha256(convert_to('secreto-504', 'UTF8')));
+RESET ROLE;
+SELECT pg_temp.chk('L-09 si la del navegador es más antigua, es ella la primera',
+ $q$SELECT (SELECT is_first_session FROM sessions WHERE id = pg_temp.id('cc', 504))
+        AND (SELECT has_prior_session FROM sessions WHERE id = pg_temp.id('cc', 503))$q$);
+
+-- L-10: otro escenario no se mezcla (la versión 92 del defecto 9 es de otro escenario)
+SELECT pg_temp.mk_account(505, 505);
+SELECT pg_temp.mk_session(505, 505, now() - interval '5 hours');
+SELECT pg_temp.mk_anon(506);
+INSERT INTO sessions (id, participant_id, scenario_version_id, current_node_id, self_reported_first, started_at, last_activity_at)
+VALUES (pg_temp.id('cc', 506), pg_temp.id('bb', 506), pg_temp.id('51', 92), pg_temp.id('52', 92), true,
+        now() - interval '1 hour', now() - interval '1 hour');
+SET ROLE nukyro_api;
+SELECT nukyro.link_participant(pg_temp.id('ac', 505), sha256(convert_to('secreto-506', 'UTF8')));
+RESET ROLE;
+SELECT pg_temp.chk('L-10 dos escenarios distintos: cada uno conserva su primera sesión',
+ $q$SELECT (SELECT is_first_session FROM sessions WHERE id = pg_temp.id('cc', 505))
+        AND (SELECT is_first_session FROM sessions WHERE id = pg_temp.id('cc', 506))$q$);
+
+-- L-11, L-12: cuenta bloqueada o inexistente
+SELECT pg_temp.mk_account(507, 507);
+SELECT pg_temp.mk_anon(508);
+SELECT pg_temp.mk_session(508, 508);
+UPDATE accounts SET status = 'blocked', blocked_at = now(), block_reason = 'user_request',
+       deletion_due_at = now() + interval '1 day' WHERE id = pg_temp.id('ac', 507);
+SET ROLE nukyro_api;
+SELECT pg_temp.expect('L-11 una cuenta bloqueada no recibe progreso (23514)',
+ $q$SELECT nukyro.link_participant(pg_temp.id('ac', 507), sha256(convert_to('secreto-508', 'UTF8')))$q$, '23514');
+SELECT pg_temp.expect('L-12 una cuenta inexistente se rechaza (P0002)',
+ $q$SELECT nukyro.link_participant(pg_temp.id('ac', 599), sha256(convert_to('secreto-508', 'UTF8')))$q$, 'P0002');
+RESET ROLE;
+SELECT pg_temp.chk('L-13 lo rechazado no movió nada: el del navegador sigue con su secreto',
+ $q$SELECT secret_hash IS NOT NULL AND account_id IS NULL FROM participants WHERE id = pg_temp.id('bb', 508)$q$);
+
+-- L-14: un secreto de alguien que ya tiene cuenta no se puede vincular a otra
+SELECT pg_temp.mk_account(509, 509, true);
+SELECT pg_temp.mk_account(510);
+SET ROLE nukyro_api;
+SELECT pg_temp.chk('L-14 solo se vincula a un participante sin cuenta',
+ $q$SELECT nukyro.link_participant(pg_temp.id('ac', 510), sha256(convert_to('secreto-509', 'UTF8'))) = 'none'$q$);
+SELECT pg_temp.chk('L-15 un hash nulo no hace nada',
+ $q$SELECT nukyro.link_participant(pg_temp.id('ac', 510), NULL) = 'none'$q$);
+RESET ROLE;
+
+-- L-16..L-19: permisos. Solo api ejecuta la función, y api no hace el traslado por su cuenta
+SELECT pg_temp.chk('L-16 api puede ejecutarla; analytics, jobs y PUBLIC no',
+ $q$SELECT has_function_privilege('nukyro_api', 'nukyro.link_participant(uuid, bytea)', 'EXECUTE')
+        AND NOT has_function_privilege('nukyro_analytics', 'nukyro.link_participant(uuid, bytea)', 'EXECUTE')
+        AND NOT has_function_privilege('nukyro_jobs', 'nukyro.link_participant(uuid, bytea)', 'EXECUTE')
+        AND NOT EXISTS (SELECT 1 FROM pg_proc p, aclexplode(coalesce(p.proacl, acldefault('f', p.proowner))) a
+                         WHERE p.proname = 'link_participant' AND a.grantee = 0)$q$);
+SET ROLE nukyro_api;
+SELECT pg_temp.expect('L-17 api no borra participantes', $q$DELETE FROM nukyro.participants WHERE id = pg_temp.id('bb', 508)$q$, '42501');
+SELECT pg_temp.expect('L-18 api no cambia el participante de una sesión',
+ $q$UPDATE nukyro.sessions SET participant_id = pg_temp.id('bb', 501) WHERE id = pg_temp.id('cc', 508)$q$, '42501');
+RESET ROLE;
+SELECT pg_temp.chk('L-19 la función es del owner, SECURITY DEFINER y con search_path fijo',
+ $q$SELECT p.prosecdef AND p.proowner = 'nukyro_owner'::regrole
+        AND EXISTS (SELECT 1 FROM unnest(p.proconfig) c WHERE c LIKE 'search_path=%')
+      FROM pg_proc p WHERE p.proname = 'link_participant'$q$);
+
 SELECT pg_temp.finish();

@@ -11,6 +11,7 @@ import shlex
 import ssl
 import subprocess
 import time
+import uuid
 from pathlib import Path
 
 import httpx
@@ -137,3 +138,29 @@ def participant_id(superuser, client):
         "SELECT id FROM nukyro.participants WHERE secret_hash = %s", (digest,)
     ).fetchone()
     return row[0]
+
+
+# --- Emisor de identidad simulado (D-34): tokens para las pruebas ---
+@pytest.fixture(scope="session")
+def issuer_url():
+    compose("up", "-d", "--wait", "issuer")
+    port = compose("port", "issuer", "8080").strip().rsplit(":", 1)[1]
+    return f"http://127.0.0.1:{port}"
+
+
+@pytest.fixture(scope="session")
+def mint(issuer_url):
+    """mint(**spec) -> token de identidad. Sin campos, uno válido de una cuenta nueva."""
+
+    def _mint(**spec) -> str:
+        spec.setdefault("sub", f"sub-{uuid.uuid4().hex}")
+        spec.setdefault("email", f"{uuid.uuid4().hex[:12]}@example.test")
+        response = httpx.post(f"{issuer_url}/token", json=spec, timeout=10)
+        response.raise_for_status()
+        return response.json()["id_token"]
+
+    return _mint
+
+
+def bearer(token: str) -> dict[str, str]:
+    return {"Authorization": f"Bearer {token}"}

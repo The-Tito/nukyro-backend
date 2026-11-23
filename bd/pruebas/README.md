@@ -18,12 +18,12 @@ cualquier FAIL, error de psql o conteo de PASS menor al esperado (constantes `ES
 |---|---|---|
 | reglas | `pruebas-reglas.sql` | Reglas de integridad del §5 (T01 a T44). Se detiene en el primer FAIL |
 | defectos | `pruebas-defectos.sql` | Defectos 2 a 9 y hitos de una sola escritura (T-14): hechos y funciones del owner, xmin, umbral de 10, FK de administradores, ciclo de la versión, permisos por columna, primera sesión. Cuenta todos los FAIL |
-| concurrencia | `pruebas-concurrencia.sh` | Dos sesiones psql: inicios simultáneos, dos archivos simultáneos, editar contra publicar (dos órdenes), caducidad contra actividad |
+| concurrencia | `pruebas-concurrencia.sh` | Dos sesiones psql: inicios simultáneos, dos archivos simultáneos, editar contra publicar (dos órdenes), caducidad contra actividad, dos vinculaciones del mismo navegador y vincular contra una sesión que se inicia |
 
 La línea `ERROR` de T10b es esperada: es el rechazo al `COMMIT` de la referencia diferida.
 `evidencia-rojo.md` registra lo que falló al correr estas pruebas contra el esquema original, antes de corregir.
 
-Resultado esperado: `reglas: 57 PASS`, `defectos: 197 PASS`, `concurrencia: 15 PASS` y `== TODAS LAS SUITES PASARON ==`.
+Resultado esperado: `reglas: 57 PASS`, `defectos: 216 PASS`, `concurrencia: 21 PASS` y `== TODAS LAS SUITES PASARON ==`.
 
 Último resultado: 2026-11-22, PostgreSQL 16, esquema con los defectos 2 a 9 corregidos: 57 + 184 + 15, 0 FAIL.
 

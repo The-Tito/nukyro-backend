@@ -5,6 +5,8 @@
 #   CC2  dos archivos simultáneos sin pérdida de hechos (defecto 2/8)
 #   CC3  editar contra publicar, en los dos órdenes (defecto 6)
 #   CC4  la caducidad revalida la actividad tras esperar el bloqueo (defecto 8)
+#   CC5  dos vinculaciones del mismo navegador (defecto 9, RF-076)
+#   CC6  vincular contra una sesión que se inicia en el navegador (defecto 9)
 # Uso: C=<contenedor> bash bd/pruebas/pruebas-concurrencia.sh <base>
 # La base ya tiene schema.sql y la semilla (las aplica ejecutar.sh).
 # Imprime «PASS ...» o «FAIL ...» por prueba y termina con código 1 si hubo FAIL.
@@ -55,6 +57,20 @@ INSERT INTO participants (id, secret_hash, last_activity_at) VALUES
   ('00000000-0000-0000-0000-00000000c004', sha256('c4'), now() - interval '100 days');
 INSERT INTO sessions (id, participant_id, scenario_version_id, current_node_id, self_reported_first, has_prior_session) VALUES
   ('00000000-0000-0000-0000-0000000c0a04', '00000000-0000-0000-0000-00000000c004', '$V1', '$D01', true, false);
+-- CC5 y CC6: una cuenta con su participante y una sesión antigua; un navegador con una sesión más reciente
+INSERT INTO accounts (id, cognito_sub, email, nickname) VALUES
+  ('00000000-0000-0000-0000-0000000000a5', 'cc5', 'cc5@example.test', 'cc5'),
+  ('00000000-0000-0000-0000-0000000000a6', 'cc6', 'cc6@example.test', 'cc6');
+INSERT INTO participants (id, account_id) VALUES
+  ('00000000-0000-0000-0000-00000000c005', '00000000-0000-0000-0000-0000000000a5'),
+  ('00000000-0000-0000-0000-00000000c007', '00000000-0000-0000-0000-0000000000a6');
+INSERT INTO participants (id, secret_hash) VALUES
+  ('00000000-0000-0000-0000-00000000c006', sha256('c6')), ('00000000-0000-0000-0000-00000000c008', sha256('c8'));
+INSERT INTO sessions (id, participant_id, scenario_version_id, current_node_id, self_reported_first, started_at, last_activity_at) VALUES
+  ('00000000-0000-0000-0000-0000000c0a05', '00000000-0000-0000-0000-00000000c005', '$V1', '$D01', true, now() - interval '5 hours', now() - interval '5 hours'),
+  ('00000000-0000-0000-0000-0000000c0a06', '00000000-0000-0000-0000-00000000c006', '$V1', '$D01', true, now() - interval '2 hours', now() - interval '2 hours'),
+  ('00000000-0000-0000-0000-0000000c0a07', '00000000-0000-0000-0000-00000000c007', '$V1', '$D01', true, now() - interval '5 hours', now() - interval '5 hours'),
+  ('00000000-0000-0000-0000-0000000c0a08', '00000000-0000-0000-0000-00000000c008', '$V1', '$D01', true, now() - interval '2 hours', now() - interval '2 hours');
 SQL
 
 # ejecuta un script SQL en segundo plano: salida en $L/<nombre>.out y código en $L/<nombre>.rc
@@ -136,6 +152,31 @@ wait
 comprobar "CC4 la caducidad no borró a quien volvió justo antes (devuelve 0)" "0" "$(tail -1 "$L/cc4b.out")"
 comprobar "CC4 el participante y su sesión siguen vivos; sin hechos nuevos" "1/1/$SF0" \
     "$(psq -c "SELECT (SELECT count(*) FROM nukyro.participants WHERE id = '00000000-0000-0000-0000-00000000c004') || '/' || (SELECT count(*) FROM nukyro.sessions WHERE participant_id = '00000000-0000-0000-0000-00000000c004') || '/' || (SELECT count(*) FROM nukyro.session_facts)")"
+
+# --------------------------- CC5 · dos vinculaciones del mismo navegador (RF-076)
+LINK5="SELECT nukyro.link_participant('00000000-0000-0000-0000-0000000000a5', sha256('c6'));"
+fondo cc5a "BEGIN; SET ROLE nukyro_api; $LINK5 SELECT pg_sleep(2); COMMIT;"
+sleep 0.7
+fondo cc5b "SET ROLE nukyro_api; $LINK5"
+wait
+comprobar "CC5 las dos vinculaciones terminaron sin error" "0/0" "$(cat "$L/cc5a.rc")/$(cat "$L/cc5b.rc")"
+comprobar "CC5 una traslada y la otra no hace nada (idempotente)" "merged/none" "$(head -1 "$L/cc5a.out")/$(tail -1 "$L/cc5b.out")"
+comprobar "CC5 queda un participante, dos sesiones y una sola primera" "1/2/1" \
+    "$(psq -c "SELECT (SELECT count(*) FROM nukyro.participants WHERE id IN ('00000000-0000-0000-0000-00000000c005', '00000000-0000-0000-0000-00000000c006')) || '/' || count(*) || '/' || count(*) FILTER (WHERE is_first_session) FROM nukyro.sessions WHERE participant_id = '00000000-0000-0000-0000-00000000c005'")"
+
+# --------------------------- CC6 · vincular contra una sesión que se inicia
+fondo cc6a "BEGIN; SET ROLE nukyro_api;
+INSERT INTO nukyro.sessions (id, participant_id, scenario_version_id, current_node_id, self_reported_first)
+VALUES ('00000000-0000-0000-0000-0000000c0a09', '00000000-0000-0000-0000-00000000c008', '$V1', '$D01', true);
+SELECT pg_sleep(2); COMMIT;"
+sleep 0.7
+fondo cc6b "SET ROLE nukyro_api; SELECT nukyro.link_participant('00000000-0000-0000-0000-0000000000a6', sha256('c8'));"
+wait
+comprobar "CC6 la sesión nueva y la vinculación terminaron sin error" "0/0" "$(cat "$L/cc6a.rc")/$(cat "$L/cc6b.rc")"
+comprobar "CC6 la vinculación esperó y trasladó las tres sesiones" "merged/3" \
+    "$(tail -1 "$L/cc6b.out")/$(psq -c "SELECT count(*) FROM nukyro.sessions WHERE participant_id = '00000000-0000-0000-0000-00000000c007'")"
+comprobar "CC6 queda una sola primera sesión: la más antigua" "1/0000000c0a07" \
+    "$(psq -c "SELECT count(*) || '/' || max(right(id::text, 12)) FROM nukyro.sessions WHERE participant_id = '00000000-0000-0000-0000-00000000c007' AND is_first_session")"
 
 echo
 if [ "$FALLOS" -eq 0 ]; then echo "== Todas las pruebas de concurrencia pasaron =="; exit 0; fi

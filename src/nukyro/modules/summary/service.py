@@ -6,12 +6,12 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy import Engine
 
+from nukyro.auth import Auth
 from nukyro.modules.assessment import queries as assessment_queries
 from nukyro.modules.assessment import service as assessment_service
 from nukyro.modules.assessment.scoring import difference
 from nukyro.modules.entry import queries as entry_queries
 from nukyro.modules.summary import queries
-from nukyro.security import hash_secret
 
 
 def _reference(r) -> dict:
@@ -35,14 +35,14 @@ def _applicable(sets: dict, r) -> int:
     return len(s["questions"]) if s else r["answered_count"]
 
 
-def get_summary(engine: Engine, secret: str, session_id: str) -> dict:
+def get_summary(engine: Engine, auth: Auth, session_id: str) -> dict:
     try:
         session = UUID(session_id)
     except ValueError:
         raise HTTPException(404) from None
     with engine.begin() as conn:
         # El UPDATE bloquea al participante antes de leer la sesión (RF-080)
-        participant = entry_queries.touch_participant(conn, hash_secret(secret))
+        participant = entry_queries.touch_participant(conn, auth)
         if participant is None:
             raise HTTPException(401)
         row = assessment_queries.session_row(conn, participant, session, lock=False)

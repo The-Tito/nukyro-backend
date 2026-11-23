@@ -264,7 +264,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-18 · Cuenta y vinculación
 - Etapa: E5
-- Estado: pendiente
+- Estado: en curso
 - Entregable: cuenta, consentimientos y proceso P10
 - Criterios de cierre:
   - la vinculación concurrente es idempotente y deja una primera sesión

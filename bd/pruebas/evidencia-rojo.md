@@ -44,3 +44,8 @@ Devolvió una fila: el participante, `D01` y `A`. El hecho «anónimo» decía q
 
 **Intentos enviados (defecto 7).** Con la primera corrección, D7-55b y D7-55d fallaron: la API podía reabrir un
 intento enviado y agregarle respuestas. Pasan con `trg_guard_attempt_submitted` y el trigger de respuestas también en INSERT.
+
+**Defecto 9 al vincular una cuenta (T-18).** Con `link_participant` sin el recálculo de `has_prior_session` (el
+traslado de sesiones del paso 1 de P10 y nada más), fallaron L-07 y L-09 y, en concurrencia, CC5 y CC6: la cuenta
+con una sesión y el navegador con otra quedaban con **dos primeras sesiones** (`1/2/2` en CC5; en CC6, dos primeras
+entre tres sesiones). Con el recálculo por `(started_at, id)` pasan: queda una sola, la más antigua.

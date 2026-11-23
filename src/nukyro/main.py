@@ -13,6 +13,7 @@ from nukyro import security
 from nukyro.config import load_oidc_settings, load_settings, load_web_settings
 from nukyro.db import build_engines, verify_engines
 from nukyro.identity import OidcVerifier
+from nukyro.modules.account.routes import router as account_router
 from nukyro.modules.assessment.routes import router as assessment_router
 from nukyro.modules.entry import service as entry_service
 from nukyro.modules.entry.routes import router as entry_router
@@ -22,6 +23,9 @@ from nukyro.modules.survey.routes import router as survey_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 log = logging.getLogger("nukyro")
+
+# Detalles de HTTPException que se publican como código (nunca texto libre ni datos de la persona)
+ERROR_CODES = {"account_blocked", "documents_required"}
 
 
 def error_response(status: int, code: str, message: str) -> JSONResponse:
@@ -65,6 +69,8 @@ def create_app() -> FastAPI:
             404: "not_found",
             405: "method_not_allowed",
         }.get(exc.status_code, "http_error")
+        if exc.detail in ERROR_CODES:  # códigos estables que el cliente distingue
+            code = exc.detail
         return error_response(exc.status_code, code, "Solicitud no válida")
 
     @app.exception_handler(RequestValidationError)
@@ -87,6 +93,7 @@ def create_app() -> FastAPI:
             return error_response(503, "database_unavailable", "La base de datos no responde")
         return {"status": "ok"}
 
+    app.include_router(account_router)
     app.include_router(entry_router)
     app.include_router(simulation_router)
     app.include_router(assessment_router)
