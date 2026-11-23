@@ -17,7 +17,7 @@ Argumentos: $ARGUMENTS. Fases E2 a E8. Manda el KG; el plan está en `context/pl
 ## comprobar N
 1. `./scripts/verify` desde una base vacía, sin pruebas omitidas.
 2. Cada RF con su caso positivo y negativo; cada defecto, de rojo a verde.
-3. Agente `auditor` sin hallazgos que bloqueen; escaneo de secretos y de datos personales.
+3. Auditoría en la sesión con Opus (D-33, sin subagentes) sin hallazgos que bloqueen; escaneo de secretos y de datos personales.
 4. KG, vistas y modelo al día; nodo `EV-xx` con `commit`, `comando`, `resultado` y arista `respalda` a la etapa.
 
 ## cerrar N

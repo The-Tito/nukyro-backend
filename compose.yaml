@@ -2,6 +2,11 @@
 # un .env ignorado por git (scripts/gen-env). Nombre del proyecto: NUKYRO_PROJECT.
 name: ${NUKYRO_PROJECT:-nukyro}
 
+# Emisor de identidad simulado (D-34): el emisor y la audiencia son datos, no secretos
+x-oidc-env: &oidc-env
+  NUKYRO_OIDC_ISSUER: ${NUKYRO_OIDC_ISSUER:-https://cognito-sim.example.test/nukyro-local}
+  NUKYRO_OIDC_AUDIENCE: ${NUKYRO_OIDC_AUDIENCE:-nukyro-local-client}
+
 x-db-env: &db-env
   NUKYRO_DB_HOST: db
   NUKYRO_DB_NAME: ${NUKYRO_DB_NAME:-nukyro}
@@ -56,15 +61,33 @@ services:
       migrate:
         condition: service_completed_successfully
 
+  # Emisor de identidad simulado (T-17, D-34). No es la API ni entra en su imagen. Sin puertos
+  # publicados: las pruebas lo alcanzan por la red de Compose o con compose.test.yaml.
+  issuer:
+    build:
+      context: .
+      dockerfile: devtools/issuer/Dockerfile
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      <<: *oidc-env
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8080/healthz', timeout=3)"]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+
   api:
     build: .
     read_only: true
     cap_drop: [ALL]
     security_opt: ["no-new-privileges:true"]
     environment:
-      <<: *db-env
+      <<: [*db-env, *oidc-env]
       # Origin exacto que acepta la API en las escrituras; con el proxy local es https://proxy
       NUKYRO_ORIGIN: ${NUKYRO_ORIGIN:-https://proxy}
+      NUKYRO_OIDC_JWKS_URL: http://issuer:8080/.well-known/jwks.json
       NUKYRO_DB_API_USER: ${NUKYRO_DB_API_USER:-nukyro_api_app}
       NUKYRO_DB_API_PASSWORD: ${NUKYRO_DB_API_PASSWORD:?falta}
       NUKYRO_DB_ADMIN_USER: ${NUKYRO_DB_ADMIN_USER:-nukyro_admin_app}
@@ -76,6 +99,8 @@ services:
     depends_on:
       seed:
         condition: service_completed_successfully
+      issuer:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3)"]
       interval: 3s
@@ -123,6 +148,7 @@ services:
       NUKYRO_BASE_URL: https://proxy
       NUKYRO_CA_FILE: /ca/caddy/pki/authorities/local/root.crt
       NUKYRO_ORIGIN: https://proxy
+      NUKYRO_ISSUER_URL: http://issuer:8080
     volumes:
       - caddy_data:/ca:ro
     depends_on:

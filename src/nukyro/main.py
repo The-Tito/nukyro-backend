@@ -10,8 +10,9 @@ from sqlalchemy import text
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from nukyro import security
-from nukyro.config import load_settings, load_web_settings
+from nukyro.config import load_oidc_settings, load_settings, load_web_settings
 from nukyro.db import build_engines, verify_engines
+from nukyro.identity import OidcVerifier
 from nukyro.modules.assessment.routes import router as assessment_router
 from nukyro.modules.entry import service as entry_service
 from nukyro.modules.entry.routes import router as entry_router
@@ -34,6 +35,7 @@ async def lifespan(app: FastAPI):
     verify_engines(settings, engines)
     web = load_web_settings()  # falla al arrancar si falta NUKYRO_ORIGIN
     app.state.origin = web.origin
+    app.state.verifier = OidcVerifier.from_settings(load_oidc_settings())  # falla si falta
     app.state.documents = entry_service.load_documents(web.documents_path)
     app.state.engines = engines
     log.info("API lista: %d conexiones verificadas", len(engines))

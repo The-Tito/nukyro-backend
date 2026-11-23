@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.36.0",
+    "version": "1.37.2",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -240,6 +240,21 @@
         "version": "1.36.0",
         "fecha": "2026-11-22",
         "cambio": "E4 cerrada por delegación (D-32) con EV-04: 70 de 87 RF. Defectos 2 y 11 corregidos."
+      },
+      {
+        "version": "1.37.0",
+        "fecha": "2026-11-22",
+        "cambio": "D-33 (sin multiagentes, modifica D-25). E5 en curso: Puerta A delegada (D-32) con context/etapas/etapa-5.md; D-34, D-35 y A-06."
+      },
+      {
+        "version": "1.37.1",
+        "fecha": "2026-11-22",
+        "cambio": "T-17 en curso: verificador OIDC (identity.py), emisor simulado aparte (devtools/issuer) y 37+16 pruebas; pendiente la auditoría."
+      },
+      {
+        "version": "1.37.2",
+        "fecha": "2026-11-22",
+        "cambio": "T-17 cerrada por delegación (D-32) tras la auditoría en Opus (D-33): dos hallazgos corregidos (caché de claves sin espera tras fallo; prueba del emisor caído que no llegaba a pedir las claves)."
       }
     ]
   },
@@ -390,8 +405,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 496,
-    "aristas": 839,
+    "nodos": 500,
+    "aristas": 848,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 17,
@@ -411,7 +426,7 @@
       "ConjuntoPrincipios": 1,
       "Contacto": 1,
       "Cookie": 2,
-      "Decision": 52,
+      "Decision": 56,
       "Degradado": 2,
       "Descargo": 4,
       "DisenoEvaluacion": 1,
@@ -420,6 +435,7 @@
       "Escenario": 1,
       "Etapa": 9,
       "Evaluacion": 1,
+      "Evidencia": 4,
       "Finalidad": 14,
       "FlujoExperiencia": 1,
       "FueraDeAlcance": 23,
@@ -458,8 +474,7 @@
       "Supuesto": 4,
       "Tarea": 28,
       "Tipografia": 1,
-      "TonoVoz": 1,
-      "Evidencia": 4
+      "TonoVoz": 1
     }
   },
   "nodos": [
@@ -7329,10 +7344,16 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "en_curso",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
-      "buscar": "| E5 |"
+      "buscar": "| E5 |",
+      "puerta_a": {
+        "estado": "delegada",
+        "fecha": "2026-11-22",
+        "decision": "D-32",
+        "plan": "context/etapas/etapa-5.md"
+      }
     },
     {
       "id": "E6",
@@ -7611,7 +7632,7 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-17 ·"
@@ -8229,6 +8250,74 @@
         {
           "doc": "D-32",
           "seccion": "verificación delegada"
+        }
+      ]
+    },
+    {
+      "id": "D-33",
+      "tipo": "Decision",
+      "nombre": "Sin multiagentes",
+      "texto": "Sin subagentes ni agentes en paralelo: consumen demasiado uso. El usuario cambia el modelo de la sesión: Opus planea, pasa las puertas y audita (la auditoría la hace la sesión, ya no el agente auditor); Sonnet programa. Haiku no se usa. Solo la sesión principal hace commit, push y fusión.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-33 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
+        }
+      ],
+      "cita": "ya no trabajaremos con multi agentes, solo cambio de modelos segun lo acordado"
+    },
+    {
+      "id": "D-34",
+      "tipo": "Decision",
+      "nombre": "Token de identidad y emisor simulado",
+      "texto": "La API recibe el token de identidad de Cognito por Authorization: Bearer y lo verifica con RS256 y JWKS: emisor, audiencia, token_use=id, vencimiento, edad y grupo (admins no es participante). En local lo emite un contenedor aparte en devtools/issuer/, fuera de la imagen de la API (D-15, ADR-008 §9).",
+      "quien": "asistente (declarada)",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-34 |",
+      "fuente": [
+        {
+          "doc": "D-32",
+          "seccion": "Puerta A de E5, context/etapas/etapa-5.md"
+        }
+      ]
+    },
+    {
+      "id": "D-35",
+      "tipo": "Decision",
+      "nombre": "Defecto 12 sin guardar datos",
+      "texto": "Un token se acepta solo si su iat es de hace menos de 1 hora y exp − iat es de 1 hora o menos. Como la cuenta bloqueada sigue en la base hasta deletion_due_at, un token anterior a la baja vence antes de la purga y no la recrea. No se guarda ningún dato tras purgar. Lo emitido después de la baja lo cierra T-21 al borrar al usuario en el proveedor.",
+      "quien": "asistente (declarada)",
+      "estado": "tomada",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-35 |",
+      "fuente": [
+        {
+          "doc": "D-32",
+          "seccion": "Puerta A de E5, context/etapas/etapa-5.md"
+        }
+      ]
+    },
+    {
+      "id": "A-06",
+      "tipo": "Decision",
+      "nombre": "Plazo mínimo de bloqueo antes de purgar",
+      "texto": "D-35 requiere que una cuenta bloqueada siga en la base al menos la vida máxima del token (1 hora) antes de purgarse. Recomendación: CHECK deletion_due_at >= blocked_at + 1 hora; ningún plazo legal o de RET-01 es menor. Toca la conservación de datos personales: lo decide el usuario. No bloquea T-17.",
+      "estado": "abierta",
+      "fecha": "2026-11-22",
+      "ruta": "context/decisiones.md",
+      "buscar": "| A-06 |",
+      "fuente": [
+        {
+          "doc": "D-35",
+          "seccion": "defecto 12"
         }
       ]
     }
@@ -12447,6 +12536,51 @@
       "origen": "EV-04",
       "relacion": "respalda",
       "destino": "T-16"
+    },
+    {
+      "origen": "D-33",
+      "relacion": "modifica",
+      "destino": "D-25"
+    },
+    {
+      "origen": "D-34",
+      "relacion": "afecta",
+      "destino": "T-17"
+    },
+    {
+      "origen": "D-34",
+      "relacion": "afecta",
+      "destino": "RF-074"
+    },
+    {
+      "origen": "D-34",
+      "relacion": "afecta",
+      "destino": "RF-075"
+    },
+    {
+      "origen": "D-34",
+      "relacion": "basado_en",
+      "destino": "D-15"
+    },
+    {
+      "origen": "D-35",
+      "relacion": "afecta",
+      "destino": "T-18"
+    },
+    {
+      "origen": "D-35",
+      "relacion": "basado_en",
+      "destino": "D-20"
+    },
+    {
+      "origen": "A-06",
+      "relacion": "afecta",
+      "destino": "T-18"
+    },
+    {
+      "origen": "A-06",
+      "relacion": "afecta",
+      "destino": "RET-01"
     }
   ],
   "conflictos": [

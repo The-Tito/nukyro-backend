@@ -4,3 +4,7 @@ services:
   db:
     ports:
       - "127.0.0.1::5432"
+  # El emisor simulado, para que las pruebas del anfitrión pidan tokens (D-34)
+  issuer:
+    ports:
+      - "127.0.0.1::8080"
