@@ -267,6 +267,11 @@
         "cambio": "T-19 en curso: inventario de rutas (tests/acceso.py) con su caso de acceso ajeno, CSRF por ruta y cuenta bloqueada en todas; pendiente la auditoría."
       },
       {
+        "version": "1.37.5",
+        "fecha": "2026-11-22",
+        "cambio": "Auditoría de T-18 y T-19 en Opus (D-33): T-19 cerrada por delegación (D-32). T-18 sigue en curso: el defecto 12 espera A-06. Cuatro correcciones menores y una prueba reforzada."
+      },
+      {
         "version": "1.38.0",
         "fecha": "2026-11-22",
         "cambio": "A-06 cerrada: el usuario aprueba el CHECK de una hora entre bloqueo y purga (defecto 12). Se aplica al empezar la próxima sesión."
@@ -7694,7 +7699,7 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "en_curso",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-19 ·"

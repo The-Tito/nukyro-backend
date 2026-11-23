@@ -274,7 +274,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-19 · Aislamiento y CSRF
 - Etapa: E5
-- Estado: en curso
+- Estado: cerrada
 - Entregable: protección de todas las rutas
 - Criterios de cierre:
   - cada ruta tiene un caso de acceso ajeno

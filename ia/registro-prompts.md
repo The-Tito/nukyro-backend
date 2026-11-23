@@ -92,6 +92,12 @@ Solo peticiones que deciden algo, inician una tarea o corrigen el rumbo.
 **Resultado:** dos hallazgos corregidos (la caché de claves no esperaba tras un fallo; una prueba no llegaba a pedir las claves); sabotajes de la imagen y del verificador; T-17 cerrada; PR #18 fusionado en develop
 **Revisión humana:** pendiente
 
+## 2026-11-22: cuenta, vinculación y aislamiento (T-18, T-19)
+**Modelo:** Claude Sonnet 5.5 (programación y pruebas) y Claude Opus 5.5 (auditoría), en la sesión principal (D-33)
+**Prompt:** «sigue con T-18»; luego «audita T-18 y T-19, y al final dime en que punto del backend vamos, y cuanto hace falta»
+**Resultado:** `link_participant`, módulo `account`, `nukyro.auth`, inventario de rutas (`tests/acceso.py`) con sus pruebas de aislamiento, CSRF y cuenta bloqueada; auditoría con cinco correcciones menores; T-19 cerrada y T-18 en espera de A-06
+**Revisión humana:** pendiente
+
 ## 2026-11-22: A-06 y cierre de la tercera sesión
 **Modelo:** Claude Opus 5.5
 **Prompt:** «sí, apruebo A-06, luego /cerrar»

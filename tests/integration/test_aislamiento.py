@@ -119,16 +119,15 @@ def test_t19_lo_ajeno_da_404_y_no_cambia_nada(victim, attacker, superuser, metho
 
 
 @pytest.mark.parametrize(("method", "template"), SESSION_ROUTES)
-def test_t19_lo_inexistente_da_el_mismo_404_que_lo_ajeno(victim, method, template):
-    ghost = "00000000-0000-4000-8000-000000000000"
-    path = fill(template, {**victim.keys, "session_id": ghost})
+def test_t19_lo_inexistente_y_lo_ajeno_responden_lo_mismo(victim, attacker, method, template):
+    """Ni el código ni el cuerpo dicen si la sesión existe y es de otra persona (ADR-008 §5)."""
+    ghost = {**victim.keys, "session_id": "00000000-0000-4000-8000-000000000000"}
     body = fill(RUTAS[(method, template)][1], victim.keys)
-    missing = victim.send(method, path, body)
-    foreign_like = victim.send(
-        method, fill(template, {**victim.keys, "session_id": "no-es-uuid"}), body
-    )
-    assert missing.status_code == foreign_like.status_code == 404
-    assert missing.json() == foreign_like.json()
+    missing = attacker.send(method, fill(template, ghost), body)
+    foreign = call(attacker, method, template, victim=victim)
+    malformed = attacker.send(method, fill(template, {**ghost, "session_id": "no-es-uuid"}), body)
+    assert missing.status_code == foreign.status_code == malformed.status_code == 404
+    assert missing.json() == foreign.json() == malformed.json()
 
 
 AUTHENTICATED = [(m, p) for (m, p) in NON_PUBLIC if (m, p) not in rutas_de(ENTRADA)]
