@@ -212,6 +212,12 @@ Lo más reciente va al final. Formato de cada entrada:
   - Cuenta sin haber iniciado sesión: 401.
 - **Evidencia:** `tests/trazabilidad-e5.md`.
 
+## 2026-11-22: T-19 construida, pendiente de auditoría
+- **Resultado:** `tests/acceso.py` (inventario: pública, entrada, propia o de sesión) y tres pruebas que lo recorren: aislamiento (dueño y intruso, anónimo o con cuenta), CSRF por ruta y cuenta bloqueada en las 14 rutas con identidad. `tests/unit/test_inventario_rutas.py` falla si una ruta no está en el inventario o no autentica.
+- **Revisión:** `./scripts/verify`: sql=294, unit=265, integration=403, blackbox=90. Siete sabotajes detectados (ver `tests/trazabilidad-e5.md`). Falta la auditoría en Opus.
+- **Hallazgo propio:** `entry.service.get_session` y `entry.queries.session_by_id` no los usa ninguna ruta (la de simulación los sustituye); el primer sabotaje cayó ahí y no probaba nada. Queda como código muerto para la auditoría.
+- **Excepción de los GET (ADR-008 §6):** se mantiene. Un GET autenticado solo mueve `last_activity_at` y no hay CORS: una página ajena no lee la respuesta.
+
 ## 2026-11-22: A-06 aprobada
 - **Resultado:** el usuario aprueba el `CHECK` de una hora entre bloqueo y purga. Se aplica al empezar la próxima sesión, con sus pruebas, y con él se cierran el defecto 12 y T-18.
 - **Decisiones:** A-06 cerrada con la aprobación del usuario.
