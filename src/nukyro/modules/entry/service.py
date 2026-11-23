@@ -2,7 +2,6 @@
 
 import json
 from datetime import UTC
-from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import Engine, text
@@ -146,21 +145,6 @@ def _start_session(engine: Engine, versions: dict, auth: Auth, body) -> dict:
             {"p": participant},
         )
         return _view(queries.session_by_id(conn, participant, session))
-
-
-def get_session(engine: Engine, auth: Auth, session_id: str) -> dict:
-    try:
-        session = UUID(session_id)
-    except ValueError:
-        raise HTTPException(404) from None  # igual que lo ajeno o inexistente
-    with engine.begin() as conn:
-        participant = queries.touch_participant(conn, auth)
-        if participant is None:
-            raise HTTPException(401)
-        row = queries.session_by_id(conn, participant, session)
-    if row is None:
-        raise HTTPException(404)
-    return _view(row)
 
 
 def list_sessions(engine: Engine, auth: Auth) -> dict:

@@ -117,7 +117,9 @@ def test_rf074_el_correo_y_el_nickname_se_sincronizan_con_cognito(new_client, mi
 
 def test_rf074_sin_correo_verificado_no_se_crea_la_cuenta(new_client, mint, superuser):
     token = mint(email_verified=False)
-    assert login(new_client(), token).status_code == 403
+    response = login(new_client(), token)
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "email_not_verified"
     assert account_row(superuser, sub_of(token)) is None
 
 

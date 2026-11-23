@@ -19,7 +19,7 @@ def login(engine: Engine, identity: Identity, body, secret: str | None) -> dict:
 
     Con una cuenta bloqueada no hace nada (D-20). Repetir la llamada no cambia nada más."""
     if not identity.email_verified:
-        raise HTTPException(403)  # RF-074: la cuenta exige el correo verificado
+        raise HTTPException(403, detail="email_not_verified")  # RF-074
     nickname, email = identity.nickname, identity.email
     if not email or len(email) > MAX_EMAIL or not nickname or len(nickname) > MAX_NICKNAME:
         raise HTTPException(422)  # el token debe traer correo y nickname válidos
@@ -34,6 +34,8 @@ def login(engine: Engine, identity: Identity, body, secret: str | None) -> dict:
             body.surveys_opt_in,
         )
         account = queries.lock_account(conn, identity.sub)
+        if account is None:  # purgada entre el INSERT y el bloqueo
+            raise HTTPException(401)
         if account["status"] == "blocked":
             raise HTTPException(403, detail="account_blocked")
         if created is not None:

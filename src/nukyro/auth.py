@@ -19,7 +19,8 @@ class Auth:
 
     @property
     def secret_hash(self) -> bytes:
-        assert self.secret is not None
+        if self.secret is None:
+            raise RuntimeError("Auth sin secreto: la identidad es de una cuenta")
         return hash_secret(self.secret)
 
 

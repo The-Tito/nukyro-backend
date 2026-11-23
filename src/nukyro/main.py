@@ -25,7 +25,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name
 log = logging.getLogger("nukyro")
 
 # Detalles de HTTPException que se publican como código (nunca texto libre ni datos de la persona)
-ERROR_CODES = {"account_blocked", "documents_required"}
+ERROR_CODES = {"account_blocked", "documents_required", "email_not_verified"}
 
 
 def error_response(status: int, code: str, message: str) -> JSONResponse:
