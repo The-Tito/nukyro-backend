@@ -21,7 +21,7 @@ E1 va aparte y no bloquea el backend local. Cada RF tiene una sola fase principa
 | E3 | Motor de simulación | Consecuencias deterministas decididas por el servidor | 006, 013-038, 063-066 | E2 | cerrada |
 | E4 | Experiencia educativa | Recorrido completo, del pre-test al resumen | 005, 007-012, 039-061, 067 | E3 | cerrada |
 | E5 | Identidad y aislamiento | Con o sin cuenta, cada persona accede solo a lo suyo | 074-077 | E4 | cerrada |
-| E6 | Ciclo de datos y estadísticas | Borrar sin perder agregados ni reidentificar | 070, 072, 078-080 | E5 | pendiente |
+| E6 | Ciclo de datos y estadísticas | Borrar sin perder agregados ni reidentificar | 070, 072, 078-080 | E5 | en curso |
 | E7 | Administración y ARCO | API del panel para operar sin SQL manual | 069, 081-087 | E6 | pendiente |
 | E8 | Aceptación del backend | Backend funcional demostrado de punta a punta | regresión de los 87 | E7 | pendiente |
 
@@ -282,7 +282,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-20 · Derechos del participante
 - Etapa: E6
-- Estado: pendiente
+- Estado: cerrada
 - Entregable: descarga, oposición, bloqueo y borrado
 - Criterios de cierre:
   - se agrega antes de bloquear, salvo oposición o minoría de edad

@@ -62,3 +62,8 @@ después. Al adelantar el reloj del verificador al instante de purga entre esos 
 arreglo devolvió 200. Si se inserta una cuenta se vuelve a verificar el token dentro de la misma
 transacción, antes de escribir consentimientos o vincular el progreso. La prueba obtiene 401 y
 comprueba que la transacción revirtió el alta.
+
+**Duración de una sesión anterior al borrado (T-20, RF-070, RF-078).** Una sesión con
+28 días entre inicio y última actividad produjo HTTP 500 al borrarse por la API. Los 40 320
+minutos superaban el rango de `smallint` en el archivo de hechos. Con `integer` la misma
+prueba exige 204 y un hecho con la duración de 40 320 minutos.

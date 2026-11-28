@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.39.0",
+    "version": "1.42.2",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -290,6 +290,21 @@
         "version": "1.39.0",
         "fecha": "2026-11-28",
         "cambio": "D-36: migración a Codex con AGENTS.md y skills del repositorio, modelo activo y cierre manual."
+      },
+      {
+        "version": "1.42.0",
+        "fecha": "2026-11-28",
+        "cambio": "Puerta A de E6 delegada (D-32), T-20 en curso y A-07 abierta para la publicación de estadísticas de T-22."
+      },
+      {
+        "version": "1.42.1",
+        "fecha": "2026-11-28",
+        "cambio": "D-39 fija un informe exacto al cierre del piloto. A-07 cerrada."
+      },
+      {
+        "version": "1.42.2",
+        "fecha": "2026-11-28",
+        "cambio": "T-20 cerrada por delegación (D-32): derechos del participante por HTTPS y archivo de sesiones de larga duración."
       }
     ]
   },
@@ -440,8 +455,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 502,
-    "aristas": 851,
+    "nodos": 504,
+    "aristas": 854,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 17,
@@ -461,7 +476,7 @@
       "ConjuntoPrincipios": 1,
       "Contacto": 1,
       "Cookie": 2,
-      "Decision": 57,
+      "Decision": 59,
       "Degradado": 2,
       "Descargo": 4,
       "DisenoEvaluacion": 1,
@@ -7408,10 +7423,16 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
-      "fecha": "2026-11-22",
+      "estado": "en_curso",
+      "fecha": "2026-11-28",
       "ruta": "context/plan.md",
-      "buscar": "| E6 |"
+      "buscar": "| E6 |",
+      "puerta_a": {
+        "estado": "delegada",
+        "fecha": "2026-11-28",
+        "decision": "D-32",
+        "plan": "context/etapas/etapa-6.md"
+      }
     },
     {
       "id": "E7",
@@ -7735,10 +7756,11 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
-      "fecha": "2026-11-22",
+      "estado": "cerrada",
+      "fecha": "2026-11-28",
       "ruta": "context/plan.md",
-      "buscar": "### T-20 ·"
+      "buscar": "### T-20 ·",
+      "nota": "Cierre delegado (D-32). Descarga, oposición y borrado por HTTPS. D-20 y defecto 2 respaldados por SQL y concurrencia, con evidencia nueva del borrado desde la API."
     },
     {
       "id": "T-21",
@@ -8403,6 +8425,50 @@
         }
       ],
       "cita": "confirmo, continua"
+    },
+    {
+      "id": "A-07",
+      "tipo": "Decision",
+      "nombre": "Política de publicación de estadísticas",
+      "texto": "T-22 publicará un único informe exacto al cierre del piloto, con supresión de grupos menores de 10 y de totales que permitan reconstruirlos (RN-20). El cálculo en vivo se reserva para la comprobación interna.",
+      "estado": "cerrada",
+      "fecha": "2026-11-28",
+      "ruta": "context/decisiones.md",
+      "buscar": "| A-07 |",
+      "fuente": [
+        {
+          "doc": "D-21",
+          "seccion": "métricas por tema y abandono"
+        },
+        {
+          "doc": "RN-20",
+          "seccion": "umbral y anonimato"
+        },
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-28"
+        }
+      ],
+      "quien": "usuario",
+      "cita": "Un informe exacto al cierre del piloto"
+    },
+    {
+      "id": "D-39",
+      "tipo": "Decision",
+      "nombre": "Informe exacto al cierre del piloto",
+      "texto": "T-22 publicará un único informe exacto al cierre del piloto, con supresión de grupos menores de 10 y de totales que permitan reconstruirlos (RN-20). El cálculo en vivo se reserva para la comprobación interna.",
+      "estado": "tomada",
+      "fecha": "2026-11-28",
+      "quien": "usuario",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-39 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-28"
+        }
+      ],
+      "cita": "Un informe exacto al cierre del piloto"
     }
   ],
   "aristas": [
@@ -12679,6 +12745,21 @@
       "origen": "D-36",
       "relacion": "modifica",
       "destino": "D-25"
+    },
+    {
+      "origen": "A-07",
+      "relacion": "afecta",
+      "destino": "T-22"
+    },
+    {
+      "origen": "D-39",
+      "relacion": "basado_en",
+      "destino": "A-07"
+    },
+    {
+      "origen": "D-39",
+      "relacion": "afecta",
+      "destino": "T-22"
     }
   ],
   "conflictos": [

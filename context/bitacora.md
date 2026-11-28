@@ -252,3 +252,26 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** siete criterios respaldados en `context/etapas/etapa-5.md`. Un GET de sesión añadido en memoria sin registro produjo «rutas sin caso de acceso ajeno». Los defectos 9 y 12 tienen evidencia de rojo a verde. Las pruebas usaron Docker local y un emisor simulado. Cognito y AWS RDS quedan pendientes de prueba.
 - **Decisiones:** Puerta B delegada (D-32). Revisión humana pendiente.
 - **Evidencia:** EV-05, `./scripts/verify` en `12c6430` con sql=298, unit=265, integration=422, blackbox=90.
+
+## 2026-11-28: Puerta A de E6
+- **Resultado:** plan de derechos, caducidad y estadísticas. T-20 en curso. La política de publicación de T-22 espera la decisión del usuario (A-07).
+- **Revisión:** `./scripts/verify` en `develop` `283e3f7`, con 298 comprobaciones SQL, 265 unitarias, 422 de integración y 90 de caja negra. Validador del KG en verde.
+- **Decisiones:** D-32, RN-20, A-07.
+- **Evidencia:** `context/etapas/etapa-6.md`.
+
+## 2026-11-28: T-22, política de publicación
+- **Resultado:** el usuario elige un único informe exacto al cierre del piloto (D-39). Se preserva el umbral y se suprimen totales que permitan despejar grupos pequeños.
+- **Evidencia:** comparación de alternativas en `context/etapas/etapa-6.md`; A-07 cerrada.
+
+## 2026-11-28: T-20, derechos del participante y cierre delegado
+
+| Criterio | Dictamen | Evidencia |
+|---|---|---|
+| Archivar antes de bloquear, salvo oposición o minoría de edad | Respaldado | D8-22 a D8-27 y `test_rf078_borrar_invalida_el_secreto_y_archiva_segun_la_oposicion` |
+| Bloqueo terminal y purga sin archivo | Respaldado | D7-01 a D7-05, D8-28 a D8-33 y matriz de cuenta bloqueada por HTTPS |
+| Defecto 2 reproducido y corregido | Respaldado | Evidencia roja en el esquema de `60e867e`, D2-18, D2-19 y CC2 |
+| Titularidad de descarga, borrado y oposición | Respaldado | `tests/integration/test_rights.py` e inventario y matriz T-19 |
+
+- **Resultado:** descarga JSON, borrado sin cuenta y oposición en ambos modos. La exportación usa una proyección explícita y la identidad resuelve el titular en el servidor. El borrado viejo devolvía 500 cuando la duración en minutos excedía el rango de `smallint`. Se corrigió con `integer` y se congeló la migración.
+- **Evidencia:** `./scripts/verify` desde base vacía. SQL 298, unitarias 265, integración 460 y caja negra 90. Verificación de Cognito real y AWS RDS fuera del alcance local (D-15).
+- **Decisión:** cierre delegado (D-32), revisión humana pendiente.

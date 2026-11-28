@@ -121,3 +121,9 @@ Solo peticiones que deciden algo, inician una tarea o corrigen el rumbo.
 **Prompt:** «confirmo, continua», continuación del plan delegado (D-32).
 **Resultado:** auditados E5 y el alta concurrente con purga, comprobados los cuatro RF y cerrada la Puerta B con EV-05. Preguntas de defensa en `context/estudio.md`.
 **Revisión humana:** pendiente.
+
+## 2026-11-28: derechos del participante y cierre de T-20
+**Modelo:** GPT-6 en Codex (identificador exacto de la sesión no registrado)
+**Prompt:** «continua».
+**Resultado:** descarga y borrado sin cuenta, oposición en ambos modos, corrección del rango de duración al archivar y regresión por HTTPS. `./scripts/verify` aprobó 1 113 comprobaciones y pruebas.
+**Revisión humana:** pendiente (D-32).

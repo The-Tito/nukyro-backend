@@ -535,7 +535,7 @@ Table session_facts [headercolor: #5E5E6A] {
   outcome_key text
   stopped_at_key text [note: 'Clave del nodo actual si no llegó al desenlace']
   evaluations_completed boolean [not null]
-  duration_bucket_min smallint [note: 'Múltiplo de 5']
+  duration_bucket_min integer [note: 'Múltiplo de 5']
   Note: 'Hecho anónimo por sesión, copiado al cerrar (borrado anónimo, caducidad o bloqueo). Alimenta H02 a H06. Semana de inicio en UTC.'
 }
 

@@ -64,3 +64,14 @@ escenario por fecha e id. Repetir la vinculación encuentra el secreto anterior 
 **¿Cómo detecta la suite una ruta nueva sin un caso de acceso ajeno?**
 Compara las rutas que FastAPI registra con el inventario. La integración usa ese inventario para probar las
 peticiones del dueño y de otra persona, y verifica el rechazo de escrituras de origen ajeno (T-19).
+
+## T-20 · Derechos del participante
+
+**¿Cómo acredita su titularidad quien usa Nukyro sin cuenta?**
+El servidor busca la huella del secreto de reanudación recibido en la cookie. La descarga y el borrado se limitan al participante que acredita esa cookie (RF-078).
+
+**¿Qué ocurre cuando una persona se opone y después borra sus datos?**
+La oposición se guarda en el participante. El borrado respeta ese estado y suprime la copia de nuevos hechos (RF-079, D-20).
+
+**¿Por qué purgar una cuenta bloqueada solo borra?**
+El bloqueo ya decidió si correspondía conservar una copia anónima. Purgar elimina los datos bloqueados cuando vence el plazo (RF-070, D-20).

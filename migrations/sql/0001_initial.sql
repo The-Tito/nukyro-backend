@@ -707,7 +707,7 @@ CREATE TABLE session_facts (
     outcome_key            text,
     stopped_at_key         text,            -- clave del nodo actual si no llegó al desenlace
     evaluations_completed  boolean NOT NULL,
-    duration_bucket_min    smallint CHECK (duration_bucket_min >= 0 AND duration_bucket_min % 5 = 0),
+    duration_bucket_min    integer CHECK (duration_bucket_min >= 0 AND duration_bucket_min % 5 = 0),
     CHECK (transfer_correct IS NULL OR transfer_correct <= transfer_total),
     CHECK (causal_correct IS NULL OR causal_correct <= causal_total),
     CHECK (justification_correct IS NULL OR justification_correct <= justification_total),
@@ -826,7 +826,7 @@ BEGIN
                                            WHERE a.session_id = s.id AND a.question_set_id = q.id
                                              AND a.submitted_at IS NOT NULL)),
            (greatest(0, floor(extract(epoch FROM
-               coalesce(s.completed_at, s.outcome_reached_at, s.last_activity_at) - s.started_at) / 300)) * 5)::smallint
+               coalesce(s.completed_at, s.outcome_reached_at, s.last_activity_at) - s.started_at) / 300)) * 5)::integer
       FROM nukyro.sessions s
       LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
                            FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
