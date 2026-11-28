@@ -139,3 +139,9 @@ Solo peticiones que deciden algo, inician una tarea o corrigen el rumbo.
 **Prompt:** «Un informe exacto al cierre del piloto» y «continua».
 **Resultado:** cálculo interno a partir de sesiones vivas elegibles y hechos; informe inmutable con supresión y roles separados. Cierre de T-22 delegado con pruebas SQL e integración.
 **Revisión humana:** el usuario aprobó D-39. Implementación pendiente de revisión.
+
+## 2026-11-28: comprobación y cierre de E6
+**Modelo:** GPT-6 en Codex (identificador exacto de la sesión no registrado)
+**Prompt:** «continua».
+**Resultado:** Puerta B delegada con EV-06. Reporte técnico v2.1 compilado, diagramas revisados y modelo sincronizado con PostgreSQL. El documento permanece local.
+**Revisión humana:** pendiente.

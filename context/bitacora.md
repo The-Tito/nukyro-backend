@@ -301,3 +301,9 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Resultado:** proyecciones comunes para sesiones activas elegibles y archivo. Informe único persistido, roles separados y diagrama de estadísticas actualizado.
 - **Evidencia:** `./scripts/verify`: 312 SQL, 265 unitarias, 465 de integración y 90 de caja negra. Datos de prueba sintéticos (D-15).
 - **Decisión:** cierre delegado (D-32), revisión humana pendiente.
+
+## 2026-11-28: E6, Puerta B delegada
+- **Resultado:** las tareas T-20 a T-22 están cerradas con cobertura para RF-070, RF-072 y RF-078 a RF-080. El reporte técnico v2.1 integra el catálogo de PostgreSQL y los diagramas de dominios, identidad y estadísticas. El PDF de 33 páginas y el LaTeX quedan en `docs/` (D-09).
+- **Revisión:** evidencia local desde una base vacía, auditoría de criterios en `context/etapas/etapa-6.md`, renderizado visual del PDF, huellas de las dos versiones y escaneos de secretos y datos personales. La revisión humana de los cambios técnicos está pendiente.
+- **Decisiones:** D-31, D-32, D-39.
+- **Evidencia:** EV-06, `./scripts/verify` en `5aa1901`: 312 SQL, 265 unitarias, 465 de integración y 90 de caja negra. 79 de 87 RF en alcance local.

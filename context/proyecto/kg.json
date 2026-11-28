@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.42.4",
+    "version": "1.43.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -14,7 +14,8 @@
       "DOC-REQ11",
       "REPORTE-BD",
       "DOC-AVP22",
-      "REPORTE-BD-V2"
+      "REPORTE-BD-V2",
+      "REPORTE-BD-V21"
     ],
     "convenciones": {
       "nodos": "Cada nodo tiene id único, tipo, nombre, propiedades y 'fuente' (lista de {doc, seccion}) que indica de dónde proviene.",
@@ -315,6 +316,11 @@
         "version": "1.42.4",
         "fecha": "2026-11-28",
         "cambio": "T-22 cerrada por delegación (D-32); D-39 aplicado en el modelo v0.4 con informe de cierre, umbral y supresión."
+      },
+      {
+        "version": "1.43.0",
+        "fecha": "2026-11-28",
+        "cambio": "E6 cerrada por delegación con EV-06, 79 de 87 RF en el alcance local. Reporte técnico v2.1 y diagramas conforme a D-31."
       }
     ]
   },
@@ -465,8 +471,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 504,
-    "aristas": 854,
+    "nodos": 506,
+    "aristas": 857,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 17,
@@ -490,12 +496,12 @@
       "Degradado": 2,
       "Descargo": 4,
       "DisenoEvaluacion": 1,
-      "Documento": 9,
+      "Documento": 10,
       "EntidadDominio": 18,
       "Escenario": 1,
       "Etapa": 9,
       "Evaluacion": 1,
-      "Evidencia": 5,
+      "Evidencia": 6,
       "Finalidad": 14,
       "FlujoExperiencia": 1,
       "FueraDeAlcance": 23,
@@ -6502,7 +6508,7 @@
       "nombre": "Reporte Técnico de la Base de Datos (LaTeX)",
       "version": "2.0",
       "fecha": "2026-11-01",
-      "estado": "vigente",
+      "estado": "reemplazado",
       "archivo": "docs/entregables/*_U2.DiseñoBDpdf.pdf",
       "fuente_latex": "docs/entregables/ReporteTecnicoBD_v2_latex/*_ReporteTecnicoBD_v2.tex",
       "compilador": "XeLaTeX (Tectonic); también Overleaf con XeLaTeX",
@@ -6528,7 +6534,8 @@
           "doc": "DECISION-USUARIO",
           "seccion": "2026-11-22"
         }
-      ]
+      ],
+      "reemplazado_por": "REPORTE-BD-V21"
     },
     {
       "id": "ART-DBML",
@@ -7433,7 +7440,7 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "en_curso",
+      "estado": "cerrada",
       "fecha": "2026-11-28",
       "ruta": "context/plan.md",
       "buscar": "| E6 |",
@@ -7442,6 +7449,11 @@
         "fecha": "2026-11-28",
         "decision": "D-32",
         "plan": "context/etapas/etapa-6.md"
+      },
+      "puerta_b": {
+        "estado": "delegada",
+        "fecha": "2026-11-28",
+        "decision": "D-32"
       }
     },
     {
@@ -8481,6 +8493,61 @@
         }
       ],
       "cita": "Un informe exacto al cierre del piloto"
+    },
+    {
+      "id": "EV-06",
+      "tipo": "Evidencia",
+      "nombre": "E6 comprobada",
+      "estado": "vigente",
+      "fecha": "2026-11-28",
+      "commit": "5aa1901",
+      "comando": "./scripts/verify",
+      "texto": "Base vacía en PostgreSQL 16 y recorridos de derechos, caducidad y publicación única local.",
+      "resultado": "sql=312, unit=265, integration=465, blackbox=90; 79 de 87 RF comprobados en el alcance local; auditoría y escaneos aprobados",
+      "ruta": "context/bitacora.md",
+      "buscar": "EV-06",
+      "fuente": [
+        {
+          "doc": "D-32",
+          "seccion": "verificación delegada"
+        },
+        {
+          "doc": "D-39",
+          "seccion": "informe único"
+        }
+      ]
+    },
+    {
+      "id": "REPORTE-BD-V21",
+      "tipo": "Documento",
+      "nombre": "Reporte Técnico de la Base de Datos de Nukyro",
+      "version": "2.1",
+      "estado": "vigente",
+      "fecha": "2026-11-28",
+      "archivo": "docs/entregables/ReporteTecnicoBD_v2_1_latex/Nukyro_ReporteTecnicoBD_v2.1.pdf",
+      "fuente_latex": "docs/entregables/ReporteTecnicoBD_v2_1_latex/Nukyro_ReporteTecnicoBD_v2.1.tex",
+      "paginas": 33,
+      "sha256": "d8882d041b8d1b5ecfce66eba2de5d21e16369d830fa1e9dce8ac2c1986094c5",
+      "compilador": "XeLaTeX (Tectonic)",
+      "cambios_vs_2_0": [
+        "Catálogo de PostgreSQL 16 y modelo de 37 tablas",
+        "Diagramas de dominios, identidad y estadísticas actualizados",
+        "Derechos, plazos, informe de cierre y límites de la verificación local"
+      ],
+      "fuente": [
+        {
+          "doc": "REPORTE-BD-V2",
+          "seccion": "texto y formato originales"
+        },
+        {
+          "doc": "D-31",
+          "seccion": "revisión al cerrar E6"
+        },
+        {
+          "doc": "EV-06",
+          "seccion": "esquema y verificación"
+        }
+      ]
     }
   ],
   "aristas": [
@@ -12772,6 +12839,21 @@
       "origen": "D-39",
       "relacion": "afecta",
       "destino": "T-22"
+    },
+    {
+      "origen": "EV-06",
+      "relacion": "respalda",
+      "destino": "E6"
+    },
+    {
+      "origen": "REPORTE-BD-V21",
+      "relacion": "reemplaza",
+      "destino": "REPORTE-BD-V2"
+    },
+    {
+      "origen": "D-31",
+      "relacion": "afecta",
+      "destino": "REPORTE-BD-V21"
     }
   ],
   "conflictos": [

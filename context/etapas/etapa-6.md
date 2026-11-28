@@ -68,7 +68,17 @@ Delegada (D-24, D-32) para los criterios ya aprobados de E6. La publicación de 
 
 ## Puerta B
 
-Pendiente. Verificar los cinco RF, los defectos 2 y 8, el umbral y las diferencias de cortes, y registrar la evidencia y la revisión documental de D-31.
+Delegada el 2026-11-28 (D-32). EV-06 registra `./scripts/verify` desde una base vacía en `5aa1901`. Pasaron 312 comprobaciones SQL, 265 unitarias, 465 de integración y 90 de caja negra. E6 aporta RF-070, RF-072 y RF-078 a RF-080. Quedan 79 de 87 RF comprobados en el alcance local.
+
+| Criterio de salida | Evidencia |
+|---|---|
+| El agregado se conserva después de archivar | R-03 a R-05. |
+| Oposición y minoría de edad no generan copia | D2-17, D8-22 a D8-27 e integración por HTTPS. |
+| Nueve se suprime y diez se muestra | R-01 y R-02, incluidos los complementos pequeños. |
+| Orden y xmin carecen de vínculo con personas vivas en las superficies probadas | D2-18, D2-19 y CC2. El acceso privilegiado a WAL y respaldos sigue siendo un riesgo residual (ADR-007). |
+| Analítica solo recibe un informe exacto | R-06 a R-14 y cierre concurrente por CLI de Compose. |
+
+Se revisaron el PDF v2.1 y tres diagramas actualizados (D-31). Escaneos de Git aprobados. El informe se probó con datos sintéticos. No se han medido resultados del piloto. Las pruebas contra AWS RDS y Cognito real quedan fuera del alcance de D-15. Las preguntas de defensa están en `context/estudio.md`.
 
 ### Comprobación de T-21
 

@@ -8,7 +8,8 @@ Vista del KG: los documentos son material de origen y, si difieren, manda el KG.
 | 2026-10-30 | equipo | Términos y Condiciones con Descargo de Responsabilidad de Nukyro | DOC-TYC (ruta en el KG) | la registrada en el KG |
 | 2026-11-01 | equipo | Documento de requerimientos de software | DOC-REQ11 (ruta en el KG) | la registrada en el KG |
 | 2026-11-01 | equipo | Aviso de Privacidad Integral de Nukyro | DOC-AVP22 (ruta en el KG) | la registrada en el KG |
-| 2026-11-01 | equipo | Reporte Técnico de la Base de Datos (LaTeX) | REPORTE-BD-V2 (ruta en el KG) | la registrada en el KG |
+| 2026-11-01 | equipo | Reporte Técnico de la Base de Datos (LaTeX) | REPORTE-BD-V2 (ruta en el KG) | sustituido por REPORTE-BD-V21 |
+| 2026-11-28 | equipo | Reporte Técnico de la Base de Datos v2.1 (LaTeX) | REPORTE-BD-V21 (ruta en el KG) | Esquema de E6 y evidencia EV-06 |
 | desconocida | docente (PER-DOCENTE) | Reporte técnico según su plantilla | `docs/entregables/plantillas/` | REPORTE-BD-V2 |
 
 Sin registrar: rúbrica y fechas de entrega.
