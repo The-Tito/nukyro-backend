@@ -3,6 +3,8 @@
 Orden de bloqueo: cuenta, participante del navegador, participante de la cuenta, sesiones.
 """
 
+from collections.abc import Callable
+
 from fastapi import HTTPException
 from sqlalchemy import Engine
 
@@ -14,7 +16,14 @@ MAX_NICKNAME = 40
 MAX_EMAIL = 254
 
 
-def login(engine: Engine, identity: Identity, body, secret: str | None) -> dict:
+def login(
+    engine: Engine,
+    identity: Identity,
+    body,
+    secret: str | None,
+    *,
+    recheck_identity: Callable[[], Identity],
+) -> dict:
     """Crea la cuenta si es nueva (idempotente), la sincroniza y vincula el progreso del navegador.
 
     Con una cuenta bloqueada no hace nada (D-20). Repetir la llamada no cambia nada más."""
@@ -39,6 +48,8 @@ def login(engine: Engine, identity: Identity, body, secret: str | None) -> dict:
         if account["status"] == "blocked":
             raise HTTPException(403, detail="account_blocked")
         if created is not None:
+            # El INSERT pudo esperar a una purga. Si el token venció, se revierte el alta.
+            recheck_identity()
             queries.insert_registration_consents(
                 conn, account["id"], body.newsletter_opt_in, body.surveys_opt_in
             )

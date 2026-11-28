@@ -221,3 +221,4 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Revisión:** los cuatro criterios de T-18 tienen respaldo. CC5, CC6 y la integración comprobaron la primera sesión única y la idempotencia. El defecto 9 está documentado en rojo. Para el defecto 12, SQL devolvió 23514 en plazos menores y el mismo token recibió 403 mientras la cuenta estuvo bloqueada y 401 en el instante de purga. La cuenta quedó ausente. Revisión humana del código pendiente.
 - **Decisiones:** A-06, D-35 y cierre delegado por D-32.
 - **Evidencia:** `./scripts/verify` desde una base vacía dio sql=298, unit=260, integration=199, blackbox=90. El rojo se conserva en `bd/pruebas/evidencia-rojo.md`.
+- **Revisión del cierre:** una petición podía validar el token a tiempo y llegar al INSERT después de la purga. Ahora el alta vuelve a verificar el mismo token dentro de la transacción y se revierte si venció. La integración controla el reloj y el orden de ambos pasos.

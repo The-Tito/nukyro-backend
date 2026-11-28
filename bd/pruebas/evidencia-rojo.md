@@ -56,3 +56,9 @@ La prueba de integración `test_defecto12_el_token_anterior_al_bloqueo_no_recrea
 200 en vez de 403 al reutilizar el mismo token del emisor simulado en la API tras una purga inmediata.
 Con el `CHECK`, el plazo de una hora se acepta, antes del plazo el mismo token recibe 403 y al
 purgar recibe 401. En ese momento la cuenta ya no existe y el inicio de sesión no la recrea.
+
+La auditoría también comprobó la petición que valida el token antes de la purga y llega al INSERT
+después. Al adelantar el reloj del verificador al instante de purga entre esos dos pasos, el primer
+arreglo devolvió 200. Si se inserta una cuenta se vuelve a verificar el token dentro de la misma
+transacción, antes de escribir consentimientos o vincular el progreso. La prueba obtiene 401 y
+comprueba que la transacción revirtió el alta.

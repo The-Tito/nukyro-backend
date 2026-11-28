@@ -17,7 +17,13 @@ def engine(request: Request):
 @router.post("/login", response_model=LoginOut)
 def login(request: Request, response: Response, body: LoginIn | None = None):
     identity = require_identity(request)
-    result = service.login(engine(request), identity, body or LoginIn(), cookie_secret(request))
+    result = service.login(
+        engine(request),
+        identity,
+        body or LoginIn(),
+        cookie_secret(request),
+        recheck_identity=lambda: require_identity(request),
+    )
     clear_cookie(response)  # tras iniciar sesión, la cookie anónima ya no sirve
     return result
 

@@ -13,6 +13,7 @@ from psycopg.errors import CheckViolation
 from nukyro.db import make_engine
 from nukyro.identity import OidcSettings, OidcVerifier, fetch_jwks
 from nukyro.main import create_app
+from nukyro.modules.account import queries
 
 from .conftest import ACCEPT, ORIGIN, WRITE, bearer
 
@@ -455,7 +456,7 @@ def test_d20_vincular_a_una_cuenta_bloqueada_no_mueve_el_progreso(new_client, mi
 
 
 def test_defecto12_el_token_anterior_al_bloqueo_no_recrea_la_cuenta(
-    request, settings, issuer_url, mint, superuser
+    request, settings, issuer_url, mint, superuser, monkeypatch
 ):
     token = mint()
     sub = sub_of(token)
@@ -491,10 +492,19 @@ def test_defecto12_el_token_anterior_al_bloqueo_no_recrea_la_cuenta(
     due = superuser.execute(
         "SELECT deletion_due_at FROM nukyro.accounts WHERE cognito_sub = %s", (sub,)
     ).fetchone()[0]
-    superuser.execute("SELECT nukyro.purge_blocked_accounts(%s)", (due,))
+    insert = queries.insert_account
+
+    def insert_after_purge(*args, **kwargs):
+        # La petición validó el token antes de que venciera y llega a la inserción tras la purga.
+        nonlocal now
+        superuser.execute("SELECT nukyro.purge_blocked_accounts(%s)", (due,))
+        now = due.timestamp()
+        return insert(*args, **kwargs)
+
+    monkeypatch.setattr(queries, "insert_account", insert_after_purge)
+    assert login(client, token).status_code == 401
     assert account_row(superuser, sub) is None
 
-    # Avanza el reloj del verificador al mismo instante que el de la purga.
-    now = due.timestamp()
+    # Una petición nueva, ya fuera del plazo, también falla al verificar el token.
     assert login(client, token).status_code == 401
     assert account_row(superuser, sub) is None
