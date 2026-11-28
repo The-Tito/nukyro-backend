@@ -255,9 +255,8 @@ RESET ROLE;
 SET ROLE nukyro_analytics;
 SELECT pg_temp.expect('T35 analítica no lee datos personales', $q$SELECT count(*) FROM nukyro.participants$q$, '42501');
 SELECT pg_temp.expect('T36 analítica no lee filas de hechos', $q$SELECT count(*) FROM nukyro.session_facts$q$, '42501');
-SELECT pg_temp.ok('T36b analítica solo recibe el agregado, suprimido con menos de 10',
- (SELECT suppressed AND first_sessions IS NULL
-    FROM nukyro.report_session_summary('00000000-0000-0000-0000-000000000011')));
+SELECT pg_temp.ok('T36b analítica no recibe cifras antes del cierre',
+ nukyro.read_pilot_report() IS NULL);
 RESET ROLE;
 
 -- Cascada ejecutada por el rol de tareas (RF-080, ADR-004)

@@ -68,10 +68,26 @@ Delegada (D-24, D-32) para los criterios ya aprobados de E6. La publicación de 
 
 ## Puerta B
 
-Pendiente. Verificar los cinco RF, los defectos 2 y 8, el umbral y las diferencias de cortes, y registrar la evidencia y la revisión documental de D-31.
+Delegada el 2026-11-28 (D-32). EV-06 registra `./scripts/verify` desde una base vacía en `5aa1901`. Pasaron 312 comprobaciones SQL, 265 unitarias, 465 de integración y 90 de caja negra. E6 aporta RF-070, RF-072 y RF-078 a RF-080. Quedan 79 de 87 RF comprobados en el alcance local.
+
+| Criterio de salida | Evidencia |
+|---|---|
+| El agregado se conserva después de archivar | R-03 a R-05. |
+| Oposición y minoría de edad no generan copia | D2-17, D8-22 a D8-27 e integración por HTTPS. |
+| Nueve se suprime y diez se muestra | R-01 y R-02, incluidos los complementos pequeños. |
+| Orden y xmin carecen de vínculo con personas vivas en las superficies probadas | D2-18, D2-19 y CC2. El acceso privilegiado a WAL y respaldos sigue siendo un riesgo residual (ADR-007). |
+| Analítica solo recibe un informe exacto | R-06 a R-14 y cierre concurrente por CLI de Compose. |
+
+Se revisaron el PDF v2.1 y tres diagramas actualizados (D-31). Escaneos de Git aprobados. El informe se probó con datos sintéticos. No se han medido resultados del piloto. Las pruebas contra AWS RDS y Cognito real quedan fuera del alcance de D-15. Las preguntas de defensa están en `context/estudio.md`.
 
 ### Comprobación de T-21
 
 `docker compose run --rm jobs` ejecuta la caducidad y la purga con el rol de tareas. Para reproducir una frontera en una base desechable, se puede ejecutar `docker compose run --rm jobs python -m nukyro.cli run-retention --at 2001-02-28T12:00:00Z`. El comando imprime conteos y devuelve un código distinto de cero si quedó una eliminación de identidad por reintentar. El entorno necesita la clave de administración local generada por `scripts/gen-env`.
 
 T-21 aplica los 90 días a la bitácora del panel (RF-087). Los logs técnicos de infraestructura y la conservación por incidentes siguen el trabajo operativo de T-27. Las llamadas al proveedor y sus pruebas ocurren en el entorno simulado (D-15).
+
+### Comprobación de T-22
+
+Operación ejecuta `docker compose exec -T api python -m nukyro.cli close-pilot-report --version <uuid>` al cerrar el piloto. Analítica lee el resultado con `docker compose exec -T api python -m nukyro.cli read-pilot-report`. Las dos operaciones usan roles distintos de PostgreSQL. Antes del cierre la lectura devuelve `null`. Repetir el cierre devuelve el mismo resultado y solicitar otra versión da error.
+
+La única elección del operador es la versión evaluada. Los caminos del escenario se muestran cuando hay al menos dos grupos y cada uno alcanza el umbral. Las cifras de evaluación y tema representan resultados de intentos enviados y respuestas registradas. Se omiten los extremos que revelan unanimidad. Los denominadores de transferencia y causal siguen expresando respuestas registradas, conforme a la representación actual. Las hipótesis de aprendizaje requieren revisión humana con los datos del piloto.

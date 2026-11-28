@@ -1,7 +1,7 @@
 ---
-version: 0.3
-estado: v0.2 aprobada por el usuario (2026-11-01); cambios de la v0.3 delegados (D-24), sin revisión humana
-fecha: 2026-11-22
+version: 0.4
+estado: Cambios de E6 delegados (D-32), con revisión humana pendiente
+fecha: 2026-11-28
 motor: PostgreSQL 16 (Amazon RDS) · FastAPI · SQLAlchemy 2.x + Alembic
 plan: context/planes/plan-modelo-datos.md
 ---
@@ -12,8 +12,8 @@ Modelo lógico y físico de la base de datos de Nukyro, el simulador de decision
 
 **Fuente de verdad:** `context/proyecto/kg.json`. Este documento cita sus identificadores: RF, RN, RNF, OR, ADR y CONF.
 
-> **v0.3 (2026-11-22):** corrige los defectos 2 a 9 con ADR-007 y ADR-008. El detalle de columnas está en `bd/schema.sql`.
-> Los defectos 10 a 13 siguen pendientes en sus fases (`context/plan.md`).
+> **v0.4 (2026-11-28).** Incorpora los derechos del participante, la retención y el informe de cierre (E6).
+> El esquema y sus pruebas se mantienen en `bd/schema.sql` y `bd/pruebas/`. El defecto 13 queda en T-25.
 
 ## 0. Convenciones
 
@@ -92,6 +92,7 @@ erDiagram
     scenario_versions ||--o{ decision_facts : "agrega"
     scenario_versions ||--o{ topic_facts : "agrega"
     scenario_versions ||--o{ survey_responses : "agrega"
+    scenario_versions ||--o| pilot_report : "informe de cierre"
 
     scenario_versions {
         uuid id PK
@@ -129,6 +130,12 @@ erDiagram
         date week_start "sin identificadores"
         bool is_first_session
         text stopped_at_key
+    }
+    pilot_report {
+        bool singleton PK
+        uuid scenario_version_id FK
+        timestamptz closed_at
+        jsonb result
     }
 ```
 
@@ -261,6 +268,8 @@ Solo columnas no obvias. Todas las tablas de contenido tienen `version_id` y `UN
 
 **`topic_facts`** — `set_type`, `topic`, `is_first_session`, `week_start`, `correct` y `total` (D-21). No se liga a `session_facts`.
 
+**`pilot_report`** — una fila para el piloto. Guarda la versión evaluada, el instante de cierre y el resultado exacto con supresión (D-39, RN-20). La lectura siempre devuelve el mismo informe.
+
 **`survey_responses`** — escalas de 1 a 5: `usefulness` (H07), `clarity`, `decision_impact`, `causal_understanding`, `summary_usefulness`, `would_repeat` (EVAL-DISENO).
 
 **`admin_audit_log`** — `admin_user_id` opaco, `action`, `entity_type`, `entity_id` y `detail jsonb`, sin respuestas de participantes (RF-087, RNF-15).
@@ -362,7 +371,7 @@ stateDiagram-v2
 | `nukyro_api` | API FastAPI de participantes | `SELECT` del contenido; escritura por columna en identidad y simulación; `INSERT` en `consent_events`; funciones de encuesta, borrado propio y bloqueo | Modificar contenido, decisiones, versión, bloqueo o identidad; tocar `arco_requests`, `admin_users` y la bitácora; leer o escribir hechos |
 | `nukyro_admin` | Panel de administración | DML en contenido; alta y desactivación de `admin_users`; ARCO; rectificar y oponer por columna; función de bloqueo; `SELECT` de la simulación; `INSERT` en la bitácora | Borrar administradores; modificar sesiones; leer o escribir hechos; borrar la bitácora |
 | `nukyro_jobs` | Tareas programadas | Funciones de caducidad, bloqueo y purga; purgar la bitácora y ARCO cerrados | Borrar personas directamente; modificar contenido; leer o escribir hechos |
-| `nukyro_analytics` | Reportes del piloto | Funciones agregadas con umbral de 10 y catálogo de versiones | Leer filas de hechos o datos personales |
+| `nukyro_analytics` | Reporte del piloto | Leer el informe cerrado y el catálogo de versiones | Leer hechos, datos personales o cortes en vivo |
 
 El aislamiento entre participantes lo hace la API (ADR-002 §6, D7): toda consulta filtra por el `participant_id` resuelto del secreto o del token de Cognito. No se usa seguridad por fila.
 
@@ -407,9 +416,11 @@ Todo en una transacción. Repetirla no hace nada, porque `B` ya no existe.
 Solo mediante funciones del owner, con bloqueo en orden cuenta, participante, sesiones:
 1. **Sin cuenta** (borrado propio o 30 días): archivar, reescribir los hechos y borrar.
 2. **Con cuenta, al bloquear:** archivar y reescribir. El bloqueo es terminal.
-3. **Con cuenta, al purgar:** solo borrar (D-20).
+3. **Con cuenta, al purgar:** confirmar el borrado de la identidad en el proveedor local y borrar en PostgreSQL (D-20, D-35). El job reintenta si el proveedor falla.
 
 Archivar omite a quien se opuso y a la cuenta bloqueada por minoría de edad. La cascada borra sesiones, decisiones, efectos, eventos, intentos y aceptaciones.
+
+Operación consolida el informe de T-22 al cierre del piloto con `close_pilot_report`, según D-39. El cálculo de regresión toma sesiones vivas elegibles y hechos archivados con una sola definición de métricas. El informe suprime grupos menores de diez y los desgloses que permitan deducir una categoría pequeña.
 
 ## 8. Borrado y retención
 

@@ -1,5 +1,5 @@
 // =====================================================================
-// Nukyro · Modelo de datos v0.2 (aprobado) · PostgreSQL 16
+// Nukyro · Modelo de datos al cierre de E6 · PostgreSQL 16
 // Para visualizar: pegar este archivo en https://dbdiagram.io/d
 // Fuente: bd/schema.sql (MODELO-DATOS en context/proyecto/kg.json).
 // Si este archivo y bd/schema.sql difieren, manda bd/schema.sql.
@@ -12,11 +12,11 @@ Project nukyro {
   database_type: 'PostgreSQL'
   Note: '''
   **Nukyro** · Simulador Educativo para la Toma de Decisiones Éticas en el Desarrollo de Software.
-  Esquema `nukyro`, 36 tablas en 5 dominios:
-  contenido y administración (16), identidad (5), simulación (10), estadísticas (4), bitácora (1).
+  Esquema `nukyro`, 37 tablas en 5 dominios:
+  contenido y administración (16), identidad (5), simulación (10), estadísticas (5), bitácora (1).
   Decisiones: ADR-001 (contenido versionado), ADR-002 (participante como raíz),
-  ADR-003 (decisiones idempotentes), ADR-004 (estadísticas anónimas), ADR-005 (PostgreSQL 16 + FastAPI),
-  ADR-007 (archivo de hechos por funciones del owner, sin vínculo por xmin u orden; etapa 2).
+  ADR-003 (decisiones idempotentes), ADR-005 (PostgreSQL 16 + FastAPI),
+  ADR-007 (archivo de hechos por funciones del owner), D-39 (informe exacto único).
   Llaves `uuid` con gen_random_uuid(); fechas `timestamptz` en UTC.
   '''
 }
@@ -289,7 +289,7 @@ Table accounts [headercolor: #F75C03] {
   status text [not null, default: 'active', note: 'active | blocked']
   blocked_at timestamptz
   block_reason text [note: 'user_request | inactivity | underage | terms_breach']
-  deletion_due_at timestamptz
+  deletion_due_at timestamptz [note: 'Al menos una hora después de blocked_at (A-06)']
   last_login_at timestamptz [not null, default: `now()`]
   created_at timestamptz [not null, default: `now()`]
 
@@ -561,6 +561,14 @@ Table topic_facts [headercolor: #5E5E6A] {
   Note: 'Aciertos por tema; sin vínculo con session_facts (ADR-007).'
 }
 
+Table pilot_report [headercolor: #5E5E6A] {
+  singleton boolean [pk, default: true, note: 'CHECK singleton; una fila para el piloto']
+  scenario_version_id uuid [not null]
+  closed_at timestamptz [not null, default: `now()`]
+  result jsonb [not null, note: 'Informe exacto con supresión y sin identificadores personales']
+  Note: 'D-39. Operación cierra una vez. Analítica lee el resultado persistido.'
+}
+
 Table survey_responses [headercolor: #5E5E6A] {
   id uuid [pk, default: `gen_random_uuid()`]
   scenario_version_id uuid [not null]
@@ -645,6 +653,7 @@ TableGroup estadisticas [color: #5E5E6A] {
   decision_facts
   topic_facts
   survey_responses
+  pilot_report
 }
 
 // =====================================================================
@@ -733,3 +742,4 @@ Ref: session_facts.scenario_version_id > scenario_versions.id [delete: restrict]
 Ref: decision_facts.scenario_version_id > scenario_versions.id [delete: restrict]
 Ref: topic_facts.scenario_version_id > scenario_versions.id [delete: restrict]
 Ref: survey_responses.scenario_version_id > scenario_versions.id [delete: restrict]
+Ref: pilot_report.scenario_version_id > scenario_versions.id [delete: restrict]

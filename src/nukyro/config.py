@@ -59,13 +59,18 @@ def load_owner_settings(env: dict[str, str] | None = None) -> Settings:
 
 
 def load_admin_settings(env: dict[str, str] | None = None) -> Settings:
-    """Solo para la siembra del escenario de demostración: el login del rol admin."""
+    """El login del rol admin para las operaciones de contenido y el cierre del piloto."""
     return _load(os.environ if env is None else env, ("admin",))
 
 
 def load_jobs_settings(env: dict[str, str] | None = None) -> Settings:
     """El comando de caducidad solo usa el login de tareas."""
     return _load(os.environ if env is None else env, ("jobs",))
+
+
+def load_analytics_settings(env: dict[str, str] | None = None) -> Settings:
+    """El login que solo tiene acceso al informe cerrado."""
+    return _load(os.environ if env is None else env, ("analytics",))
 
 
 @dataclass(frozen=True)
