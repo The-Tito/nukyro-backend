@@ -109,3 +109,9 @@ Solo peticiones que deciden algo, inician una tarea o corrigen el rumbo.
 **Prompt:** «confirmo, continua», continuación de T-18 conforme al relevo.
 **Resultado:** defecto 12 reproducido y corregido con A-06. Restricción en `bd/schema.sql` y migración congelada. Evidencia roja, verificación completa y cierre delegado de T-18.
 **Revisión humana:** A-06 aprobada previamente por el usuario. Difusión y revisión de la implementación según D-11 y D-32.
+
+## 2026-11-28: comprobación y cierre de E5
+**Modelo:** GPT-6 en Codex (identificador exacto de la sesión no registrado)
+**Prompt:** «confirmo, continua», continuación del plan delegado (D-32).
+**Resultado:** auditados E5 y el alta concurrente con purga, comprobados los cuatro RF y cerrada la Puerta B con EV-05. Preguntas de defensa en `context/estudio.md`.
+**Revisión humana:** pendiente.

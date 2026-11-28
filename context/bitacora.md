@@ -241,3 +241,9 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Decisiones:** A-06, D-35 y cierre delegado por D-32.
 - **Evidencia:** `./scripts/verify` desde una base vacía dio sql=298, unit=260, integration=199, blackbox=90. El rojo se conserva en `bd/pruebas/evidencia-rojo.md`.
 - **Revisión del cierre:** una petición podía validar el token a tiempo y llegar al INSERT después de la purga. Ahora el alta vuelve a verificar el mismo token dentro de la transacción y se revierte si venció. La integración controla el reloj y el orden de ambos pasos.
+
+## 2026-11-28: E5, Puerta B delegada
+- **Resultado:** E5 cerrada con T-17 a T-19. RF-074 a RF-077 tienen cobertura positiva y negativa, con 74 de 87 RF comprobados en el alcance local.
+- **Revisión:** siete criterios respaldados en `context/etapas/etapa-5.md`. Un GET de sesión añadido en memoria sin registro produjo «rutas sin caso de acceso ajeno». Los defectos 9 y 12 tienen evidencia de rojo a verde. Las pruebas usaron Docker local y un emisor simulado. Cognito y AWS RDS quedan pendientes de prueba.
+- **Decisiones:** Puerta B delegada (D-32). Revisión humana pendiente.
+- **Evidencia:** EV-05, `./scripts/verify` en `12c6430` con sql=298, unit=265, integration=422, blackbox=90.
