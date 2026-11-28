@@ -14,5 +14,6 @@ secret() { python3 -c 'import secrets; print(secrets.token_urlsafe(24))'; }
   for rol in OWNER API ADMIN JOBS ANALYTICS; do
     echo "NUKYRO_DB_${rol}_PASSWORD=$(secret)"
   done
+  echo "NUKYRO_LOCAL_IDENTITY_ADMIN_KEY=$(secret)"
 } > "$dest"
 echo "Escrito $dest"

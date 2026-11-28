@@ -28,7 +28,7 @@ finish() {
     echo "verify FALLÓ en el paso: $STEP" >&2
   fi
   # Limpieza: solo el proyecto de esta ejecución (-v borra sus volúmenes)
-  "${COMPOSE[@]}" --profile test down -v --rmi local --remove-orphans >/dev/null 2>&1 || true
+  "${COMPOSE[@]}" --profile test --profile jobs down -v --rmi local --remove-orphans >/dev/null 2>&1 || true
   if [[ -n "$TMP" && -d "$TMP" ]]; then
     rm -rf -- "$TMP"
   fi

@@ -63,6 +63,11 @@ def load_admin_settings(env: dict[str, str] | None = None) -> Settings:
     return _load(os.environ if env is None else env, ("admin",))
 
 
+def load_jobs_settings(env: dict[str, str] | None = None) -> Settings:
+    """El comando de caducidad solo usa el login de tareas."""
+    return _load(os.environ if env is None else env, ("jobs",))
+
+
 @dataclass(frozen=True)
 class WebSettings:
     origin: str  # Origin exacto que se acepta en las escrituras (CSRF)

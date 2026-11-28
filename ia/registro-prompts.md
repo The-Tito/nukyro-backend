@@ -127,3 +127,9 @@ Solo peticiones que deciden algo, inician una tarea o corrigen el rumbo.
 **Prompt:** «continua».
 **Resultado:** descarga y borrado sin cuenta, oposición en ambos modos, corrección del rango de duración al archivar y regresión por HTTPS. `./scripts/verify` aprobó 1 113 comprobaciones y pruebas.
 **Revisión humana:** pendiente (D-32).
+
+## 2026-11-28: caducidad y purgas (T-21)
+**Modelo:** GPT-6 en Codex (identificador exacto de la sesión no registrado)
+**Prompt:** «continua», conforme al plan delegado de E6.
+**Resultado:** comando y servicio de Compose, plazos con reloj inyectable, eliminación en el proveedor antes de la purga, integración de reintento y cierre delegado de la tarea.
+**Revisión humana:** pendiente (D-32).

@@ -69,3 +69,9 @@ Delegada (D-24, D-32) para los criterios ya aprobados de E6. La publicación de 
 ## Puerta B
 
 Pendiente. Verificar los cinco RF, los defectos 2 y 8, el umbral y las diferencias de cortes, y registrar la evidencia y la revisión documental de D-31.
+
+### Comprobación de T-21
+
+`docker compose run --rm jobs` ejecuta la caducidad y la purga con el rol de tareas. Para reproducir una frontera en una base desechable, se puede ejecutar `docker compose run --rm jobs python -m nukyro.cli run-retention --at 2001-02-28T12:00:00Z`. El comando imprime conteos y devuelve un código distinto de cero si quedó una eliminación de identidad por reintentar. El entorno necesita la clave de administración local generada por `scripts/gen-env`.
+
+T-21 aplica los 90 días a la bitácora del panel (RF-087). Los logs técnicos de infraestructura y la conservación por incidentes siguen el trabajo operativo de T-27. Las llamadas al proveedor y sus pruebas ocurren en el entorno simulado (D-15).

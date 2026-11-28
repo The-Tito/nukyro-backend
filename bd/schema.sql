@@ -991,7 +991,8 @@ END $$;
 -- api, admin, jobs: bloquea una cuenta (terminal, D-20). Orden: cuenta, participante,
 -- sesiones. Salvo oposición o menor de edad, archiva y reescribe. Si la cuenta ya
 -- está bloqueada no hace nada y devuelve false.
-CREATE FUNCTION block_account(p_account uuid, p_reason text, p_deletion_due_at timestamptz) RETURNS boolean
+CREATE FUNCTION block_account_at(p_account uuid, p_reason text, p_blocked_at timestamptz,
+                                 p_deletion_due_at timestamptz) RETURNS boolean
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
 AS $$
 DECLARE
@@ -1005,7 +1006,8 @@ BEGIN
     IF v_status = 'blocked' THEN RETURN false; END IF;
     SELECT p.id INTO v_participant FROM nukyro.participants p WHERE p.account_id = p_account FOR UPDATE;
     UPDATE nukyro.accounts
-       SET status = 'blocked', blocked_at = now(), block_reason = p_reason, deletion_due_at = p_deletion_due_at
+       SET status = 'blocked', blocked_at = p_blocked_at,
+           block_reason = p_reason, deletion_due_at = p_deletion_due_at
      WHERE id = p_account;
     IF v_participant IS NOT NULL AND p_reason <> 'underage' THEN
         -- archive_participant también omite al opuesto (exclude_from_stats)
@@ -1013,6 +1015,27 @@ BEGIN
     END IF;
     RETURN true;
 END $$;
+
+CREATE FUNCTION block_account(p_account uuid, p_reason text, p_deletion_due_at timestamptz) RETURNS boolean
+LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+    SELECT nukyro.block_account_at(p_account, p_reason, now(), p_deletion_due_at)
+$$;
+
+-- jobs: bloquea a los 12 meses calendario en UTC. Revalida la actividad al tomar el bloqueo.
+CREATE FUNCTION block_inactive_account(p_account uuid, p_now timestamptz) RETURNS boolean
+LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+    WITH inactive AS (
+        SELECT a.id FROM nukyro.accounts a
+         WHERE a.id = p_account AND a.status = 'active'
+           AND (a.last_login_at AT TIME ZONE 'UTC') + interval '12 months' <=
+               (p_now AT TIME ZONE 'UTC')
+         FOR UPDATE OF a
+    )
+    SELECT coalesce((SELECT nukyro.block_account_at(id, 'inactivity', p_now,
+                                                   p_now + interval '720 hours') FROM inactive), false)
+$$;
 
 -- api: vincula el progreso de un navegador sin cuenta con una cuenta (P10, RF-076, defecto 9).
 -- Orden de bloqueo: cuenta, participante del navegador, participante de la cuenta, sesiones.
@@ -1090,10 +1113,10 @@ DECLARE
     v_archived integer := 0;
 BEGIN
     FOR v_id IN SELECT p.id FROM nukyro.participants p
-                 WHERE p.account_id IS NULL AND p.last_activity_at < p_cutoff ORDER BY p.id
+                 WHERE p.account_id IS NULL AND p.last_activity_at <= p_cutoff ORDER BY p.id
     LOOP
         PERFORM 1 FROM nukyro.participants p
-         WHERE p.id = v_id AND p.account_id IS NULL AND p.last_activity_at < p_cutoff FOR UPDATE;
+         WHERE p.id = v_id AND p.account_id IS NULL AND p.last_activity_at <= p_cutoff FOR UPDATE;
         IF FOUND THEN v_ids := v_ids || v_id; END IF;
     END LOOP;
     IF cardinality(v_ids) = 0 THEN RETURN 0; END IF;
@@ -1105,8 +1128,28 @@ BEGIN
     RETURN cardinality(v_ids);
 END $$;
 
--- jobs: purga de cuentas bloqueadas. SOLO borra las vencidas (D-20); no archiva
--- (el archivo ocurrió al bloquear). Devuelve cuántas se borraron.
+-- jobs: obtiene solo el identificador que debe revocar en el proveedor. El bloqueo dura
+-- hasta que termina la llamada externa y el borrado de la misma cuenta.
+CREATE FUNCTION lock_due_account_for_purge(p_account uuid, p_now timestamptz) RETURNS text
+LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+    SELECT a.cognito_sub FROM nukyro.accounts a
+     WHERE a.id = p_account AND a.status = 'blocked' AND a.deletion_due_at <= p_now
+     FOR UPDATE OF a
+$$;
+
+CREATE FUNCTION purge_due_account(p_account uuid, p_now timestamptz) RETURNS boolean
+LANGUAGE sql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+    WITH removed AS (
+        DELETE FROM nukyro.accounts
+         WHERE id = p_account AND status = 'blocked' AND deletion_due_at <= p_now RETURNING id
+    )
+    SELECT EXISTS (SELECT 1 FROM removed)
+$$;
+
+-- Purga de mantenimiento del owner. El trabajo de aplicación usa la purga por cuenta
+-- tras borrar la identidad en el proveedor (D-35). Ninguna de las dos vuelve a archivar.
 CREATE FUNCTION purge_blocked_accounts(p_now timestamptz) RETURNS integer
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
 AS $$
@@ -1235,7 +1278,9 @@ GRANT SELECT, DELETE ON nukyro.admin_audit_log, nukyro.arco_requests TO nukyro_j
 GRANT SELECT (id, status, last_login_at, block_reason, deletion_due_at) ON nukyro.accounts TO nukyro_jobs;
 GRANT EXECUTE ON FUNCTION nukyro.block_account(uuid, text, timestamptz) TO nukyro_jobs;
 GRANT EXECUTE ON FUNCTION nukyro.expire_anonymous_participants(timestamptz) TO nukyro_jobs;
-GRANT EXECUTE ON FUNCTION nukyro.purge_blocked_accounts(timestamptz) TO nukyro_jobs;
+GRANT EXECUTE ON FUNCTION nukyro.block_inactive_account(uuid, timestamptz) TO nukyro_jobs;
+GRANT EXECUTE ON FUNCTION nukyro.lock_due_account_for_purge(uuid, timestamptz) TO nukyro_jobs;
+GRANT EXECUTE ON FUNCTION nukyro.purge_due_account(uuid, timestamptz) TO nukyro_jobs;
 
 -- Analítica: catálogo de versiones y el resumen agregado con umbral de 10; ninguna fila de hechos
 GRANT SELECT ON nukyro.scenarios, nukyro.scenario_versions TO nukyro_analytics;

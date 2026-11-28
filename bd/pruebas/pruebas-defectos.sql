@@ -266,7 +266,11 @@ SELECT pg_temp.chk('D8-07 grants de ejecución exactos por rol',
         AND has_function_privilege('nukyro_jobs', 'nukyro.expire_anonymous_participants(timestamptz)', 'EXECUTE')
         AND NOT has_function_privilege('nukyro_api',   'nukyro.expire_anonymous_participants(timestamptz)', 'EXECUTE')
         AND NOT has_function_privilege('nukyro_admin', 'nukyro.expire_anonymous_participants(timestamptz)', 'EXECUTE')
-        AND has_function_privilege('nukyro_jobs', 'nukyro.purge_blocked_accounts(timestamptz)', 'EXECUTE')
+        AND NOT has_function_privilege('nukyro_jobs', 'nukyro.purge_blocked_accounts(timestamptz)', 'EXECUTE')
+        AND has_function_privilege('nukyro_jobs', 'nukyro.purge_due_account(uuid,timestamptz)', 'EXECUTE')
+        AND has_function_privilege('nukyro_jobs', 'nukyro.lock_due_account_for_purge(uuid,timestamptz)', 'EXECUTE')
+        AND NOT has_function_privilege('nukyro_api', 'nukyro.purge_due_account(uuid,timestamptz)', 'EXECUTE')
+        AND NOT has_function_privilege('nukyro_admin', 'nukyro.lock_due_account_for_purge(uuid,timestamptz)', 'EXECUTE')
         AND NOT has_function_privilege('nukyro_api',   'nukyro.purge_blocked_accounts(timestamptz)', 'EXECUTE')
         AND NOT has_function_privilege('nukyro_admin', 'nukyro.purge_blocked_accounts(timestamptz)', 'EXECUTE')
         AND has_function_privilege('nukyro_analytics', 'nukyro.report_session_summary(uuid)', 'EXECUTE')
@@ -461,9 +465,10 @@ SELECT pg_temp.expect('D9-01 una cuenta bloqueada no inicia sesiones nuevas',
 -- Purga: solo las vencidas (D-20)
 SET ROLE nukyro_jobs;
 SELECT pg_temp.chk('D12-04 antes del plazo no se purga ninguna cuenta (A-06)',
- $q$SELECT nukyro.purge_blocked_accounts(now()) = 0$q$);
-SELECT pg_temp.chk('D8-30 purge_blocked_accounts borra solo la vencida',
- $q$SELECT nukyro.purge_blocked_accounts(now() + interval '1 hour') = 1$q$);
+ $q$SELECT NOT nukyro.purge_due_account(pg_temp.id('ac', 303), now())$q$);
+SELECT pg_temp.chk('D8-30 la purga borra solo la cuenta vencida',
+ $q$SELECT nukyro.purge_due_account(pg_temp.id('ac', 303), now() + interval '1 hour')
+        AND NOT nukyro.purge_due_account(pg_temp.id('ac', 302), now() + interval '1 hour')$q$);
 RESET ROLE;
 SELECT pg_temp.chk('D8-31 la vencida y su cascada desaparecen; las no vencidas y la activa siguen',
  $q$SELECT NOT EXISTS (SELECT 1 FROM accounts WHERE id = pg_temp.id('ac', 303))
@@ -474,7 +479,8 @@ SELECT pg_temp.chk('D8-31 la vencida y su cascada desaparecen; las no vencidas y
         AND EXISTS (SELECT 1 FROM accounts WHERE id = pg_temp.id('ac', 305))$q$);
 SET ROLE nukyro_jobs;
 SELECT pg_temp.chk('D8-32 pasado el plazo, la purga borra las otras dos; los hechos de la cuenta normal sobreviven',
- $q$SELECT nukyro.purge_blocked_accounts(now() + interval '11 days') = 2$q$);
+ $q$SELECT nukyro.purge_due_account(pg_temp.id('ac', 301), now() + interval '11 days')
+        AND nukyro.purge_due_account(pg_temp.id('ac', 302), now() + interval '11 days')$q$);
 RESET ROLE;
 SELECT pg_temp.chk('D8-33 sin rastro de las cuentas purgadas y con los hechos intactos',
  $q$SELECT NOT EXISTS (SELECT 1 FROM sessions WHERE id IN (pg_temp.id('cc', 205), pg_temp.id('cc', 206)))

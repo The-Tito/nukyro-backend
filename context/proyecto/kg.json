@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.42.2",
+    "version": "1.42.3",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -305,6 +305,11 @@
         "version": "1.42.2",
         "fecha": "2026-11-28",
         "cambio": "T-20 cerrada por delegación (D-32): derechos del participante por HTTPS y archivo de sesiones de larga duración."
+      },
+      {
+        "version": "1.42.3",
+        "fecha": "2026-11-28",
+        "cambio": "T-21 cerrada por delegación (D-32): plazos, concurrencia y purga en el proveedor de identidad simulado."
       }
     ]
   },
@@ -7778,10 +7783,11 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
-      "fecha": "2026-11-22",
+      "estado": "cerrada",
+      "fecha": "2026-11-28",
       "ruta": "context/plan.md",
-      "buscar": "### T-21 ·"
+      "buscar": "### T-21 ·",
+      "nota": "Cierre delegado (D-32). Comando de retención, límites de 30 días, 12 meses y 90 días en bitácora, reintentos y eliminación en el proveedor simulado (D-35)."
     },
     {
       "id": "T-22",

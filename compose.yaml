@@ -72,6 +72,7 @@ services:
     security_opt: ["no-new-privileges:true"]
     environment:
       <<: *oidc-env
+      NUKYRO_LOCAL_IDENTITY_ADMIN_KEY: ${NUKYRO_LOCAL_IDENTITY_ADMIN_KEY:-}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request as u; u.urlopen('http://127.0.0.1:8080/healthz', timeout=3)"]
       interval: 2s
@@ -88,6 +89,7 @@ services:
       # Origin exacto que acepta la API en las escrituras; con el proxy local es https://proxy
       NUKYRO_ORIGIN: ${NUKYRO_ORIGIN:-https://proxy}
       NUKYRO_OIDC_JWKS_URL: http://issuer:8080/.well-known/jwks.json
+      NUKYRO_LOCAL_IDENTITY_URL: http://issuer:8080
       NUKYRO_DB_API_USER: ${NUKYRO_DB_API_USER:-nukyro_api_app}
       NUKYRO_DB_API_PASSWORD: ${NUKYRO_DB_API_PASSWORD:?falta}
       NUKYRO_DB_ADMIN_USER: ${NUKYRO_DB_ADMIN_USER:-nukyro_admin_app}
@@ -117,6 +119,25 @@ services:
       - caddy_data:/data
     depends_on:
       api:
+        condition: service_healthy
+
+  jobs:
+    profiles: [jobs]
+    build: .
+    command: ["python", "-m", "nukyro.cli", "run-retention"]
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    environment:
+      <<: *db-env
+      NUKYRO_DB_JOBS_USER: ${NUKYRO_DB_JOBS_USER:-nukyro_jobs_app}
+      NUKYRO_DB_JOBS_PASSWORD: ${NUKYRO_DB_JOBS_PASSWORD:?falta}
+      NUKYRO_LOCAL_IDENTITY_URL: http://issuer:8080
+      NUKYRO_LOCAL_IDENTITY_ADMIN_KEY: ${NUKYRO_LOCAL_IDENTITY_ADMIN_KEY:-}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      issuer:
         condition: service_healthy
 
   # Preparación de la caja negra (T-07): escenarios ficticios con el pre-test marcado por SQL, porque

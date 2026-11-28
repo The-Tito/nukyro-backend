@@ -75,3 +75,11 @@ La oposición se guarda en el participante. El borrado respeta ese estado y supr
 
 **¿Por qué purgar una cuenta bloqueada solo borra?**
 El bloqueo ya decidió si correspondía conservar una copia anónima. Purgar elimina los datos bloqueados cuando vence el plazo (RF-070, D-20).
+
+## T-21 · Caducidad y purgas
+
+**¿Por qué el trabajo comprueba de nuevo el plazo bajo bloqueo?**
+Una solicitud puede renovar la actividad entre el listado y el bloqueo de una fila. Al revalidar antes de cambiarla, la operación respeta la actividad más reciente (RF-080).
+
+**¿Qué pasa si la identidad se elimina en el proveedor y falla el borrado local?**
+La cuenta sigue bloqueada. El reintento acepta que la identidad ya no exista y termina la purga. Un token emitido durante el bloqueo tampoco puede crear una cuenta nueva con esa identidad (D-35).
