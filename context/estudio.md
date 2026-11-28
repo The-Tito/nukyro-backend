@@ -50,3 +50,17 @@ puntuación no sale al enviar cada evaluación.
 **¿Cómo se sabe que alguien respondió la encuesta sin saber qué respondió?**
 La sesión solo guarda un indicador. La respuesta entra por una función que reescribe la tabla completa en orden
 aleatorio. El límite: si una sola persona respondió, su fila es evidente (ADR-007).
+
+## E5 · Identidad y aislamiento
+
+**¿Qué pasa si un token válido al empezar una petición vence antes de crear la cuenta?**
+Al insertar una cuenta, la API verifica el mismo token dentro de la transacción. Si venció durante la espera,
+devuelve 401 y revierte el alta. El plazo mínimo de A-06 cubre la vigencia de un token anterior al bloqueo (D-35).
+
+**¿Cómo se decide qué sesión queda como primera al vincular?**
+La base bloquea la cuenta y los participantes, traslada el progreso y recalcula la primera sesión de cada
+escenario por fecha e id. Repetir la vinculación encuentra el secreto anterior invalidado (RF-076, RF-077).
+
+**¿Cómo detecta la suite una ruta nueva sin un caso de acceso ajeno?**
+Compara las rutas que FastAPI registra con el inventario. La integración usa ese inventario para probar las
+peticiones del dueño y de otra persona, y verifica el rechazo de escrituras de origen ajeno (T-19).

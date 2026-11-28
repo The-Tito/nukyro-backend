@@ -212,6 +212,25 @@ Lo más reciente va al final. Formato de cada entrada:
   - Cuenta sin haber iniciado sesión: 401.
 - **Evidencia:** `tests/trazabilidad-e5.md`.
 
+## 2026-11-22: T-19 construida, pendiente de auditoría
+- **Resultado:** `tests/acceso.py` (inventario: pública, entrada, propia o de sesión) y tres pruebas que lo recorren: aislamiento (dueño y intruso, anónimo o con cuenta), CSRF por ruta y cuenta bloqueada en las 14 rutas con identidad. `tests/unit/test_inventario_rutas.py` falla si una ruta no está en el inventario o no autentica.
+- **Revisión:** `./scripts/verify`: sql=294, unit=265, integration=403, blackbox=90. Siete sabotajes detectados (ver `tests/trazabilidad-e5.md`). Falta la auditoría en Opus.
+- **Hallazgo propio:** `entry.service.get_session` y `entry.queries.session_by_id` no los usa ninguna ruta (la de simulación los sustituye); el primer sabotaje cayó ahí y no probaba nada. Queda como código muerto para la auditoría.
+- **Excepción de los GET (ADR-008 §6):** se mantiene. Un GET autenticado solo mueve `last_activity_at` y no hay CORS: una página ajena no lee la respuesta.
+
+## 2026-11-22: auditoría de T-18 y T-19
+- **Resultado:** T-19 cerrada por delegación (D-32). T-18 sigue en curso: falta el defecto 12, que espera A-06.
+- **Revisión:** en la sesión con Opus (D-33), sin agentes.
+  - Orden de bloqueo: las rutas con token bloquean solo al participante, y `link_participant` toma la cuenta y después los participantes; no hay ciclo con `block_account`, la caducidad ni otra vinculación.
+  - Un GET de evaluación no escribe (`write=False`, sin crear intentos).
+  - Ningún bloqueo. Correcciones:
+    1. `test_t19_lo_inexistente_da_el_mismo_404_que_lo_ajeno` comparaba lo inexistente con un id mal formado, no con lo ajeno. Ahora la sustituye `test_t19_lo_inexistente_y_lo_ajeno_responden_lo_mismo`: mismo código y mismo cuerpo en los tres casos, con intruso anónimo y con cuenta.
+    2. El correo sin verificar daba un 403 indistinguible del grupo `admins`: ahora tiene el código `email_not_verified`.
+    3. Si la cuenta se purga entre el INSERT y el bloqueo, el inicio de sesión daba 500: ahora da 401.
+    4. `Auth.secret_hash` usaba `assert`, que `python -O` quitaría.
+    5. Se borró `entry.service.get_session`, que no usaba ninguna ruta.
+- **Evidencia:** `./scripts/verify` sobre f5e87c2 más las correcciones: sql=294, unit=265, integration=421, blackbox=90.
+
 ## 2026-11-22: A-06 aprobada
 - **Resultado:** el usuario aprueba el `CHECK` de una hora entre bloqueo y purga. Se aplica al empezar la próxima sesión, con sus pruebas, y con él se cierran el defecto 12 y T-18.
 - **Decisiones:** A-06 cerrada con la aprobación del usuario.
@@ -222,3 +241,9 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Decisiones:** A-06, D-35 y cierre delegado por D-32.
 - **Evidencia:** `./scripts/verify` desde una base vacía dio sql=298, unit=260, integration=199, blackbox=90. El rojo se conserva en `bd/pruebas/evidencia-rojo.md`.
 - **Revisión del cierre:** una petición podía validar el token a tiempo y llegar al INSERT después de la purga. Ahora el alta vuelve a verificar el mismo token dentro de la transacción y se revierte si venció. La integración controla el reloj y el orden de ambos pasos.
+
+## 2026-11-28: E5, Puerta B delegada
+- **Resultado:** E5 cerrada con T-17 a T-19. RF-074 a RF-077 tienen cobertura positiva y negativa, con 74 de 87 RF comprobados en el alcance local.
+- **Revisión:** siete criterios respaldados en `context/etapas/etapa-5.md`. Un GET de sesión añadido en memoria sin registro produjo «rutas sin caso de acceso ajeno». Los defectos 9 y 12 tienen evidencia de rojo a verde. Las pruebas usaron Docker local y un emisor simulado. Cognito y AWS RDS quedan pendientes de prueba.
+- **Decisiones:** Puerta B delegada (D-32). Revisión humana pendiente.
+- **Evidencia:** EV-05, `./scripts/verify` en `12c6430` con sql=298, unit=265, integration=422, blackbox=90.

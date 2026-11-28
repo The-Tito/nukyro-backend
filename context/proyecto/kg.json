@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.38.1",
+    "version": "1.38.2",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -262,6 +262,16 @@
         "cambio": "T-18 en curso: cuenta (POST /account/login, GET /account), link_participant (P10, defecto 9 corregido), autenticación por token o cookie. Falta el defecto 12, que espera A-06."
       },
       {
+        "version": "1.37.4",
+        "fecha": "2026-11-22",
+        "cambio": "T-19 en curso: inventario de rutas (tests/acceso.py) con su caso de acceso ajeno, CSRF por ruta y cuenta bloqueada en todas; pendiente la auditoría."
+      },
+      {
+        "version": "1.37.5",
+        "fecha": "2026-11-22",
+        "cambio": "Auditoría de T-18 y T-19 en Opus (D-33): T-19 cerrada por delegación (D-32). T-18 sigue en curso: el defecto 12 espera A-06. Cuatro correcciones menores y una prueba reforzada."
+      },
+      {
         "version": "1.38.0",
         "fecha": "2026-11-22",
         "cambio": "A-06 cerrada: el usuario aprueba el CHECK de una hora entre bloqueo y purga (defecto 12). Se aplica al empezar la próxima sesión."
@@ -270,6 +280,11 @@
         "version": "1.38.1",
         "fecha": "2026-11-28",
         "cambio": "T-18 cerrada por delegación (D-32): A-06 aplicada y defecto 12 reproducido y corregido junto con el defecto 9."
+      },
+      {
+        "version": "1.38.2",
+        "fecha": "2026-11-28",
+        "cambio": "E5 cerrada por delegación (D-32), con evidencia EV-05: 74 de 87 RF en el alcance local."
       }
     ]
   },
@@ -420,8 +435,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 500,
-    "aristas": 848,
+    "nodos": 501,
+    "aristas": 849,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 17,
@@ -450,7 +465,7 @@
       "Escenario": 1,
       "Etapa": 9,
       "Evaluacion": 1,
-      "Evidencia": 4,
+      "Evidencia": 5,
       "Finalidad": 14,
       "FlujoExperiencia": 1,
       "FueraDeAlcance": 23,
@@ -7359,8 +7374,8 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "en_curso",
-      "fecha": "2026-11-22",
+      "estado": "cerrada",
+      "fecha": "2026-11-28",
       "ruta": "context/plan.md",
       "buscar": "| E5 |",
       "puerta_a": {
@@ -7368,6 +7383,11 @@
         "fecha": "2026-11-22",
         "decision": "D-32",
         "plan": "context/etapas/etapa-5.md"
+      },
+      "puerta_b": {
+        "estado": "delegada",
+        "fecha": "2026-11-28",
+        "decision": "D-32"
       }
     },
     {
@@ -7689,7 +7709,7 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/plan.md",
       "buscar": "### T-19 ·"
@@ -8341,6 +8361,25 @@
       ],
       "quien": "usuario",
       "cita": "sí, apruebo A-06"
+    },
+    {
+      "id": "EV-05",
+      "tipo": "Evidencia",
+      "nombre": "E5 comprobada",
+      "estado": "vigente",
+      "fecha": "2026-11-28",
+      "commit": "12c6430",
+      "comando": "./scripts/verify",
+      "texto": "Verificación acumulada desde base vacía, defectos 9 y 12 de rojo a verde y prueba del inventario con una ruta sin caso.",
+      "resultado": "sql=298, unit=265, integration=422, blackbox=90; auditoría sin hallazgos abiertos; 74 de 87 RF en alcance local",
+      "ruta": "context/bitacora.md",
+      "buscar": "EV-05",
+      "fuente": [
+        {
+          "doc": "D-32",
+          "seccion": "verificación delegada"
+        }
+      ]
     }
   ],
   "aristas": [
@@ -12602,6 +12641,11 @@
       "origen": "A-06",
       "relacion": "afecta",
       "destino": "RET-01"
+    },
+    {
+      "origen": "EV-05",
+      "relacion": "respalda",
+      "destino": "E5"
     }
   ],
   "conflictos": [

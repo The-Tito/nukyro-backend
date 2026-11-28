@@ -116,6 +116,21 @@ Queda reservado al usuario, sin bloquear T-17: **A-06**, el plazo mínimo de blo
 
 ## Puerta B
 
-La evidencia será EV-05: verify desde una base vacía, los sabotajes del inventario y del verificador, y los escaneos.
+Delegada el 2026-11-28 (D-32), con revisión humana pendiente. T-17, T-18 y T-19 cerradas.
+EV-05 registra `./scripts/verify` en `12c6430`, desde una base vacía, con 298 comprobaciones SQL,
+265 pruebas unitarias, 422 de integración y 90 de caja negra. E5 aporta RF-074 a RF-077 y deja
+74 de 87 RF comprobados en el alcance local. Las pruebas con Cognito y AWS RDS quedan pendientes.
 
-No se probará Cognito real ni AWS. La Puerta B queda delegada (D-32), con revisión humana pendiente.
+| Criterio | Dictamen | Evidencia |
+|---|---|---|
+| RF-074. Alta y rechazos con token | Respaldado | Alta concurrente, consentimientos, tokens inválidos y correo sin verificar en integración y caja negra. |
+| RF-075. Reanudación en otro navegador | Respaldado | Reanudación sin la cookie anterior, acceso ajeno 404 y cuenta bloqueada 403. |
+| RF-076. Vinculación y secreto invalidado | Respaldado | L-01 a L-19, CC5, integración y caja negra de la vinculación. |
+| RF-077. Una primera sesión al vincular | Respaldado | Pruebas de integración del defecto 9 y carreras CC5 y CC6. |
+| D-35, A-06. Una cuenta purgada permanece ausente con el token previo | Respaldado | D12-01 a D12-04 e integración con el reloj adelantado entre la validación y la inserción. |
+| T-19. El inventario detecta rutas sin caso | Respaldado | Una ruta de sesión añadida en memoria hizo fallar la prueba de cobertura del inventario. |
+| T-19. Se rechazan las escrituras de origen ajeno | Respaldado | Matriz de `test_aislamiento.py` para métodos, orígenes y credenciales. |
+
+La trazabilidad de casos positivos y negativos está en `tests/trazabilidad-e5.md`. Los defectos 9 y 12
+se documentaron de rojo a verde en `bd/pruebas/evidencia-rojo.md`. Las preguntas de defensa están en
+`context/estudio.md`.
