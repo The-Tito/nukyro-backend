@@ -49,3 +49,10 @@ intento enviado y agregarle respuestas. Pasan con `trg_guard_attempt_submitted` 
 traslado de sesiones del paso 1 de P10 y nada más), fallaron L-07 y L-09 y, en concurrencia, CC5 y CC6: la cuenta
 con una sesión y el navegador con otra quedaban con **dos primeras sesiones** (`1/2/2` en CC5; en CC6, dos primeras
 entre tres sesiones). Con el recálculo por `(started_at, id)` pasan: queda una sola, la más antigua.
+
+**Defecto 12 al purgar una cuenta (T-18, A-06).** Con el esquema de `ff3a65c`, D12-01 y D12-02
+fallaron porque PostgreSQL aceptó el bloqueo con un plazo menor a una hora en vez de devolver 23514.
+La prueba de integración `test_defecto12_el_token_anterior_al_bloqueo_no_recrea_la_cuenta` recibió
+200 en vez de 403 al reutilizar el mismo token del emisor simulado en la API tras una purga inmediata.
+Con el `CHECK`, el plazo de una hora se acepta, antes del plazo el mismo token recibe 403 y al
+purgar recibe 401. En ese momento la cuenta ya no existe y el inicio de sesión no la recrea.

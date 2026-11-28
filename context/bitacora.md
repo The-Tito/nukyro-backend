@@ -211,3 +211,13 @@ Lo más reciente va al final. Formato de cada entrada:
   - Cuenta sin participante: las rutas de sesión responden 409 `documents_required`.
   - Cuenta sin haber iniciado sesión: 401.
 - **Evidencia:** `tests/trazabilidad-e5.md`.
+
+## 2026-11-22: A-06 aprobada
+- **Resultado:** el usuario aprueba el `CHECK` de una hora entre bloqueo y purga. Se aplica al empezar la próxima sesión, con sus pruebas, y con él se cierran el defecto 12 y T-18.
+- **Decisiones:** A-06 cerrada con la aprobación del usuario.
+
+## 2026-11-28: T-18, A-06 aplicada y cierre delegado
+- **Resultado:** PostgreSQL exige una hora desde `blocked_at` hasta `deletion_due_at`. Se regeneró la migración inicial y se verificaron el mínimo exacto y el instante anterior.
+- **Revisión:** los cuatro criterios de T-18 tienen respaldo. CC5, CC6 y la integración comprobaron la primera sesión única y la idempotencia. El defecto 9 está documentado en rojo. Para el defecto 12, SQL devolvió 23514 en plazos menores y el mismo token recibió 403 mientras la cuenta estuvo bloqueada y 401 en el instante de purga. La cuenta quedó ausente. Revisión humana del código pendiente.
+- **Decisiones:** A-06, D-35 y cierre delegado por D-32.
+- **Evidencia:** `./scripts/verify` desde una base vacía dio sql=298, unit=260, integration=199, blackbox=90. El rojo se conserva en `bd/pruebas/evidencia-rojo.md`.

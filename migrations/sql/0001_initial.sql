@@ -349,7 +349,10 @@ CREATE TABLE accounts (
     deletion_due_at    timestamptz,
     last_login_at      timestamptz NOT NULL DEFAULT now(),
     created_at         timestamptz NOT NULL DEFAULT now(),
-    CHECK ((status = 'blocked') = (blocked_at IS NOT NULL AND block_reason IS NOT NULL AND deletion_due_at IS NOT NULL))
+    CHECK ((status = 'blocked') = (blocked_at IS NOT NULL AND block_reason IS NOT NULL AND deletion_due_at IS NOT NULL)),
+    -- A-06: el plazo cubre toda la vida de un token anterior al bloqueo (D-35).
+    CONSTRAINT accounts_minimum_blocking_period
+        CHECK (deletion_due_at IS NULL OR deletion_due_at >= blocked_at + interval '1 hour')
 );
 CREATE INDEX ix_accounts_inactivity ON accounts (last_login_at) WHERE status = 'active';
 CREATE INDEX ix_accounts_deletion_due ON accounts (deletion_due_at) WHERE status = 'blocked';

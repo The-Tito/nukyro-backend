@@ -20,7 +20,7 @@ cd "$RAIZ"
 
 # Conteos mínimos de líneas PASS (si cambia una prueba, se actualiza aquí)
 ESPERADO_REGLAS=57
-ESPERADO_DEFECTOS=216
+ESPERADO_DEFECTOS=220
 ESPERADO_CONCURRENCIA=21
 
 C="nukyro-t09-$$"
@@ -89,7 +89,7 @@ correr_sql() { # <suite> <archivo> <esperado>
 echo "== Suite reglas (pruebas-reglas.sql) =="
 correr_sql reglas bd/pruebas/pruebas-reglas.sql "$ESPERADO_REGLAS"
 
-echo "== Suite defectos 2 a 9 (pruebas-defectos.sql) =="
+echo "== Suite defectos (pruebas-defectos.sql) =="
 correr_sql defectos bd/pruebas/pruebas-defectos.sql "$ESPERADO_DEFECTOS"
 
 echo "== Suite concurrencia (pruebas-concurrencia.sh) =="

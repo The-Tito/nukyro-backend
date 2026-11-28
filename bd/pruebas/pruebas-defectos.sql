@@ -413,9 +413,15 @@ SELECT pg_temp.chk('D8-23 menor: sin hechos nuevos y su sesión queda sin marcar
 SET ROLE nukyro_jobs;
 SELECT pg_temp.chk('D8-24 block_account de una cuenta normal archiva y reescribe',
  $q$SELECT nukyro.block_account(pg_temp.id('ac', 302), 'user_request', now() + interval '10 days')$q$);
+SELECT pg_temp.expect('D12-01 rechaza una purga inmediata al bloquear (A-06)',
+ $q$SELECT nukyro.block_account(pg_temp.id('ac', 303), 'user_request', now())$q$, '23514');
+SELECT pg_temp.expect('D12-02 rechaza un plazo un microsegundo menor a una hora (A-06)',
+ $q$SELECT nukyro.block_account(pg_temp.id('ac', 303), 'user_request', now() + interval '1 hour -1 microsecond')$q$, '23514');
 SELECT pg_temp.chk('D8-25 block_account de una cuenta con oposición bloquea sin copia',
- $q$SELECT nukyro.block_account(pg_temp.id('ac', 303), 'user_request', now() - interval '1 hour')$q$);
+ $q$SELECT nukyro.block_account(pg_temp.id('ac', 303), 'user_request', now() + interval '1 hour')$q$);
 RESET ROLE;
+SELECT pg_temp.chk('D12-03 se acepta exactamente una hora (A-06)',
+ $q$SELECT deletion_due_at = blocked_at + interval '1 hour' FROM accounts WHERE id = pg_temp.id('ac', 303)$q$);
 SELECT pg_temp.chk('D8-26 normal: un hecho más y sesión marcada; opuesta: ninguno',
  $q$SELECT (SELECT count(*) FROM session_facts) = current_setting('nukyro_t.n_sf')::int + 1
         AND (SELECT facts_written_at IS NOT NULL FROM sessions WHERE id = pg_temp.id('cc', 206))
@@ -454,8 +460,10 @@ SELECT pg_temp.expect('D9-01 una cuenta bloqueada no inicia sesiones nuevas',
 
 -- Purga: solo las vencidas (D-20)
 SET ROLE nukyro_jobs;
+SELECT pg_temp.chk('D12-04 antes del plazo no se purga ninguna cuenta (A-06)',
+ $q$SELECT nukyro.purge_blocked_accounts(now()) = 0$q$);
 SELECT pg_temp.chk('D8-30 purge_blocked_accounts borra solo la vencida',
- $q$SELECT nukyro.purge_blocked_accounts(now()) = 1$q$);
+ $q$SELECT nukyro.purge_blocked_accounts(now() + interval '1 hour') = 1$q$);
 RESET ROLE;
 SELECT pg_temp.chk('D8-31 la vencida y su cascada desaparecen; las no vencidas y la activa siguen',
  $q$SELECT NOT EXISTS (SELECT 1 FROM accounts WHERE id = pg_temp.id('ac', 303))

@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.37.3",
+    "version": "1.38.1",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -24,7 +24,7 @@
       "seguimiento": "Los ids E0, T-01, D-01, A-01, S-01, EV-01 y CA-01 son de seguimiento y llevan estado, ruta y buscar (context/README.md). No confundir con D1–D7 ni S1–S6 del modelo de datos.",
       "privacidad": "Repositorio público (D-09, ADR-006): personas por seudónimo, sin correo ni matrícula; en las rutas, * sustituye al dato personal. docs/, versiones/ y bd/presentacion/*.docx son solo locales."
     },
-    "actualizado": "2026-11-22",
+    "actualizado": "2026-11-28",
     "historial": [
       {
         "version": "1.0.0",
@@ -260,6 +260,16 @@
         "version": "1.37.3",
         "fecha": "2026-11-22",
         "cambio": "T-18 en curso: cuenta (POST /account/login, GET /account), link_participant (P10, defecto 9 corregido), autenticación por token o cookie. Falta el defecto 12, que espera A-06."
+      },
+      {
+        "version": "1.38.0",
+        "fecha": "2026-11-22",
+        "cambio": "A-06 cerrada: el usuario aprueba el CHECK de una hora entre bloqueo y purga (defecto 12). Se aplica al empezar la próxima sesión."
+      },
+      {
+        "version": "1.38.1",
+        "fecha": "2026-11-28",
+        "cambio": "T-18 cerrada por delegación (D-32): A-06 aplicada y defecto 12 reproducido y corregido junto con el defecto 9."
       }
     ]
   },
@@ -6298,7 +6308,7 @@
             "T-10",
             "T-18"
           ],
-          "estado": "reproducido y corregido en la base (T-09); falta la vinculación (T-18)"
+          "estado": "reproducido y corregido en la base y la vinculación (T-09, T-18)"
         },
         {
           "n": 10,
@@ -6321,11 +6331,11 @@
         {
           "n": 12,
           "defecto": "El upsert puede recrear una cuenta purgada",
-          "arreglo_propuesto": "rechazar tokens anteriores a la baja",
+          "arreglo_propuesto": "limitar la vigencia del token y exigir una hora como mínimo entre bloqueo y purga (D-35, A-06)",
           "tareas": [
             "T-18"
           ],
-          "estado": "detectado por lectura, sin reproducir"
+          "estado": "reproducido y corregido (T-18)"
         },
         {
           "n": 13,
@@ -7659,8 +7669,8 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "en_curso",
-      "fecha": "2026-11-22",
+      "estado": "cerrada",
+      "fecha": "2026-11-28",
       "ruta": "context/plan.md",
       "buscar": "### T-18 ·"
     },
@@ -8314,8 +8324,8 @@
       "id": "A-06",
       "tipo": "Decision",
       "nombre": "Plazo mínimo de bloqueo antes de purgar",
-      "texto": "D-35 requiere que una cuenta bloqueada siga en la base al menos la vida máxima del token (1 hora) antes de purgarse. Recomendación: CHECK deletion_due_at >= blocked_at + 1 hora; ningún plazo legal o de RET-01 es menor. Toca la conservación de datos personales: lo decide el usuario. No bloquea T-17.",
-      "estado": "abierta",
+      "texto": "Una cuenta bloqueada no se purga antes de una hora: CHECK deletion_due_at >= blocked_at + interval '1 hour'. Es la vida máxima del token (D-35): así un token anterior a la baja vence antes de la purga y no recrea la cuenta (defecto 12).",
+      "estado": "cerrada",
       "fecha": "2026-11-22",
       "ruta": "context/decisiones.md",
       "buscar": "| A-06 |",
@@ -8323,8 +8333,14 @@
         {
           "doc": "D-35",
           "seccion": "defecto 12"
+        },
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-22"
         }
-      ]
+      ],
+      "quien": "usuario",
+      "cita": "sí, apruebo A-06"
     }
   ],
   "aristas": [

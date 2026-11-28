@@ -4,10 +4,17 @@ RF-074 a RF-077, defectos 9 y 12. El emisor simulado firma los tokens (D-34).
 """
 
 import threading
+import time
 
 import pytest
+from fastapi.testclient import TestClient
+from psycopg.errors import CheckViolation
 
-from .conftest import ACCEPT, WRITE, bearer
+from nukyro.db import make_engine
+from nukyro.identity import OidcSettings, OidcVerifier, fetch_jwks
+from nukyro.main import create_app
+
+from .conftest import ACCEPT, ORIGIN, WRITE, bearer
 
 SCENARIO = {"scenario_key": "DEMO-BECAS", "self_reported_first": True}
 
@@ -445,3 +452,49 @@ def test_d20_vincular_a_una_cuenta_bloqueada_no_mueve_el_progreso(new_client, mi
     assert login(anon, token).status_code == 403
     assert anon.get("/api/v1/sessions").status_code == 200  # el navegador conserva lo suyo
     assert anon.get("/api/v1/sessions").json()["sessions"][0]["id"] == sid
+
+
+def test_defecto12_el_token_anterior_al_bloqueo_no_recrea_la_cuenta(
+    request, settings, issuer_url, mint, superuser
+):
+    token = mint()
+    sub = sub_of(token)
+    now = time.time()
+    oidc = OidcSettings(
+        "https://cognito-sim.example.test/nukyro-local",
+        "nukyro-local-client",
+        f"{issuer_url}/.well-known/jwks.json",
+    )
+    jwks = fetch_jwks(oidc.jwks_url)
+    engine = make_engine(settings, "api")
+    request.addfinalizer(engine.dispose)
+    app = create_app()
+    app.state.origin = ORIGIN
+    app.state.engines = {"api": engine}
+    app.state.verifier = OidcVerifier(oidc, lambda force=False: jwks, clock=lambda: now)
+    client = TestClient(app, base_url=ORIGIN)
+    request.addfinalizer(client.close)
+
+    assert login(client, token).status_code == 200
+    try:
+        block(superuser, token, due="now()")
+    except CheckViolation as exc:
+        assert exc.diag.constraint_name == "accounts_minimum_blocking_period"
+        block(superuser, token, due="now() + interval '1 hour'")
+
+    # Antes del plazo, el token todavía es válido y la cuenta debe seguir bloqueada.
+    superuser.execute("SELECT nukyro.purge_blocked_accounts(now())")
+    response = login(client, token)
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "account_blocked"
+
+    due = superuser.execute(
+        "SELECT deletion_due_at FROM nukyro.accounts WHERE cognito_sub = %s", (sub,)
+    ).fetchone()[0]
+    superuser.execute("SELECT nukyro.purge_blocked_accounts(%s)", (due,))
+    assert account_row(superuser, sub) is None
+
+    # Avanza el reloj del verificador al mismo instante que el de la purga.
+    now = due.timestamp()
+    assert login(client, token).status_code == 401
+    assert account_row(superuser, sub) is None

@@ -267,9 +267,9 @@ SET ROLE nukyro_jobs;
 SELECT pg_temp.ok('T38a caducidad: expira solo al anónimo inactivo',
  nukyro.expire_anonymous_participants(now() - interval '30 days') = 1);
 SELECT pg_temp.ok('T38b bloqueo de la cuenta (archiva sus hechos)',
- nukyro.block_account('00000000-0000-0000-0000-00000000ac01', 'user_request', now() - interval '1 hour'));
+ nukyro.block_account('00000000-0000-0000-0000-00000000ac01', 'user_request', now() + interval '1 hour'));
 SELECT pg_temp.ok('T38c purga de la cuenta vencida',
- nukyro.purge_blocked_accounts(now()) = 1);
+ nukyro.purge_blocked_accounts(now() + interval '1 hour') = 1);
 SELECT pg_temp.expect('T37 tareas no pueden modificar contenido',
  $q$UPDATE nukyro.nodes SET title = 'x' WHERE version_id = '00000000-0000-0000-0000-000000000012'$q$, '42501');
 RESET ROLE;

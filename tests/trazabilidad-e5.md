@@ -13,4 +13,6 @@ Fuente: etapa-5, «Criterios por RF». Prefijos: `U` unitarias (`tests/unit/test
 | RF-062 y T-19 | I `test_t19_con_token_y_cookie_manda_el_token` | I `test_rf062_la_escritura_con_token_exige_origin_y_cabecera`, I `test_t19_una_cuenta_no_ve_ni_toca_la_sesion_de_otra`, B `test_t19_la_sesion_de_otra_cuenta_es_404_y_la_escritura_ajena_es_403` |
 | D-20 | I `test_d20_una_cuenta_bloqueada_no_inicia_sesion_ni_usa_ninguna_ruta` (403 `account_blocked` en cinco rutas) | S L-11, I `test_d20_vincular_a_una_cuenta_bloqueada_no_mueve_el_progreso` |
 
-Defecto 12 (T-18): **pendiente de A-06**. Sin el `CHECK` del plazo mínimo entre bloqueo y purga no se cierra.
+**Defecto 12 (T-18, D-35, A-06).** S D12-01 a D12-04 comprueban el rechazo de plazos menores,
+el mínimo exacto y la espera de la purga. I `test_defecto12_el_token_anterior_al_bloqueo_no_recrea_la_cuenta`
+recorre inicio, bloqueo y purga con el mismo token. Resultado en rojo en `bd/pruebas/evidencia-rojo.md`.

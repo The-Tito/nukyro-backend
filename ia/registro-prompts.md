@@ -91,3 +91,15 @@ Solo peticiones que deciden algo, inician una tarea o corrigen el rumbo.
 **Prompt:** «audita T-17»
 **Resultado:** dos hallazgos corregidos (la caché de claves no esperaba tras un fallo; una prueba no llegaba a pedir las claves); sabotajes de la imagen y del verificador; T-17 cerrada; PR #18 fusionado en develop
 **Revisión humana:** pendiente
+
+## 2026-11-22: A-06 y cierre de la tercera sesión
+**Modelo:** Claude Opus 5.5
+**Prompt:** «sí, apruebo A-06, luego /cerrar»
+**Resultado:** A-06 cerrada en el KG y en `context/decisiones.md`; bitácora, registro de IA y handoff para retomar con el `CHECK` del defecto 12 y el cierre de T-18 y E5
+**Revisión humana:** el usuario aprobó A-06; lo demás, pendiente
+
+## 2026-11-28: restricción de purga y cierre de T-18
+**Modelo:** GPT-6 en Codex (identificador exacto de la sesión no registrado)
+**Prompt:** «confirmo, continua», continuación de T-18 conforme al relevo.
+**Resultado:** defecto 12 reproducido y corregido con A-06. Restricción en `bd/schema.sql` y migración congelada. Evidencia roja, verificación completa y cierre delegado de T-18.
+**Revisión humana:** A-06 aprobada previamente por el usuario. Difusión y revisión de la implementación según D-11 y D-32.
