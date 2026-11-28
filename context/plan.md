@@ -291,7 +291,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-21 · Caducidad y purgas
 - Etapa: E6
-- Estado: pendiente
+- Estado: cerrada
 - Entregable: tareas idempotentes con fecha inyectable
 - Criterios de cierre:
   - se prueban los límites de 30 días, 12 meses y 90 días

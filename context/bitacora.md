@@ -275,3 +275,16 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Resultado:** descarga JSON, borrado sin cuenta y oposición en ambos modos. La exportación usa una proyección explícita y la identidad resuelve el titular en el servidor. El borrado viejo devolvía 500 cuando la duración en minutos excedía el rango de `smallint`. Se corrigió con `integer` y se congeló la migración.
 - **Evidencia:** `./scripts/verify` desde base vacía. SQL 298, unitarias 265, integración 460 y caja negra 90. Verificación de Cognito real y AWS RDS fuera del alcance local (D-15).
 - **Decisión:** cierre delegado (D-32), revisión humana pendiente.
+
+## 2026-11-28: T-21, caducidad y purgas
+
+| Criterio | Dictamen | Evidencia |
+|---|---|---|
+| Límites de 30 días, 12 meses y 90 días | Respaldado | Instantes a ambos lados de los límites, incluido un aniversario de año bisiesto, en `test_retention.py`. |
+| Repetición y concurrencia no pierden ni duplican operaciones | Respaldado | Dos ejecuciones simultáneas, CC4 de concurrencia con una petición, purga fallida, reintento y caso en que el proveedor ya borró. |
+| Defecto 8 reproducido y corregido | Respaldado | Evidencia de E2 en `bd/pruebas/evidencia-rojo.md`, D8-01 a D8-36 y nuevo comando con el rol jobs. |
+| Token emitido durante el bloqueo no recrea una cuenta purgada | Respaldado | Prueba con token aún vigente. El proveedor rechaza la identidad eliminada y el alta se revierte. |
+
+- **Resultado:** el comando local ejecuta la caducidad, bloquea cuentas inactivas y purga después de confirmar la baja en el proveedor. La bitácora se purga a los 90 días (RF-087).
+- **Evidencia:** `./scripts/verify` aprobó SQL 298, unitarias 265, integración 464 y caja negra 90. Pruebas con Docker local y un proveedor simulado. AWS RDS y Cognito real quedan fuera de D-15.
+- **Decisión:** cierre delegado (D-32). Revisión humana pendiente.

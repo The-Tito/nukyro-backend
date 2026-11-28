@@ -22,7 +22,7 @@ def login(
     body,
     secret: str | None,
     *,
-    recheck_identity: Callable[[], Identity],
+    recheck_identity: Callable[[], None],
 ) -> dict:
     """Crea la cuenta si es nueva (idempotente), la sincroniza y vincula el progreso del navegador.
 
@@ -48,7 +48,7 @@ def login(
         if account["status"] == "blocked":
             raise HTTPException(403, detail="account_blocked")
         if created is not None:
-            # El INSERT pudo esperar a una purga. Si el token venció, se revierte el alta.
+            # El INSERT pudo esperar a una purga. Se revierte el alta si la identidad ya no sirve.
             recheck_identity()
             queries.insert_registration_consents(
                 conn, account["id"], body.newsletter_opt_in, body.surveys_opt_in
