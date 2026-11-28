@@ -75,3 +75,9 @@ Pendiente. Verificar los cinco RF, los defectos 2 y 8, el umbral y las diferenci
 `docker compose run --rm jobs` ejecuta la caducidad y la purga con el rol de tareas. Para reproducir una frontera en una base desechable, se puede ejecutar `docker compose run --rm jobs python -m nukyro.cli run-retention --at 2001-02-28T12:00:00Z`. El comando imprime conteos y devuelve un código distinto de cero si quedó una eliminación de identidad por reintentar. El entorno necesita la clave de administración local generada por `scripts/gen-env`.
 
 T-21 aplica los 90 días a la bitácora del panel (RF-087). Los logs técnicos de infraestructura y la conservación por incidentes siguen el trabajo operativo de T-27. Las llamadas al proveedor y sus pruebas ocurren en el entorno simulado (D-15).
+
+### Comprobación de T-22
+
+Operación ejecuta `docker compose exec -T api python -m nukyro.cli close-pilot-report --version <uuid>` al cerrar el piloto. Analítica lee el resultado con `docker compose exec -T api python -m nukyro.cli read-pilot-report`. Las dos operaciones usan roles distintos de PostgreSQL. Antes del cierre la lectura devuelve `null`. Repetir el cierre devuelve el mismo resultado y solicitar otra versión da error.
+
+La única elección del operador es la versión evaluada. Los caminos del escenario se muestran cuando hay al menos dos grupos y cada uno alcanza el umbral. Las cifras de evaluación y tema representan resultados de intentos enviados y respuestas registradas. Se omiten los extremos que revelan unanimidad. Los denominadores de transferencia y causal siguen expresando respuestas registradas, conforme a la representación actual. Las hipótesis de aprendizaje requieren revisión humana con los datos del piloto.

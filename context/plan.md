@@ -300,7 +300,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-22 · Reportes agregados
 - Etapa: E6
-- Estado: pendiente
+- Estado: cerrada
 - Entregable: reportes con aciertos por tema y abandono
 - Criterios de cierre:
   - el agregado es igual antes y después de borrar

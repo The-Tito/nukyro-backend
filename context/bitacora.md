@@ -288,3 +288,16 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Resultado:** el comando local ejecuta la caducidad, bloquea cuentas inactivas y purga después de confirmar la baja en el proveedor. La bitácora se purga a los 90 días (RF-087).
 - **Evidencia:** `./scripts/verify` aprobó SQL 298, unitarias 265, integración 464 y caja negra 90. Pruebas con Docker local y un proveedor simulado. AWS RDS y Cognito real quedan fuera de D-15.
 - **Decisión:** cierre delegado (D-32). Revisión humana pendiente.
+
+## 2026-11-28: T-22, informe de cierre
+
+| Criterio | Dictamen | Evidencia |
+|---|---|---|
+| El agregado se conserva antes y después del borrado | Respaldado | R-03 a R-05, con sesiones y temas vivos antes de archivar. |
+| El umbral suprime a nueve y muestra a diez | Respaldado | R-01 y R-02, con supresión de caminos cuando una categoría es pequeña. |
+| No hay dos cortes publicables para deducir a una persona | Respaldado | R-06 a R-14, dos cierres concurrentes por Compose y una única fila. |
+| El archivo y el informe respetan la oposición | Respaldado | R-11 y `test_rights.py`. |
+
+- **Resultado:** proyecciones comunes para sesiones activas elegibles y archivo. Informe único persistido, roles separados y diagrama de estadísticas actualizado.
+- **Evidencia:** `./scripts/verify`: 312 SQL, 265 unitarias, 465 de integración y 90 de caja negra. Datos de prueba sintéticos (D-15).
+- **Decisión:** cierre delegado (D-32), revisión humana pendiente.

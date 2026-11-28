@@ -20,7 +20,7 @@ cd "$RAIZ"
 
 # Conteos mínimos de líneas PASS (si cambia una prueba, se actualiza aquí)
 ESPERADO_REGLAS=57
-ESPERADO_DEFECTOS=220
+ESPERADO_DEFECTOS=234
 ESPERADO_CONCURRENCIA=21
 
 C="nukyro-t09-$$"

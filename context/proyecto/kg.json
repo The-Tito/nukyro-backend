@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.42.3",
+    "version": "1.42.4",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -310,6 +310,11 @@
         "version": "1.42.3",
         "fecha": "2026-11-28",
         "cambio": "T-21 cerrada por delegación (D-32): plazos, concurrencia y purga en el proveedor de identidad simulado."
+      },
+      {
+        "version": "1.42.4",
+        "fecha": "2026-11-28",
+        "cambio": "T-22 cerrada por delegación (D-32); D-39 aplicado en el modelo v0.4 con informe de cierre, umbral y supresión."
       }
     ]
   },
@@ -6253,16 +6258,16 @@
       "id": "MODELO-DATOS",
       "tipo": "Artefacto",
       "nombre": "Modelo de datos de Nukyro",
-      "version": "0.3",
-      "estado": "Cambios delegados (D-24), sin revisión humana",
+      "version": "0.4",
+      "estado": "Cambios delegados (D-32), con revisión humana pendiente",
       "archivo": "bd/modelo-datos.md",
       "ddl": "bd/schema.sql",
       "seed": "bd/seed-prueba.sql",
       "pruebas": "bd/pruebas/pruebas-reglas.sql",
       "plan": "context/planes/plan-modelo-datos.md",
-      "fecha": "2026-11-22",
-      "resumen": "36 tablas en 5 dominios (contenido y administración 16, identidad 5 con consent_events, simulación 10, estadísticas 4, bitácora 1), esquema nukyro, PostgreSQL 16. Llaves compuestas (version_id, id); referencias internas del contenido DEFERRABLE; triggers de inmutabilidad; roles nukyro_api, nukyro_admin, nukyro_jobs y nukyro_analytics.",
-      "validacion": "v0.3 ejecutada en PostgreSQL 16 (Docker) como owner sin superusuario: 269 comprobaciones (57 de reglas, 197 de defectos, hitos y encuesta, 15 de concurrencia). S1 y S2 sin probar (S-04).",
+      "fecha": "2026-11-28",
+      "resumen": "37 tablas en cinco dominios: contenido y administración 16, identidad 5, simulación 10, estadísticas 5 y bitácora 1. Derechos, retención, proyecciones internas y un informe exacto de cierre (E6, D-39).",
+      "validacion": "PostgreSQL 16 desde una base vacía: 312 comprobaciones SQL (57 reglas, 234 defectos y reportes, 21 concurrencia).",
       "pendientes": [
         {
           "n": 1,
@@ -6530,9 +6535,9 @@
       "tipo": "Artefacto",
       "nombre": "Modelo de datos en DBML (dbdiagram.io)",
       "archivo": "bd/nukyro.dbml",
-      "version": "0.2",
-      "fecha": "2026-11-10",
-      "resumen": "Transcripción de bd/schema.sql a DBML para visualizar el modelo en dbdiagram.io: 35 tablas, 59 llaves foráneas (incluidas las compuestas), 5 TableGroup por dominio. Índices parciales, triggers y roles van como notas.",
+      "version": "0.4",
+      "fecha": "2026-11-28",
+      "resumen": "Transcripción de bd/schema.sql a DBML: 37 tablas, 61 llaves foráneas y cinco dominios. Incluye pilot_report y los plazos de A-06.",
       "validacion": "Parseado con @dbml/core 3.9.5: 35 tablas y 59 relaciones; columnas idénticas a bd/schema.sql.",
       "regla": "Si difiere de bd/schema.sql, manda bd/schema.sql.",
       "fuente": [
@@ -7805,10 +7810,11 @@
           "seccion": "plan del backend propuesto por el asistente, aprobado por el usuario"
         }
       ],
-      "estado": "pendiente",
-      "fecha": "2026-11-22",
+      "estado": "cerrada",
+      "fecha": "2026-11-28",
       "ruta": "context/plan.md",
-      "buscar": "### T-22 ·"
+      "buscar": "### T-22 ·",
+      "nota": "Cierre delegado (D-32). Cálculo interno, informe exacto único con supresión y permisos separados (D-39)."
     },
     {
       "id": "T-23",

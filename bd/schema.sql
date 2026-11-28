@@ -774,6 +774,60 @@ CREATE INDEX ix_admin_audit_log_occurred ON admin_audit_log (occurred_at);
 -- insertaran primero y bloquearan después se interbloquearían.
 -- ---------------------------------------------------------------------
 
+-- Proyecciones internas compartidas por el archivo y el reporte (D-19, D-21).
+-- Contienen id de sesión únicamente mientras los datos siguen en las tablas de origen.
+CREATE VIEW session_fact_source AS
+SELECT s.id AS session_id, s.scenario_version_id,
+           date_trunc('week', s.started_at AT TIME ZONE 'UTC')::date AS week_start,
+           s.is_first_session,
+           pre.score AS pretest_score, post.score AS posttest_score,
+           tr.correct_count AS transfer_correct, tr.answered_count AS transfer_total,
+           ca.correct_count AS causal_correct, ca.answered_count AS causal_total,
+           CASE WHEN j.t > 0 THEN j.c END AS justification_correct,
+           CASE WHEN j.t > 0 THEN j.t END AS justification_total,
+           s.outcome_reached_at IS NOT NULL AS outcome_reached,
+           CASE WHEN s.outcome_reached_at IS NOT NULL THEN o.key END AS outcome_key,
+           CASE WHEN s.outcome_reached_at IS NULL THEN c.key END AS stopped_at_key,
+           -- supuesto: evaluaciones completas = todos los conjuntos de la versión enviados
+           NOT EXISTS (SELECT 1 FROM nukyro.question_sets q
+                        WHERE q.version_id = s.scenario_version_id
+                          AND NOT EXISTS (SELECT 1 FROM nukyro.assessment_attempts a
+                                           WHERE a.session_id = s.id AND a.question_set_id = q.id
+                                             AND a.submitted_at IS NOT NULL)) AS evaluations_completed,
+           (greatest(0, floor(extract(epoch FROM
+               coalesce(s.completed_at, s.outcome_reached_at, s.last_activity_at) - s.started_at) / 300)) * 5)::integer AS duration_bucket_min
+      FROM nukyro.sessions s
+      LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
+                           FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
+                          WHERE a.session_id = s.id AND q.set_type = 'pretest' AND a.submitted_at IS NOT NULL) pre ON true
+      LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
+                           FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
+                          WHERE a.session_id = s.id AND q.set_type = 'posttest' AND a.submitted_at IS NOT NULL) post ON true
+      LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
+                           FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
+                          WHERE a.session_id = s.id AND q.set_type = 'transfer' AND a.submitted_at IS NOT NULL) tr ON true
+      LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
+                           FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
+                          WHERE a.session_id = s.id AND q.set_type = 'causal' AND a.submitted_at IS NOT NULL) ca ON true
+      LEFT JOIN LATERAL (SELECT (count(*) FILTER (WHERE d.justification_correct))::smallint AS c, count(*)::smallint AS t
+                           FROM nukyro.session_decisions d
+                           JOIN nukyro.decision_points dp ON dp.version_id = d.scenario_version_id AND dp.node_id = d.node_id
+                          WHERE d.session_id = s.id AND dp.evaluated_for_h05 AND d.justification_correct IS NOT NULL) j ON true
+      LEFT JOIN nukyro.nodes o ON o.id = s.outcome_node_id
+      LEFT JOIN nukyro.nodes c ON c.id = s.current_node_id;
+
+CREATE VIEW topic_fact_source AS
+SELECT s.id AS session_id, s.scenario_version_id, date_trunc('week', s.started_at AT TIME ZONE 'UTC')::date AS week_start,
+           qs.set_type, q.topic, s.is_first_session,
+           (count(*) FILTER (WHERE qo.is_correct))::smallint AS correct, count(*)::smallint AS total
+      FROM nukyro.sessions s
+      JOIN nukyro.assessment_attempts a ON a.session_id = s.id AND a.submitted_at IS NOT NULL
+      JOIN nukyro.question_sets qs ON qs.id = a.question_set_id
+      JOIN nukyro.assessment_answers aa ON aa.attempt_id = a.id
+      JOIN nukyro.questions q ON q.id = aa.question_id
+      JOIN nukyro.question_options qo ON qo.id = aa.option_id
+ GROUP BY s.id, s.scenario_version_id, s.started_at, s.is_first_session, qs.set_type, q.topic;
+
 -- Interna (sin GRANT). El llamador ya bloqueó la cuenta y el participante.
 -- Copia a los hechos, por cada sesión con facts_written_at nulo, los datos de
 -- sesión (puntuaciones, aciertos, desenlace, duración por tramos de 5 min), de
@@ -810,43 +864,12 @@ BEGIN
         transfer_correct, transfer_total, causal_correct, causal_total,
         justification_correct, justification_total, outcome_reached, outcome_key, stopped_at_key,
         evaluations_completed, duration_bucket_min)
-    SELECT s.scenario_version_id,
-           date_trunc('week', s.started_at AT TIME ZONE 'UTC')::date,
-           s.is_first_session,
-           pre.score, post.score,
-           tr.correct_count, tr.answered_count, ca.correct_count, ca.answered_count,
-           CASE WHEN j.t > 0 THEN j.c END, CASE WHEN j.t > 0 THEN j.t END,
-           s.outcome_reached_at IS NOT NULL,
-           CASE WHEN s.outcome_reached_at IS NOT NULL THEN o.key END,
-           CASE WHEN s.outcome_reached_at IS NULL THEN c.key END,
-           -- supuesto: evaluaciones completas = todos los conjuntos de la versión enviados
-           NOT EXISTS (SELECT 1 FROM nukyro.question_sets q
-                        WHERE q.version_id = s.scenario_version_id
-                          AND NOT EXISTS (SELECT 1 FROM nukyro.assessment_attempts a
-                                           WHERE a.session_id = s.id AND a.question_set_id = q.id
-                                             AND a.submitted_at IS NOT NULL)),
-           (greatest(0, floor(extract(epoch FROM
-               coalesce(s.completed_at, s.outcome_reached_at, s.last_activity_at) - s.started_at) / 300)) * 5)::integer
-      FROM nukyro.sessions s
-      LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
-                           FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
-                          WHERE a.session_id = s.id AND q.set_type = 'pretest' AND a.submitted_at IS NOT NULL) pre ON true
-      LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
-                           FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
-                          WHERE a.session_id = s.id AND q.set_type = 'posttest' AND a.submitted_at IS NOT NULL) post ON true
-      LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
-                           FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
-                          WHERE a.session_id = s.id AND q.set_type = 'transfer' AND a.submitted_at IS NOT NULL) tr ON true
-      LEFT JOIN LATERAL (SELECT a.score, a.correct_count, a.answered_count
-                           FROM nukyro.assessment_attempts a JOIN nukyro.question_sets q ON q.id = a.question_set_id
-                          WHERE a.session_id = s.id AND q.set_type = 'causal' AND a.submitted_at IS NOT NULL) ca ON true
-      LEFT JOIN LATERAL (SELECT (count(*) FILTER (WHERE d.justification_correct))::smallint AS c, count(*)::smallint AS t
-                           FROM nukyro.session_decisions d
-                           JOIN nukyro.decision_points dp ON dp.version_id = d.scenario_version_id AND dp.node_id = d.node_id
-                          WHERE d.session_id = s.id AND dp.evaluated_for_h05 AND d.justification_correct IS NOT NULL) j ON true
-      LEFT JOIN nukyro.nodes o ON o.id = s.outcome_node_id
-      LEFT JOIN nukyro.nodes c ON c.id = s.current_node_id
-     WHERE s.id = ANY (v_ids);
+    SELECT f.scenario_version_id, f.week_start, f.is_first_session, f.pretest_score, f.posttest_score,
+           f.transfer_correct, f.transfer_total, f.causal_correct, f.causal_total,
+           f.justification_correct, f.justification_total, f.outcome_reached, f.outcome_key,
+           f.stopped_at_key, f.evaluations_completed, f.duration_bucket_min
+      FROM nukyro.session_fact_source f
+     WHERE f.session_id = ANY (v_ids);
 
     INSERT INTO nukyro.decision_facts (scenario_version_id, week_start, decision_key, option_key, is_first_session)
     SELECT s.scenario_version_id, date_trunc('week', s.started_at AT TIME ZONE 'UTC')::date,
@@ -858,17 +881,9 @@ BEGIN
      WHERE s.id = ANY (v_ids);
 
     INSERT INTO nukyro.topic_facts (scenario_version_id, week_start, set_type, topic, is_first_session, correct, total)
-    SELECT s.scenario_version_id, date_trunc('week', s.started_at AT TIME ZONE 'UTC')::date,
-           qs.set_type, q.topic, s.is_first_session,
-           (count(*) FILTER (WHERE qo.is_correct))::smallint, count(*)::smallint
-      FROM nukyro.sessions s
-      JOIN nukyro.assessment_attempts a ON a.session_id = s.id AND a.submitted_at IS NOT NULL
-      JOIN nukyro.question_sets qs ON qs.id = a.question_set_id
-      JOIN nukyro.assessment_answers aa ON aa.attempt_id = a.id
-      JOIN nukyro.questions q ON q.id = aa.question_id
-      JOIN nukyro.question_options qo ON qo.id = aa.option_id
-     WHERE s.id = ANY (v_ids)
-     GROUP BY s.id, s.scenario_version_id, s.started_at, s.is_first_session, qs.set_type, q.topic;
+    SELECT f.scenario_version_id, f.week_start, f.set_type, f.topic, f.is_first_session, f.correct, f.total
+      FROM nukyro.topic_fact_source f
+     WHERE f.session_id = ANY (v_ids);
 
     UPDATE nukyro.sessions SET facts_written_at = now() WHERE id = ANY (v_ids);
     RETURN cardinality(v_ids);
@@ -1162,26 +1177,117 @@ BEGIN
     RETURN v_n;
 END $$;
 
--- analytics: resumen de primeras sesiones de una versión. Con menos de 10 devuelve
--- suprimido y sin valores; con 10 o más, agregados (cada promedio exige además 10
--- valores propios, para no exponer a una sola persona).
+-- T-22: proyecta el mismo conjunto de sesiones antes y después del archivo.
+CREATE VIEW report_eligible_sessions AS
+SELECT s.id
+  FROM nukyro.sessions s
+  JOIN nukyro.participants p ON p.id = s.participant_id
+  LEFT JOIN nukyro.accounts a ON a.id = p.account_id
+ WHERE s.facts_written_at IS NULL AND s.is_first_session AND NOT p.exclude_from_stats
+   AND (p.account_id IS NULL OR a.status = 'active');
+
+CREATE VIEW report_session_metrics AS
+SELECT f.scenario_version_id, f.pretest_score, f.posttest_score, f.outcome_reached,
+       f.outcome_key, f.stopped_at_key
+  FROM nukyro.session_facts f WHERE f.is_first_session
+UNION ALL
+SELECT f.scenario_version_id, f.pretest_score, f.posttest_score, f.outcome_reached,
+       f.outcome_key, f.stopped_at_key
+  FROM nukyro.session_fact_source f JOIN nukyro.report_eligible_sessions e ON e.id = f.session_id;
+
+CREATE VIEW report_topic_metrics AS
+SELECT f.scenario_version_id, f.set_type, f.topic, f.correct, f.total
+  FROM nukyro.topic_facts f WHERE f.is_first_session
+UNION ALL
+SELECT f.scenario_version_id, f.set_type, f.topic, f.correct, f.total
+  FROM nukyro.topic_fact_source f JOIN nukyro.report_eligible_sessions e ON e.id = f.session_id;
+
+-- Cálculo interno. Los roles de aplicación no consultan versiones vivas ni hechos.
 CREATE FUNCTION report_session_summary(p_version uuid)
 RETURNS TABLE (suppressed boolean, first_sessions integer, outcome_reached_count integer,
                avg_pretest_score numeric, avg_posttest_score numeric)
-LANGUAGE plpgsql STABLE SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
 AS $$
+    SELECT count(*) < 10,
+           CASE WHEN count(*) >= 10 THEN count(*)::integer END,
+           CASE WHEN count(*) >= 10 THEN (count(*) FILTER (WHERE m.outcome_reached))::integer END,
+           CASE WHEN count(m.pretest_score) >= 10 THEN round(avg(m.pretest_score), 2) END,
+           CASE WHEN count(m.posttest_score) >= 10 THEN round(avg(m.posttest_score), 2) END
+      FROM nukyro.report_session_metrics m WHERE m.scenario_version_id = p_version
+$$;
+
+-- Cálculo interno del informe completo. No se devuelve un total de abandonos
+-- ni una categoría parcial cuando otro grupo se podría deducir por diferencia.
+CREATE FUNCTION build_pilot_report(p_version uuid) RETURNS jsonb
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+    WITH summary AS (
+        SELECT * FROM nukyro.report_session_summary(p_version)
+    ), paths AS (
+        SELECT m.outcome_reached, coalesce(m.outcome_key, m.stopped_at_key) AS node_key,
+               count(*)::integer AS participants
+          FROM nukyro.report_session_metrics m WHERE m.scenario_version_id = p_version
+         GROUP BY 1, 2
+    ), topics AS (
+        SELECT m.set_type, m.topic, round(100 * avg(m.correct::numeric / m.total), 2) AS accuracy
+          FROM nukyro.report_topic_metrics m WHERE m.scenario_version_id = p_version
+         GROUP BY m.set_type, m.topic
+        HAVING count(*) >= 10 AND sum(m.correct) > 0 AND sum(m.correct) < sum(m.total)
+    )
+    SELECT CASE WHEN s.suppressed THEN jsonb_build_object('suppressed', true)
+                ELSE jsonb_strip_nulls(jsonb_build_object(
+                     'suppressed', false,
+                     'participants', s.first_sessions,
+                     'avg_pretest_score', CASE
+                         WHEN s.avg_pretest_score > 0 AND s.avg_pretest_score < 100
+                         THEN s.avg_pretest_score END,
+                     'avg_posttest_score', CASE
+                         WHEN s.avg_posttest_score > 0 AND s.avg_posttest_score < 100
+                         THEN s.avg_posttest_score END,
+                     'paths', (SELECT jsonb_agg(to_jsonb(p) ORDER BY p.outcome_reached, p.node_key)
+                                 FROM paths p HAVING count(*) >= 2 AND min(p.participants) >= 10),
+                     'topics', (SELECT jsonb_agg(to_jsonb(t) ORDER BY t.set_type, t.topic) FROM topics t)
+                ))
+           END
+      FROM summary s
+$$;
+
+-- El único informe que ve analítica. El cierre es inmutable y se serializa en la tabla.
+CREATE TABLE pilot_report (
+    singleton           boolean PRIMARY KEY DEFAULT true CHECK (singleton),
+    scenario_version_id uuid NOT NULL REFERENCES scenario_versions (id) ON DELETE RESTRICT,
+    closed_at           timestamptz NOT NULL DEFAULT now(),
+    result              jsonb NOT NULL CHECK (jsonb_typeof(result) = 'object')
+);
+
+CREATE FUNCTION close_pilot_report(p_version uuid) RETURNS jsonb
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+DECLARE
+    v_report nukyro.pilot_report%ROWTYPE;
 BEGIN
-    RETURN QUERY
-    SELECT false, count(*)::integer, (count(*) FILTER (WHERE f.outcome_reached))::integer,
-           CASE WHEN count(f.pretest_score)  >= 10 THEN round(avg(f.pretest_score), 2) END,
-           CASE WHEN count(f.posttest_score) >= 10 THEN round(avg(f.posttest_score), 2) END
-      FROM nukyro.session_facts f
-     WHERE f.scenario_version_id = p_version AND f.is_first_session
-    HAVING count(*) >= 10;
+    LOCK TABLE nukyro.pilot_report IN SHARE ROW EXCLUSIVE MODE;
+    SELECT * INTO v_report FROM nukyro.pilot_report;
     IF NOT FOUND THEN
-        RETURN QUERY SELECT true, NULL::integer, NULL::integer, NULL::numeric, NULL::numeric;
+        IF NOT EXISTS (SELECT 1 FROM nukyro.scenario_versions
+                        WHERE id = p_version AND status IN ('published', 'retired')) THEN
+            RAISE EXCEPTION 'La versión del piloto no existe o es un borrador'
+                USING ERRCODE = 'check_violation';
+        END IF;
+        INSERT INTO nukyro.pilot_report (scenario_version_id, result)
+        VALUES (p_version, nukyro.build_pilot_report(p_version))
+        RETURNING * INTO v_report;
+    ELSIF v_report.scenario_version_id <> p_version THEN
+        RAISE EXCEPTION 'El piloto ya cerró con otra versión' USING ERRCODE = 'check_violation';
     END IF;
+    RETURN v_report.result;
 END $$;
+
+CREATE FUNCTION read_pilot_report() RETURNS jsonb
+LANGUAGE sql STABLE SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+    SELECT result FROM nukyro.pilot_report
+$$;
 
 COMMIT;
 
@@ -1282,7 +1388,8 @@ GRANT EXECUTE ON FUNCTION nukyro.block_inactive_account(uuid, timestamptz) TO nu
 GRANT EXECUTE ON FUNCTION nukyro.lock_due_account_for_purge(uuid, timestamptz) TO nukyro_jobs;
 GRANT EXECUTE ON FUNCTION nukyro.purge_due_account(uuid, timestamptz) TO nukyro_jobs;
 
--- Analítica: catálogo de versiones y el resumen agregado con umbral de 10; ninguna fila de hechos
+-- Operación cierra un solo informe. Analítica consulta únicamente el resultado publicado.
 GRANT SELECT ON nukyro.scenarios, nukyro.scenario_versions TO nukyro_analytics;
-GRANT EXECUTE ON FUNCTION nukyro.report_session_summary(uuid) TO nukyro_analytics;
+GRANT EXECUTE ON FUNCTION nukyro.close_pilot_report(uuid) TO nukyro_admin;
+GRANT EXECUTE ON FUNCTION nukyro.read_pilot_report() TO nukyro_analytics;
 COMMIT;

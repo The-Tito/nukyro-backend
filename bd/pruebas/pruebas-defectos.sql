@@ -273,7 +273,9 @@ SELECT pg_temp.chk('D8-07 grants de ejecución exactos por rol',
         AND NOT has_function_privilege('nukyro_admin', 'nukyro.lock_due_account_for_purge(uuid,timestamptz)', 'EXECUTE')
         AND NOT has_function_privilege('nukyro_api',   'nukyro.purge_blocked_accounts(timestamptz)', 'EXECUTE')
         AND NOT has_function_privilege('nukyro_admin', 'nukyro.purge_blocked_accounts(timestamptz)', 'EXECUTE')
-        AND has_function_privilege('nukyro_analytics', 'nukyro.report_session_summary(uuid)', 'EXECUTE')
+        AND NOT has_function_privilege('nukyro_analytics', 'nukyro.report_session_summary(uuid)', 'EXECUTE')
+        AND has_function_privilege('nukyro_analytics', 'nukyro.read_pilot_report()', 'EXECUTE')
+        AND has_function_privilege('nukyro_admin', 'nukyro.close_pilot_report(uuid)', 'EXECUTE')
         AND NOT has_function_privilege('nukyro_api',  'nukyro.report_session_summary(uuid)', 'EXECUTE')
         AND NOT has_function_privilege('nukyro_jobs', 'nukyro.report_session_summary(uuid)', 'EXECUTE')
         AND NOT has_function_privilege('nukyro_admin','nukyro.report_session_summary(uuid)', 'EXECUTE')$q$);
@@ -492,16 +494,16 @@ SELECT pg_temp.fx($q$
  SELECT '00000000-0000-0000-0000-000000000012', date '2026-11-30', true, 40, 80, true, true FROM generate_series(1, 9);
  INSERT INTO session_facts (scenario_version_id, week_start, is_first_session, pretest_score, posttest_score, outcome_reached, evaluations_completed)
  SELECT '00000000-0000-0000-0000-000000000012', date '2026-11-30', false, 0, 0, false, false FROM generate_series(1, 3)$q$);
-SET ROLE nukyro_analytics;
 SELECT pg_temp.chk('D8-34 con 9 primeras sesiones: suprimido y sin valores (las no primeras no cuentan)',
  $q$SELECT suppressed AND first_sessions IS NULL AND outcome_reached_count IS NULL
            AND avg_pretest_score IS NULL AND avg_posttest_score IS NULL
       FROM nukyro.report_session_summary('00000000-0000-0000-0000-000000000012')$q$);
-RESET ROLE;
+SELECT pg_temp.chk('R-01 con nueve el informe no devuelve cifras',
+ $q$SELECT nukyro.build_pilot_report('00000000-0000-0000-0000-000000000012') =
+     '{"suppressed": true}'::jsonb$q$);
 SELECT pg_temp.fx($q$
  INSERT INTO session_facts (scenario_version_id, week_start, is_first_session, pretest_score, posttest_score, outcome_reached, evaluations_completed)
  VALUES ('00000000-0000-0000-0000-000000000012', date '2026-11-30', true, 100, 80, false, true)$q$);
-SET ROLE nukyro_analytics;
 SELECT pg_temp.chk('D8-35 con 10: muestra agregados de las primeras sesiones',
  $q$SELECT NOT suppressed AND first_sessions = 10 AND outcome_reached_count = 9
            AND avg_pretest_score = 46 AND avg_posttest_score = 80
@@ -509,6 +511,59 @@ SELECT pg_temp.chk('D8-35 con 10: muestra agregados de las primeras sesiones',
 SELECT pg_temp.chk('D8-36 una versión sin hechos devuelve suprimido',
  $q$SELECT suppressed AND first_sessions IS NULL
       FROM nukyro.report_session_summary('00000000-0000-0000-0000-0000000000ff')$q$);
+SELECT pg_temp.chk('R-02 con diez hay estadística. Si un grupo tiene uno se ocultan los caminos',
+ $q$SELECT nukyro.build_pilot_report('00000000-0000-0000-0000-000000000012') =
+     '{"suppressed":false,"participants":10,"avg_pretest_score":46,"avg_posttest_score":80}'::jsonb$q$);
+
+-- Sesiones completas, sus respuestas por tema y sesiones detenidas en D01. Las
+-- tablas de hechos sintéticos no llevan ids de participante, como el esquema real.
+SELECT pg_temp.mk_anon(n) FROM generate_series(700, 719) n;
+SELECT pg_temp.mk_rich_session(n, n) FROM generate_series(700, 709) n;
+SELECT pg_temp.mk_session(n, n) FROM generate_series(710, 719) n;
+SELECT pg_temp.fx($q$
+ INSERT INTO topic_facts (scenario_version_id, week_start, set_type, topic, is_first_session, correct, total)
+ VALUES ('00000000-0000-0000-0000-000000000011', date '2026-11-30', 'pretest', 'privacidad', true, 0, 1)$q$);
+SELECT set_config('nukyro_t.report_live',
+    nukyro.build_pilot_report('00000000-0000-0000-0000-000000000011')::text, false);
+SELECT pg_temp.chk('R-03 el reporte contiene abandono y aciertos con grupos suficientes',
+ $q$SELECT current_setting('nukyro_t.report_live')::jsonb @>
+      '{"paths":[{"node_key":"D01","outcome_reached":false}],"topics":[{"set_type":"pretest","topic":"privacidad"}]}'::jsonb$q$);
+SET ROLE nukyro_api;
+SELECT pg_temp.allow('R-04 se borra el dato vivo con su archivo',
+ $q$SELECT nukyro.erase_anonymous_participant(pg_temp.id('bb', 700))$q$);
+RESET ROLE;
+SELECT pg_temp.chk('R-05 archivar preserva el mismo informe sin contar dos veces la sesión',
+ $q$SELECT nukyro.build_pilot_report('00000000-0000-0000-0000-000000000011')
+           = current_setting('nukyro_t.report_live')::jsonb$q$);
+SET ROLE nukyro_analytics;
+SELECT pg_temp.expect('R-06 analítica no puede pedir un corte en vivo',
+ $q$SELECT nukyro.build_pilot_report('00000000-0000-0000-0000-000000000011')$q$, '42501');
+SELECT pg_temp.chk('R-07 analítica no recibe un informe antes del cierre',
+ $q$SELECT nukyro.read_pilot_report() IS NULL$q$);
+SELECT pg_temp.expect('R-08 analítica no puede cerrar el piloto',
+ $q$SELECT nukyro.close_pilot_report('00000000-0000-0000-0000-000000000011')$q$, '42501');
+RESET ROLE;
+SET ROLE nukyro_admin;
+SELECT pg_temp.chk('R-09 operaciones cierra y devuelve el primer resultado',
+ $q$SELECT nukyro.close_pilot_report('00000000-0000-0000-0000-000000000011')
+           = current_setting('nukyro_t.report_live')::jsonb$q$);
+SELECT pg_temp.expect('R-10 otro corte por versión se rechaza',
+ $q$SELECT nukyro.close_pilot_report('00000000-0000-0000-0000-000000000012')$q$, '23514');
+RESET ROLE;
+UPDATE participants SET exclude_from_stats = true WHERE id = pg_temp.id('bb', 701);
+SELECT pg_temp.chk('R-11 la oposición cambia el cálculo interno',
+ $q$SELECT nukyro.build_pilot_report('00000000-0000-0000-0000-000000000011')
+           <> current_setting('nukyro_t.report_live')::jsonb$q$);
+SET ROLE nukyro_admin;
+SELECT pg_temp.chk('R-12 repetir el cierre no recalcula',
+ $q$SELECT nukyro.close_pilot_report('00000000-0000-0000-0000-000000000011')
+           = current_setting('nukyro_t.report_live')::jsonb$q$);
+RESET ROLE;
+SET ROLE nukyro_analytics;
+SELECT pg_temp.chk('R-13 analítica solo recibe el corte que cerró operaciones',
+ $q$SELECT nukyro.read_pilot_report() = current_setting('nukyro_t.report_live')::jsonb$q$);
+SELECT pg_temp.expect('R-14 analítica no lee las proyecciones internas',
+ $q$SELECT * FROM nukyro.session_fact_source$q$, '42501');
 RESET ROLE;
 
 -- =====================================================================

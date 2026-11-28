@@ -83,3 +83,11 @@ Una solicitud puede renovar la actividad entre el listado y el bloqueo de una fi
 
 **¿Qué pasa si la identidad se elimina en el proveedor y falla el borrado local?**
 La cuenta sigue bloqueada. El reintento acepta que la identidad ya no exista y termina la purga. Un token emitido durante el bloqueo tampoco puede crear una cuenta nueva con esa identidad (D-35).
+
+## T-22 · Informe del piloto
+
+**¿Por qué un cálculo en vivo y un informe cerrado dan garantías diferentes?**
+El informe cerrado guarda un solo resultado. Analítica carece de permiso para pedir un segundo corte exacto y despejar cambios pequeños por diferencia (D-39).
+
+**¿Cuándo se muestran los caminos del escenario?**
+Solo si todos los grupos del desglose alcanzan diez participantes y hay al menos dos grupos. Una cifra total combinada con categorías visibles podría permitir deducir una categoría suprimida (RN-20).
