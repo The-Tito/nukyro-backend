@@ -17,6 +17,7 @@ from nukyro.modules.account.routes import router as account_router
 from nukyro.modules.assessment.routes import router as assessment_router
 from nukyro.modules.entry import service as entry_service
 from nukyro.modules.entry.routes import router as entry_router
+from nukyro.modules.rights.routes import router as rights_router
 from nukyro.modules.simulation.routes import router as simulation_router
 from nukyro.modules.summary.routes import router as summary_router
 from nukyro.modules.survey.routes import router as survey_router
@@ -95,6 +96,7 @@ def create_app() -> FastAPI:
 
     app.include_router(account_router)
     app.include_router(entry_router)
+    app.include_router(rights_router)
     app.include_router(simulation_router)
     app.include_router(assessment_router)
     app.include_router(summary_router)

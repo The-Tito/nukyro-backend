@@ -27,6 +27,9 @@ RUTAS = {
     ("POST", "/api/v1/sessions"): (PROPIA, SCENARIO),
     ("GET", "/api/v1/account"): (PROPIA, None),
     ("POST", "/api/v1/account/login"): (PROPIA, {}),
+    ("GET", "/api/v1/participants/me/data"): (PROPIA, None),
+    ("DELETE", "/api/v1/participants/me/data"): (PROPIA, None),
+    ("PUT", "/api/v1/participants/me/statistics-opposition"): (PROPIA, None),
     ("GET", S): (SESION, None),
     ("POST", S + "/decisions"): (
         SESION,
