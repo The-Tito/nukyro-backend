@@ -104,6 +104,12 @@ Solo peticiones que deciden algo, inician una tarea o corrigen el rumbo.
 **Resultado:** A-06 cerrada en el KG y en `context/decisiones.md`; bitácora, registro de IA y handoff para retomar con el `CHECK` del defecto 12 y el cierre de T-18 y E5
 **Revisión humana:** el usuario aprobó A-06; lo demás, pendiente
 
+## 2026-11-28: relevo y migración a Codex (D-36)
+**Modelo:** GPT-6 (identificador exacto de la sesión no registrado)
+**Prompt:** «/retomar» y «confirmo, continua»
+**Resultado:** relevo contrastado contra Git y el KG; D-36 en el KG y su vista; `AGENTS.md` y `.agents/skills/` en una rama propia.
+**Revisión humana:** el usuario confirmó D-36; archivos pendientes de revisión.
+
 ## 2026-11-28: restricción de purga y cierre de T-18
 **Modelo:** GPT-6 en Codex (identificador exacto de la sesión no registrado)
 **Prompt:** «confirmo, continua», continuación de T-18 conforme al relevo.

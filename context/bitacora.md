@@ -235,6 +235,11 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Resultado:** el usuario aprueba el `CHECK` de una hora entre bloqueo y purga. Se aplica al empezar la próxima sesión, con sus pruebas, y con él se cierran el defecto 12 y T-18.
 - **Decisiones:** A-06 cerrada con la aprobación del usuario.
 
+## 2026-11-28: D-36, migración a Codex
+- **Resultado:** se incorporan `AGENTS.md` y las skills de `.agents/skills/`, usando enlaces para las tres skills compartidas. Codex usa el modelo activo de la sesión y ejecuta `$cerrar` manualmente al acercarse a su límite.
+- **Revisión:** el usuario confirmó D-36. Se comprobó el KG y la existencia de los destinos de los enlaces.
+- **Evidencia:** KG v1.39.0 y `context/decisiones.md`.
+
 ## 2026-11-28: T-18, A-06 aplicada y cierre delegado
 - **Resultado:** PostgreSQL exige una hora desde `blocked_at` hasta `deletion_due_at`. Se regeneró la migración inicial y se verificaron el mínimo exacto y el instante anterior.
 - **Revisión:** los cuatro criterios de T-18 tienen respaldo. CC5, CC6 y la integración comprobaron la primera sesión única y la idempotencia. El defecto 9 está documentado en rojo. Para el defecto 12, SQL devolvió 23514 en plazos menores y el mismo token recibió 403 mientras la cuenta estuvo bloqueada y 401 en el instante de purga. La cuenta quedó ausente. Revisión humana del código pendiente.
