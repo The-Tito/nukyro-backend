@@ -6,8 +6,8 @@ from fastapi import HTTPException
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import DBAPIError
 
+from nukyro.auth import Auth
 from nukyro.modules.entry import queries as entry_queries
-from nukyro.security import hash_secret
 
 NOTE = (
     "Esta encuesta es voluntaria y puedes omitirla sin consecuencias. Sirve para mejorar el "
@@ -38,11 +38,11 @@ def _session_id(session_id: str) -> UUID:
         raise HTTPException(404) from None
 
 
-def _authenticate(engine: Engine, secret: str):
+def _authenticate(engine: Engine, auth: Auth):
     """Renueva la actividad del participante en su propia transacción, ya confirmada. Así el envío
     no comparte transacción (ni xmin) con ninguna otra escritura (ADR-007)."""
     with engine.begin() as conn:
-        participant = entry_queries.touch_participant(conn, hash_secret(secret))
+        participant = entry_queries.touch_participant(conn, auth)
     if participant is None:
         raise HTTPException(401)
     return participant
@@ -66,9 +66,9 @@ def _state(conn, participant, session):
     )
 
 
-def get_survey(engine: Engine, secret: str, session_id: str) -> dict:
+def get_survey(engine: Engine, auth: Auth, session_id: str) -> dict:
     session = _session_id(session_id)
-    participant = _authenticate(engine, secret)
+    participant = _authenticate(engine, auth)
     with engine.connect() as conn:
         row = _state(conn, participant, session)
     if row is None:
@@ -92,9 +92,9 @@ def get_survey(engine: Engine, secret: str, session_id: str) -> dict:
     }
 
 
-def submit_survey(engine: Engine, secret: str, session_id: str, body) -> dict:
+def submit_survey(engine: Engine, auth: Auth, session_id: str, body) -> dict:
     session = _session_id(session_id)
-    participant = _authenticate(engine, secret)
+    participant = _authenticate(engine, auth)
     values = {k: getattr(body, k) for k, _, _ in SCALES}
     try:
         with engine.begin() as conn:

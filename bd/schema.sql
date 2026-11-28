@@ -349,7 +349,10 @@ CREATE TABLE accounts (
     deletion_due_at    timestamptz,
     last_login_at      timestamptz NOT NULL DEFAULT now(),
     created_at         timestamptz NOT NULL DEFAULT now(),
-    CHECK ((status = 'blocked') = (blocked_at IS NOT NULL AND block_reason IS NOT NULL AND deletion_due_at IS NOT NULL))
+    CHECK ((status = 'blocked') = (blocked_at IS NOT NULL AND block_reason IS NOT NULL AND deletion_due_at IS NOT NULL)),
+    -- A-06: el plazo cubre toda la vida de un token anterior al bloqueo (D-35).
+    CONSTRAINT accounts_minimum_blocking_period
+        CHECK (deletion_due_at IS NULL OR deletion_due_at >= blocked_at + interval '1 hour')
 );
 CREATE INDEX ix_accounts_inactivity ON accounts (last_login_at) WHERE status = 'active';
 CREATE INDEX ix_accounts_deletion_due ON accounts (deletion_due_at) WHERE status = 'blocked';
@@ -1011,6 +1014,70 @@ BEGIN
     RETURN true;
 END $$;
 
+-- api: vincula el progreso de un navegador sin cuenta con una cuenta (P10, RF-076, defecto 9).
+-- Orden de bloqueo: cuenta, participante del navegador, participante de la cuenta, sesiones.
+-- Devuelve 'none' (no hay participante con ese secreto: nada que hacer, también al repetirla),
+-- 'linked' (la cuenta no tenía participante: el del navegador pasa a ser suyo y pierde el
+-- secreto) o 'merged' (la cuenta ya tenía uno: se trasladan las sesiones y las aceptaciones,
+-- se borra el del navegador y se recalcula la primera sesión). Rechaza cuentas bloqueadas.
+-- La primera sesión de un escenario es la más antigua (started_at, id) del participante.
+CREATE FUNCTION link_participant(p_account uuid, p_secret_hash bytea) RETURNS text
+LANGUAGE plpgsql SECURITY DEFINER SET search_path = pg_catalog, nukyro, pg_temp
+AS $$
+DECLARE
+    v_status text;
+    v_browser uuid;
+    v_excluded boolean;
+    v_account_participant uuid;
+BEGIN
+    SELECT a.status INTO v_status FROM nukyro.accounts a WHERE a.id = p_account FOR UPDATE;
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'La cuenta % no existe', p_account USING ERRCODE = 'no_data_found';
+    END IF;
+    IF v_status = 'blocked' THEN
+        RAISE EXCEPTION 'Una cuenta bloqueada no recibe progreso (D-20)' USING ERRCODE = 'check_violation';
+    END IF;
+    IF p_secret_hash IS NULL THEN RETURN 'none'; END IF;
+
+    SELECT p.id, p.exclude_from_stats INTO v_browser, v_excluded
+      FROM nukyro.participants p
+     WHERE p.secret_hash = p_secret_hash AND p.account_id IS NULL FOR UPDATE;
+    IF NOT FOUND THEN RETURN 'none'; END IF;
+
+    SELECT p.id INTO v_account_participant
+      FROM nukyro.participants p WHERE p.account_id = p_account FOR UPDATE;
+    IF NOT FOUND THEN
+        UPDATE nukyro.participants SET account_id = p_account, secret_hash = NULL WHERE id = v_browser;
+        RETURN 'linked';
+    END IF;
+
+    UPDATE nukyro.sessions SET participant_id = v_account_participant WHERE participant_id = v_browser;
+    INSERT INTO nukyro.document_acceptances (participant_id, document_type, document_version, accepted_at)
+    SELECT v_account_participant, d.document_type, d.document_version, d.accepted_at
+      FROM nukyro.document_acceptances d WHERE d.participant_id = v_browser
+    ON CONFLICT DO NOTHING;
+    UPDATE nukyro.participants
+       SET exclude_from_stats = exclude_from_stats OR v_excluded
+     WHERE id = v_account_participant;
+    DELETE FROM nukyro.participants WHERE id = v_browser;
+
+    UPDATE nukyro.sessions s
+       SET has_prior_session = NOT first_of_scenario.is_first
+      FROM (SELECT s2.id,
+                   NOT EXISTS (SELECT 1 FROM nukyro.sessions o
+                                 JOIN nukyro.scenario_versions ov ON ov.id = o.scenario_version_id
+                                WHERE o.participant_id = s2.participant_id
+                                  AND ov.scenario_id = sv.scenario_id
+                                  AND (o.started_at, o.id) < (s2.started_at, s2.id)) AS is_first
+              FROM nukyro.sessions s2
+              JOIN nukyro.scenario_versions sv ON sv.id = s2.scenario_version_id
+             WHERE s2.participant_id = v_account_participant) first_of_scenario
+     WHERE s.id = first_of_scenario.id
+       AND s.facts_written_at IS NULL
+       AND s.has_prior_session = first_of_scenario.is_first;
+    RETURN 'merged';
+END $$;
+
 -- jobs: caducidad de anónimos (RF-080). Bloquea y revalida last_activity_at de cada
 -- candidato (alguien pudo volver mientras se esperaba el bloqueo), archiva, reescribe
 -- una sola vez y borra. Devuelve cuántos participantes se borraron.
@@ -1135,6 +1202,7 @@ GRANT SELECT, INSERT ON nukyro.consent_events TO nukyro_api;
 GRANT EXECUTE ON FUNCTION nukyro.submit_survey(uuid, smallint, smallint, smallint, smallint, smallint, smallint) TO nukyro_api;
 GRANT EXECUTE ON FUNCTION nukyro.erase_anonymous_participant(uuid) TO nukyro_api;
 GRANT EXECUTE ON FUNCTION nukyro.block_account(uuid, text, timestamptz) TO nukyro_api;
+GRANT EXECUTE ON FUNCTION nukyro.link_participant(uuid, bytea) TO nukyro_api;
 
 -- Panel de administración: contenido, ARCO y bitácora; datos de participantes
 -- solo para atender ARCO (consultar, rectificar, oponerse, bloquear). Sin DELETE de admin_users.

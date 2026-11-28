@@ -73,3 +73,33 @@ Solo peticiones que deciden algo, inician una tarea o corrigen el rumbo.
 **Prompt:** `/cerrar`, ejecutado por el asistente al 85 % del límite según la instrucción del usuario sobre el límite de uso (resumen)
 **Resultado:** bitácora, registro de IA y handoff para retomar en E5
 **Revisión humana:** pendiente
+
+## 2026-11-22: retomar, D-33 y plan de E5 (T-17)
+**Modelo:** Claude Opus 5.5
+**Prompt:** «/retomar, una cosa, ya no trabajaremos con multi agentes, solo cambio de modelos segun lo acordado, los agentes el paralelo consumen demasiado uso»; luego «sí, confirma D-33 y arranca con /fase planear 5»
+**Resultado:** D-33 en el KG y en sus vistas; CLAUDE.md y `.claude/commands/fase.md` ajustados; `context/etapas/etapa-5.md` con la Puerta A delegada; D-34, D-35 y A-06
+**Revisión humana:** el usuario confirmó D-33; el plan de E5 está pendiente
+
+## 2026-11-22: verificador de tokens y emisor simulado (T-17)
+**Modelo:** Claude Sonnet 5.5 en la sesión principal, sin agentes (D-33)
+**Prompt:** «sigue con T-17»
+**Resultado:** `src/nukyro/identity.py`, `load_oidc_settings`, `devtools/issuer/`, el servicio `issuer` en Compose, PyJWT 2.15.1 y las pruebas `tests/unit/test_identity.py` y `tests/integration/test_identity.py`
+**Revisión humana:** pendiente
+
+## 2026-11-22: auditoría y cierre de T-17
+**Modelo:** Claude Opus 5.5 en la sesión principal (D-33)
+**Prompt:** «audita T-17»
+**Resultado:** dos hallazgos corregidos (la caché de claves no esperaba tras un fallo; una prueba no llegaba a pedir las claves); sabotajes de la imagen y del verificador; T-17 cerrada; PR #18 fusionado en develop
+**Revisión humana:** pendiente
+
+## 2026-11-22: A-06 y cierre de la tercera sesión
+**Modelo:** Claude Opus 5.5
+**Prompt:** «sí, apruebo A-06, luego /cerrar»
+**Resultado:** A-06 cerrada en el KG y en `context/decisiones.md`; bitácora, registro de IA y handoff para retomar con el `CHECK` del defecto 12 y el cierre de T-18 y E5
+**Revisión humana:** el usuario aprobó A-06; lo demás, pendiente
+
+## 2026-11-28: restricción de purga y cierre de T-18
+**Modelo:** GPT-6 en Codex (identificador exacto de la sesión no registrado)
+**Prompt:** «confirmo, continua», continuación de T-18 conforme al relevo.
+**Resultado:** defecto 12 reproducido y corregido con A-06. Restricción en `bd/schema.sql` y migración congelada. Evidencia roja, verificación completa y cierre delegado de T-18.
+**Revisión humana:** A-06 aprobada previamente por el usuario. Difusión y revisión de la implementación según D-11 y D-32.

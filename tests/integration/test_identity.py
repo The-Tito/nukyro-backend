@@ -19,23 +19,6 @@ AUDIENCE = "nukyro-local-client"
 
 
 @pytest.fixture(scope="module")
-def issuer_url():
-    compose("up", "-d", "--wait", "issuer")
-    port = compose("port", "issuer", "8080").strip().rsplit(":", 1)[1]
-    return f"http://127.0.0.1:{port}"
-
-
-@pytest.fixture(scope="module")
-def mint(issuer_url):
-    def _mint(**spec) -> str:
-        response = httpx.post(f"{issuer_url}/token", json=spec, timeout=10)
-        response.raise_for_status()
-        return response.json()["id_token"]
-
-    return _mint
-
-
-@pytest.fixture(scope="module")
 def verifier(issuer_url):
     settings = OidcSettings(ISSUER, AUDIENCE, f"{issuer_url}/.well-known/jwks.json")
     return OidcVerifier.from_settings(settings)

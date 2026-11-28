@@ -5,9 +5,9 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy import Connection, Engine
 
+from nukyro.auth import Auth
 from nukyro.modules.assessment import queries, scoring
 from nukyro.modules.entry import queries as entry_queries
-from nukyro.security import hash_secret
 
 
 def _load(conn: Connection, session, version) -> dict:
@@ -70,7 +70,7 @@ def _view(conn: Connection, session, kind, s, attempt) -> dict:
     }
 
 
-def _run(engine: Engine, secret: str, session_id: str, kind: str, write: bool, act):
+def _run(engine: Engine, auth: Auth, session_id: str, kind: str, write: bool, act):
     """Autentica, bloquea (participante, luego sesión) y ejecuta `act` sobre el conjunto."""
     try:
         session = UUID(session_id)
@@ -80,7 +80,7 @@ def _run(engine: Engine, secret: str, session_id: str, kind: str, write: bool, a
         raise HTTPException(404)
     with engine.begin() as conn:
         # El UPDATE bloquea al participante antes que la sesión y renueva su actividad (RF-080)
-        participant = entry_queries.touch_participant(conn, hash_secret(secret))
+        participant = entry_queries.touch_participant(conn, auth)
         if participant is None:
             raise HTTPException(401)
         row = queries.session_row(conn, participant, session, lock=write)
@@ -112,17 +112,17 @@ def _run(engine: Engine, secret: str, session_id: str, kind: str, write: bool, a
         return result
 
 
-def get_assessment(engine: Engine, secret: str, session_id: str, kind: str) -> dict:
+def get_assessment(engine: Engine, auth: Auth, session_id: str, kind: str) -> dict:
     def act(c):
         if not c["done"] and not c["turn"]:
             raise HTTPException(409)  # antes de su turno no se muestran las preguntas
         return _view(c["conn"], c["session"], kind, c["set"], c["attempt"])
 
-    return _run(engine, secret, session_id, kind, False, act)
+    return _run(engine, auth, session_id, kind, False, act)
 
 
 def put_answer(
-    engine: Engine, secret: str, session_id: str, kind: str, question_key: str, body
+    engine: Engine, auth: Auth, session_id: str, kind: str, question_key: str, body
 ) -> dict:
     def act(c):
         if c["done"] or not c["turn"]:
@@ -138,10 +138,10 @@ def put_answer(
         answered, _ = queries.tally(c["conn"], attempt)
         return {"answered": answered, "total": len(c["set"]["questions"]), "submitted": False}
 
-    return _run(engine, secret, session_id, kind, True, act)
+    return _run(engine, auth, session_id, kind, True, act)
 
 
-def submit(engine: Engine, secret: str, session_id: str, kind: str) -> dict:
+def submit(engine: Engine, auth: Auth, session_id: str, kind: str) -> dict:
     def act(c):
         conn, session, s = c["conn"], c["session"], c["set"]
         if c["done"]:  # enviar otra vez devuelve lo mismo y no recalifica (RN-19)
@@ -159,4 +159,4 @@ def submit(engine: Engine, secret: str, session_id: str, kind: str) -> dict:
             settle(conn, session)
         return _view(conn, session, kind, s, queries.attempts(conn, session)[s["id"]])
 
-    return _run(engine, secret, session_id, kind, True, act)
+    return _run(engine, auth, session_id, kind, True, act)

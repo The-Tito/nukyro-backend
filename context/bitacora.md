@@ -199,3 +199,26 @@ Lo más reciente va al final. Formato de cada entrada:
 - **Sabotajes:** la imagen de la API con `devtools/` copiado dentro es detectada por la misma búsqueda de la prueba. Quitar la espera tras fallo hace fallar su prueba. Se repitieron los ocho del verificador.
 - **Para T-18:** `WrongGroup` hereda de `InvalidToken`; hay que atraparla antes para responder 403 y no 401. La comprobación de edad es redundante con la de vida (si exp − iat ≤ 1 h y no venció, la edad es menor de 1 h); se conserva como defensa.
 - **Evidencia:** `./scripts/verify`: sql=269, unit=260, integration=157, blackbox=77. Escáner de datos personales con 0 hallazgos y gitleaks del historial limpio.
+
+## 2026-11-22: T-18 construida, falta el defecto 12 (A-06)
+- **Resultado:** `link_participant` (función del owner, solo `nukyro_api`), módulo `account` (`POST /api/v1/account/login`, `GET /api/v1/account`), `nukyro.auth` (token o cookie; el token manda y uno inválido no cae a la cookie), códigos `account_blocked` (403) y `documents_required` (409). Todas las rutas aceptan `Authorization: Bearer`.
+- **Defecto 9 (vinculación):** el traslado recalcula `has_prior_session` por `(started_at, id)`: queda una sola primera sesión, la más antigua. Visto en rojo al quitar el recálculo (L-07, L-09, CC5, CC6; `bd/pruebas/evidencia-rojo.md`).
+- **Revisión:** `./scripts/verify`: sql=294 (57 + 216 + 21), unit=260, integration=198, blackbox=90. Falta la auditoría en Opus.
+- **Defecto 12:** pendiente. D-35 necesita el `CHECK` de una hora entre bloqueo y purga (A-06), que toca la conservación de datos personales y no se delegó. Sin él T-18 no cierra.
+- **Declarado al construir:**
+  - La cookie anónima se borra en todo inicio de sesión con cuenta (`Max-Age=0`), haya vinculado o no.
+  - Se registran las dos casillas del registro en `consent_events`, también cuando están sin marcar.
+  - Cuenta sin participante: las rutas de sesión responden 409 `documents_required`.
+  - Cuenta sin haber iniciado sesión: 401.
+- **Evidencia:** `tests/trazabilidad-e5.md`.
+
+## 2026-11-22: A-06 aprobada
+- **Resultado:** el usuario aprueba el `CHECK` de una hora entre bloqueo y purga. Se aplica al empezar la próxima sesión, con sus pruebas, y con él se cierran el defecto 12 y T-18.
+- **Decisiones:** A-06 cerrada con la aprobación del usuario.
+
+## 2026-11-28: T-18, A-06 aplicada y cierre delegado
+- **Resultado:** PostgreSQL exige una hora desde `blocked_at` hasta `deletion_due_at`. Se regeneró la migración inicial y se verificaron el mínimo exacto y el instante anterior.
+- **Revisión:** los cuatro criterios de T-18 tienen respaldo. CC5, CC6 y la integración comprobaron la primera sesión única y la idempotencia. El defecto 9 está documentado en rojo. Para el defecto 12, SQL devolvió 23514 en plazos menores y el mismo token recibió 403 mientras la cuenta estuvo bloqueada y 401 en el instante de purga. La cuenta quedó ausente. Revisión humana del código pendiente.
+- **Decisiones:** A-06, D-35 y cierre delegado por D-32.
+- **Evidencia:** `./scripts/verify` desde una base vacía dio sql=298, unit=260, integration=199, blackbox=90. El rojo se conserva en `bd/pruebas/evidencia-rojo.md`.
+- **Revisión del cierre:** una petición podía validar el token a tiempo y llegar al INSERT después de la purga. Ahora el alta vuelve a verificar el mismo token dentro de la transacción y se revierte si venció. La integración controla el reloj y el orden de ambos pasos.

@@ -58,7 +58,7 @@ Al resolverse, la fila queda `cerrada` y se crea un D-xx que la cierra.
 | A-03 | **Datos personales en repositorio público.** D-05 solo admite datos personales en un remoto privado y D-08 lo mantiene público: falta decidir qué se versiona. Hasta entonces esos archivos no entran a un commit. Recomendación: seudonimizar el KG y los ADR, y dejar fuera de git docs/ y la guía .docx. | E0 | D-08 | cerrada |
 | A-04 | **Release a main con el commit expuesto.** El release aprobado (D-27) llevaría e8dbae5, con datos personales (D-26), a main, que hoy no los tiene. Falta que el usuario elija: fusionar con esa consecuencia, publicar en main solo el árbol sin ese historial, o no hacer release. | E3 | D-26, D-27 | abierta |
 | A-05 | **Preguntas de opción de la encuesta.** EVAL-DISENO cambia las preguntas abiertas (decisiones difíciles, consecuencias poco claras) por opciones predefinidas, pero el modelo aprobado solo guarda seis escalas. Recomendación: dejar las seis escalas; agregar preguntas es recabar datos nuevos. | E4 | CONF-03 | abierta |
-| A-06 | **Plazo mínimo de bloqueo antes de purgar.** D-35 requiere que una cuenta bloqueada siga en la base al menos la vida máxima del token (1 hora). Recomendación: CHECK deletion_due_at >= blocked_at + 1 hora; ningún plazo legal o de RET-01 es menor. Toca la conservación de datos personales: lo decide el usuario. | E5 | D-35 | abierta |
+| A-06 | **Plazo mínimo de bloqueo antes de purgar.** Una cuenta bloqueada no se purga antes de una hora: `CHECK deletion_due_at >= blocked_at + interval '1 hour'`, la vida máxima del token (D-35). Así un token anterior a la baja vence antes de la purga y no recrea la cuenta (defecto 12). Aprobada por el usuario el 2026-11-22. | E5 | D-35 | cerrada |
 
 ## Heredadas
 

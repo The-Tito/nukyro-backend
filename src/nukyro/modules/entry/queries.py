@@ -1,6 +1,9 @@
 """SQL explícito del recorrido de entrada. Cada función recibe la conexión de una transacción."""
 
+from fastapi import HTTPException
 from sqlalchemy import Connection, text
+
+from nukyro.auth import Auth
 
 # Estado calculado de la sesión (modelo de datos §4)
 STATE = (
@@ -43,6 +46,18 @@ def insert_participant(conn: Connection, secret_hash: bytes):
     ).scalar_one()
 
 
+def insert_account_participant(conn: Connection, sub: str):
+    """Participante de la cuenta, sin secreto. None si ya existía (otra petición lo creó)."""
+    return conn.execute(
+        text(
+            "INSERT INTO nukyro.participants (account_id) "
+            "SELECT a.id FROM nukyro.accounts a WHERE a.cognito_sub = :s AND a.status = 'active' "
+            "ON CONFLICT (account_id) DO NOTHING RETURNING id"
+        ),
+        {"s": sub},
+    ).scalar_one_or_none()
+
+
 def insert_acceptances(conn: Connection, participant, privacy: str, terms: str) -> None:
     conn.execute(
         text(
@@ -55,23 +70,58 @@ def insert_acceptances(conn: Connection, participant, privacy: str, terms: str) 
     )
 
 
-def touch_participant(conn: Connection, secret_hash: bytes):
-    """Autentica y renueva la actividad; devuelve el id o None."""
-    return conn.execute(
+def _explain_missing(conn: Connection, sub: str):
+    """Token válido sin participante activo: cuenta ausente, bloqueada o sin aceptar documentos."""
+    status = conn.execute(
+        text("SELECT status FROM nukyro.accounts WHERE cognito_sub = :s"), {"s": sub}
+    ).scalar_one_or_none()
+    if status is None:
+        raise HTTPException(401)  # nunca inició sesión: falta POST /account/login
+    if status == "blocked":
+        raise HTTPException(403, detail="account_blocked")
+    raise HTTPException(409, detail="documents_required")  # cuenta sin participante
+
+
+def touch_participant(conn: Connection, auth: Auth):
+    """Autentica y renueva la actividad; devuelve el id o None (cookie desconocida)."""
+    if auth.identity is None:
+        return conn.execute(
+            text(
+                "UPDATE nukyro.participants SET last_activity_at = now() "
+                "WHERE secret_hash = :h RETURNING id"
+            ),
+            {"h": auth.secret_hash},
+        ).scalar_one_or_none()
+    found = conn.execute(
         text(
-            "UPDATE nukyro.participants SET last_activity_at = now() "
-            "WHERE secret_hash = :h RETURNING id"
+            "UPDATE nukyro.participants p SET last_activity_at = now() FROM nukyro.accounts a "
+            "WHERE a.id = p.account_id AND a.cognito_sub = :s AND a.status = 'active' "
+            "RETURNING p.id"
         ),
-        {"h": secret_hash},
+        {"s": auth.identity.sub},
     ).scalar_one_or_none()
+    if found is None:
+        _explain_missing(conn, auth.identity.sub)
+    return found
 
 
-def lock_participant(conn: Connection, secret_hash: bytes):
+def lock_participant(conn: Connection, auth: Auth):
     """Primer bloqueo de toda operación sobre sesiones: el participante."""
-    return conn.execute(
-        text("SELECT id FROM nukyro.participants WHERE secret_hash = :h FOR NO KEY UPDATE"),
-        {"h": secret_hash},
+    if auth.identity is None:
+        return conn.execute(
+            text("SELECT id FROM nukyro.participants WHERE secret_hash = :h FOR NO KEY UPDATE"),
+            {"h": auth.secret_hash},
+        ).scalar_one_or_none()
+    found = conn.execute(
+        text(
+            "SELECT p.id FROM nukyro.participants p JOIN nukyro.accounts a ON a.id = p.account_id "
+            "WHERE a.cognito_sub = :s AND a.status = 'active' FOR NO KEY UPDATE OF p"
+        ),
+        {"s": auth.identity.sub},
     ).scalar_one_or_none()
+    if found is None:
+        _explain_missing(conn, auth.identity.sub)
+    return found
 
 
 def current_acceptances(conn: Connection, participant, privacy: str, terms: str) -> int:

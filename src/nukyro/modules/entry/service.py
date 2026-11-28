@@ -2,12 +2,12 @@
 
 import json
 from datetime import UTC
-from uuid import UUID
 
 from fastapi import HTTPException
 from sqlalchemy import Engine, text
 from sqlalchemy.exc import IntegrityError
 
+from nukyro.auth import Auth
 from nukyro.modules.assessment.phases import phases
 from nukyro.modules.entry import queries
 from nukyro.security import hash_secret, new_secret
@@ -28,8 +28,11 @@ def entry(engine: Engine, documents: dict) -> dict:
     return {**documents, "scenarios": scenarios}
 
 
-def create_participant(engine: Engine, documents: dict, body, secret: str | None):
-    """Devuelve (estado, secreto). Con cookie válida no crea otro participante."""
+def create_participant(engine: Engine, documents: dict, body, auth: Auth | None):
+    """Devuelve (estado, secreto). El secreto es None con cuenta: no hay cookie que entregar.
+
+    Con cookie válida no crea otro participante. Con token, el participante nace ligado a la
+    cuenta y sin secreto (la cuenta ya existe porque pasó por /account/login)."""
     versions = current_versions(documents)
     if (
         not body.age_confirmed
@@ -38,18 +41,38 @@ def create_participant(engine: Engine, documents: dict, body, secret: str | None
     ):
         raise HTTPException(422)
     with engine.begin() as conn:
-        if secret and (existing := queries.touch_participant(conn, hash_secret(secret))):
+        if auth is not None and auth.identity is not None:
+            return _create_for_account(conn, auth, body), None
+        if auth is not None and (existing := queries.touch_participant(conn, auth)):
             # Si cambió la versión de un documento, se registra la nueva aceptación (RF-073)
             queries.insert_acceptances(
                 conn, existing, body.privacy_notice_version, body.terms_version
             )
-            return "existing", secret
+            return "existing", auth.secret
         secret = new_secret()
         participant = queries.insert_participant(conn, hash_secret(secret))
         queries.insert_acceptances(
             conn, participant, body.privacy_notice_version, body.terms_version
         )
     return "created", secret
+
+
+def _create_for_account(conn, auth: Auth, body) -> str:
+    sub = auth.identity.sub
+    status = conn.execute(
+        text("SELECT status FROM nukyro.accounts WHERE cognito_sub = :s"), {"s": sub}
+    ).scalar_one_or_none()
+    if status is None:
+        raise HTTPException(401)  # falta POST /account/login
+    if status == "blocked":
+        raise HTTPException(403, detail="account_blocked")
+    participant = queries.insert_account_participant(conn, sub)
+    state = "created"
+    if participant is None:  # ya existía (o lo creó otra petición a la vez)
+        participant = queries.touch_participant(conn, auth)
+        state = "existing"
+    queries.insert_acceptances(conn, participant, body.privacy_notice_version, body.terms_version)
+    return state
 
 
 def _view(row) -> dict:
@@ -82,10 +105,10 @@ def _view(row) -> dict:
     }
 
 
-def start_session(engine: Engine, documents: dict, secret: str, body) -> dict:
+def start_session(engine: Engine, documents: dict, auth: Auth, body) -> dict:
     versions = current_versions(documents)
     try:
-        return _start_session(engine, versions, secret, body)
+        return _start_session(engine, versions, auth, body)
     except IntegrityError as exc:
         # Solo el trigger de RN-15 (la versión se retiró entre la consulta y el INSERT) es un 404.
         # Un CHECK trae nombre de restricción; cualquier otro fallo es un 500 que se registra.
@@ -95,9 +118,9 @@ def start_session(engine: Engine, documents: dict, secret: str, body) -> dict:
         raise
 
 
-def _start_session(engine: Engine, versions: dict, secret: str, body) -> dict:
+def _start_session(engine: Engine, versions: dict, auth: Auth, body) -> dict:
     with engine.begin() as conn:
-        participant = queries.lock_participant(conn, hash_secret(secret))  # primero el participante
+        participant = queries.lock_participant(conn, auth)  # primero el participante
         if participant is None:
             raise HTTPException(401)
         if (
@@ -124,24 +147,9 @@ def _start_session(engine: Engine, versions: dict, secret: str, body) -> dict:
         return _view(queries.session_by_id(conn, participant, session))
 
 
-def get_session(engine: Engine, secret: str, session_id: str) -> dict:
-    try:
-        session = UUID(session_id)
-    except ValueError:
-        raise HTTPException(404) from None  # igual que lo ajeno o inexistente
+def list_sessions(engine: Engine, auth: Auth) -> dict:
     with engine.begin() as conn:
-        participant = queries.touch_participant(conn, hash_secret(secret))
-        if participant is None:
-            raise HTTPException(401)
-        row = queries.session_by_id(conn, participant, session)
-    if row is None:
-        raise HTTPException(404)
-    return _view(row)
-
-
-def list_sessions(engine: Engine, secret: str) -> dict:
-    with engine.begin() as conn:
-        participant = queries.touch_participant(conn, hash_secret(secret))
+        participant = queries.touch_participant(conn, auth)
         if participant is None:
             raise HTTPException(401)
         return {"sessions": [_view(r) for r in queries.sessions_of(conn, participant)]}

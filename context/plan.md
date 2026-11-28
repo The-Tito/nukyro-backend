@@ -62,7 +62,7 @@ Al final el usuario hace el recorrido manual y el auditor revisa el total.
 
 ## Defectos por corregir
 
-Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`); el 2 quedó también en la encuesta (T-16); el 9 sigue abierto para la vinculación (T-18). El 1: corregido en P5 (T-07). El 10: reproducido y corregido (T-14). El 11: reproducido y corregido (T-15). El 12 y el 13: detectados por lectura, sin reproducir (S-03).
+Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`); el 2 quedó también en la encuesta (T-16); el 9 quedó también en la vinculación (T-18). El 1: corregido en P5 (T-07). El 10: reproducido y corregido (T-14). El 11: reproducido y corregido (T-15). El 12 se reprodujo y corrigió (T-18, D-35, A-06). El 13 se detectó por lectura y falta reproducirlo (S-03).
 
 | # | Defecto | Arreglo propuesto | Tareas |
 |---|---|---|---|
@@ -77,7 +77,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 | 9 | Dos inicios o una vinculación dan dos primeras sesiones | bloquear al participante y recalcular todas | T-10, T-18 |
 | 10 | Marcar todas las razones aprueba H05 | mínimo correcto y ninguna incorrecta | T-14 |
 | 11 | La reconstrucción revela las respuestas causales | responder antes de ver la reconstrucción | T-15 |
-| 12 | El upsert puede recrear una cuenta purgada | rechazar tokens anteriores a la baja | T-18 |
+| 12 | El upsert puede recrear una cuenta purgada | limitar la vigencia del token y exigir una hora entre bloqueo y purga (D-35, A-06) | T-18 |
 | 13 | ARCO no guarda la verificación ni define la limitación | definir ambos y el calendario hábil | T-25 |
 
 ## Tareas
@@ -264,7 +264,7 @@ Del 2 al 9: reproducidos y corregidos en la base (`bd/pruebas/evidencia-rojo.md`
 
 ### T-18 · Cuenta y vinculación
 - Etapa: E5
-- Estado: pendiente
+- Estado: cerrada
 - Entregable: cuenta, consentimientos y proceso P10
 - Criterios de cierre:
   - la vinculación concurrente es idempotente y deja una primera sesión

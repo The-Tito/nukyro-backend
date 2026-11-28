@@ -6,6 +6,7 @@ from uuid import UUID
 from fastapi import HTTPException
 from sqlalchemy import Engine
 
+from nukyro.auth import Auth
 from nukyro.engine import engine as motor
 from nukyro.engine.model import (
     Activation,
@@ -26,7 +27,6 @@ from nukyro.modules.assessment import service as assessment
 from nukyro.modules.entry import queries as entry_queries
 from nukyro.modules.entry import service as entry_service
 from nukyro.modules.simulation import queries
-from nukyro.security import hash_secret
 
 # Entrada inválida (422); cualquier otro error del dominio es de estado (409).
 INVALID_INPUT = {
@@ -176,7 +176,7 @@ def _view(conn, participant, session) -> dict:
     }
 
 
-def _run(engine: Engine, secret: str, session_id: str, act):
+def _run(engine: Engine, auth: Auth, session_id: str, act):
     try:
         session = UUID(session_id)
     except ValueError:
@@ -184,7 +184,7 @@ def _run(engine: Engine, secret: str, session_id: str, act):
     try:
         with engine.begin() as conn:
             # El UPDATE bloquea al participante antes que la sesión y renueva su actividad (RF-080)
-            participant = entry_queries.touch_participant(conn, hash_secret(secret))
+            participant = entry_queries.touch_participant(conn, auth)
             if participant is None:
                 raise HTTPException(401)
             row = queries.lock_session(conn, participant, session)
@@ -215,14 +215,14 @@ def _run(engine: Engine, secret: str, session_id: str, act):
         raise HTTPException(422 if exc.code in INVALID_INPUT else 409) from None
 
 
-def decide(engine: Engine, secret: str, session_id: str, body) -> dict:
+def decide(engine: Engine, auth: Auth, session_id: str, body) -> dict:
     def act(content, state, gate):
         # Primero el reintento (defecto 1, RN-14): el motor busca antes de validar el nodo.
         if gate and body.node_key == state.current_node_key:
             raise DomainError("pretest_pending")
         return motor.decide(content, state, body.node_key, body.option_key, body.reason_keys)
 
-    view, result = _run(engine, secret, session_id, act)
+    view, result = _run(engine, auth, session_id, act)
     d = next(d for d in result.state.decisions if d.node_key == body.node_key)
     return {
         "replayed": result.replayed,
@@ -235,22 +235,22 @@ def decide(engine: Engine, secret: str, session_id: str, body) -> dict:
     }
 
 
-def advance(engine: Engine, secret: str, session_id: str, body) -> dict:
+def advance(engine: Engine, auth: Auth, session_id: str, body) -> dict:
     def act(content, state, gate):
         if gate and body.from_node_key == state.current_node_key:
             raise DomainError("pretest_pending")
         return motor.advance(content, state, body.from_node_key)
 
-    return _run(engine, secret, session_id, act)[0]
+    return _run(engine, auth, session_id, act)[0]
 
 
-def get_session(engine: Engine, secret: str, session_id: str) -> dict:
+def get_session(engine: Engine, auth: Auth, session_id: str) -> dict:
     try:
         session = UUID(session_id)
     except ValueError:
         raise HTTPException(404) from None
     with engine.begin() as conn:
-        participant = entry_queries.touch_participant(conn, hash_secret(secret))
+        participant = entry_queries.touch_participant(conn, auth)
         if participant is None:
             raise HTTPException(401)
         if queries.session_view(conn, participant, session) is None:
