@@ -13,3 +13,4 @@
 | Claude Sonnet (alias sonnet) | No registrado | Agentes de Claude Code | 2026-11-22 | Programación de E3 y E4, escenario y reactivos de demostración, verificaciones acotadas |
 | Claude Sonnet 5.5 | claude-sonnet-5-5 | Claude Code, sesión principal (D-33) | 2026-11-22 | Programación y pruebas de T-17, sin agentes |
 | Claude Opus 5.5 | claude-opus-5-5 | Claude Code, sesión principal (D-33) | 2026-11-22 | Plan de E5 y auditoría de T-17 en la sesión, sin agentes |
+| GPT-6 | Identificador exacto de la sesión no registrado | Codex, sesión principal | 2026-11-28 | Relevo, migración y ejecución de E5 (D-36) |

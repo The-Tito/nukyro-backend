@@ -2,7 +2,7 @@
   "meta": {
     "nombre": "Knowledge Graph — Nukyro",
     "descripcion": "Grafo de conocimiento del proyecto Nukyro. ÚNICA FUENTE DE VERDAD del proyecto (ver CLAUDE.md).",
-    "version": "1.38.2",
+    "version": "1.39.0",
     "generado": "2026-10-31",
     "idioma": "es",
     "fuentes": [
@@ -285,6 +285,11 @@
         "version": "1.38.2",
         "fecha": "2026-11-28",
         "cambio": "E5 cerrada por delegación (D-32), con evidencia EV-05: 74 de 87 RF en el alcance local."
+      },
+      {
+        "version": "1.39.0",
+        "fecha": "2026-11-28",
+        "cambio": "D-36: migración a Codex con AGENTS.md y skills del repositorio, modelo activo y cierre manual."
       }
     ]
   },
@@ -435,8 +440,8 @@
     ]
   },
   "estadisticas": {
-    "nodos": 501,
-    "aristas": 849,
+    "nodos": 502,
+    "aristas": 851,
     "conflictos": 21,
     "conflictos_por_estado": {
       "resuelto": 17,
@@ -456,7 +461,7 @@
       "ConjuntoPrincipios": 1,
       "Contacto": 1,
       "Cookie": 2,
-      "Decision": 56,
+      "Decision": 57,
       "Degradado": 2,
       "Descargo": 4,
       "DisenoEvaluacion": 1,
@@ -8380,6 +8385,24 @@
           "seccion": "verificación delegada"
         }
       ]
+    },
+    {
+      "id": "D-36",
+      "tipo": "Decision",
+      "nombre": "Migración a Codex",
+      "texto": "Codex usa el modelo activo de la sesión para planear, programar, pasar las puertas y auditar, hasta que el usuario indique otro reparto. Se trabaja sin subagentes. Al acercarse al límite de uso o de contexto se ejecuta $cerrar manualmente. El seguro del 96 % sigue siendo exclusivo de la CLI de Claude.",
+      "quien": "usuario",
+      "estado": "tomada",
+      "fecha": "2026-11-28",
+      "ruta": "context/decisiones.md",
+      "buscar": "| D-36 |",
+      "fuente": [
+        {
+          "doc": "DECISION-USUARIO",
+          "seccion": "2026-11-28"
+        }
+      ],
+      "cita": "confirmo, continua"
     }
   ],
   "aristas": [
@@ -12646,6 +12669,16 @@
       "origen": "EV-05",
       "relacion": "respalda",
       "destino": "E5"
+    },
+    {
+      "origen": "D-36",
+      "relacion": "modifica",
+      "destino": "D-24"
+    },
+    {
+      "origen": "D-36",
+      "relacion": "modifica",
+      "destino": "D-25"
     }
   ],
   "conflictos": [
